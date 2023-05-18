@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.20)
+project(Bamboo VERSION 0.1.0)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(BAMBOO_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(CMAKE_INSTALL_PREFIX "${BAMBOO_ROOT_DIR}/bin")
+
+add_subdirectory(engine)
