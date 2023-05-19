@@ -1,4 +1,6 @@
 #include "engine.h"
+#include "runtime/core/macro.h"
+#include "runtime/function/global/runtime_context.h"
 
 namespace Bamboo
 {
@@ -12,10 +14,14 @@ namespace Bamboo
 
     void Engine::init()
     {
+        g_runtime_context.init();
+        LOG_INFO("start engine");
     }
 
     void Engine::destroy()
     {
+        LOG_INFO("stop engine");
+        g_runtime_context.destroy();
     }
 
     bool Engine::tick(float delta_time)
