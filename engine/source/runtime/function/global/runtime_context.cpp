@@ -1,5 +1,5 @@
 #include "runtime_context.h"
-#include "runtime/core/log_system.h"
+#include "runtime/core/log/log_system.h"
 
 namespace Bamboo
 {
@@ -8,23 +8,11 @@ namespace Bamboo
     void RuntimeContext::init()
     {
         m_log_system = std::make_shared<LogSystem>();
-
-        m_context_modules = {
-            m_log_system
-        };
-
-        for (auto& context_module : m_context_modules)
-        {
-            context_module->init();
-        }
+        m_log_system->init();
     }
 
     void RuntimeContext::destroy()
     {
-        for (auto& context_module : m_context_modules)
-        {
-            context_module->destroy();
-            context_module.reset();
-        }
+        m_log_system->destroy();
     }
 }

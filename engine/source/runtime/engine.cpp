@@ -1,5 +1,5 @@
 #include "engine.h"
-#include "runtime/core/macro.h"
+#include "runtime/core/base/macro.h"
 #include "runtime/function/global/runtime_context.h"
 
 namespace Bamboo

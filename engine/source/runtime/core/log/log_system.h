@@ -1,13 +1,12 @@
 #pragma once
 
-#include "context_module.h"
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <memory>
 
 namespace Bamboo
 {
-    class LogSystem : public ContextModule
+    class LogSystem
     {
         public:
             enum class LogLevel
@@ -15,8 +14,8 @@ namespace Bamboo
                 DEBUG, INFO, WARNING, ERROR, FATAL
             };
 
-            virtual void init() override;
-            virtual void destroy() override;
+            void init();
+            void destroy();
         
             template<typename... TARGS>
             void log(LogLevel level, TARGS&&... args)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "runtime/core/log_system.h"
+#include "runtime/core/log/log_system.h"
 #include "runtime/function/global/runtime_context.h"
 
 #define LOG_HELPER(LOG_LEVEL, ...) \
