@@ -13,4 +13,8 @@ target_include_directories(
   PUBLIC ${ENGINE_ROOT_DIR}/source
 )
 
+target_link_libraries(${TARGET_NAME} PUBLIC ${Vulkan_LIBRARY})
+target_link_libraries(${TARGET_NAME} PUBLIC glfw)
+target_link_libraries(${TARGET_NAME} PUBLIC imgui)
 target_link_libraries(${TARGET_NAME} PUBLIC spdlog)
+target_link_libraries(${TARGET_NAME} PUBLIC yaml-cpp)
