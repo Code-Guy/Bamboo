@@ -1,19 +1,17 @@
 #include "engine.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/function/global/runtime_context.h"
+#include "runtime/function/render/window_system.h"
 
 namespace Bamboo
 {
-    Engine::Engine()
-    {
-        m_fps = 0;
-        m_frame_count = 0;
-        m_average_duration = 0.0f;
-        m_last_tick_time_point = std::chrono::steady_clock::now();
-    }
-
     void Engine::init()
     {
+		m_fps = 0;
+		m_frame_count = 0;
+		m_average_duration = 0.0f;
+		m_last_tick_time_point = std::chrono::steady_clock::now();
+
         g_runtime_context.init();
         LOG_INFO("start engine");
     }
@@ -31,7 +29,9 @@ namespace Bamboo
 
         renderTick(delta_time);
 
-        return true;
+        g_runtime_context.windowSystem()->pollEvents();
+
+        return !g_runtime_context.windowSystem()->shouldClose();
     }
 
     float Engine::calcDeltaTime()

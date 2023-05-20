@@ -3,15 +3,6 @@
 
 namespace Bamboo
 {
-    Editor::Editor()
-    {
-        m_engine = nullptr;
-    }
-
-    Editor::~Editor()
-    {
-    }
-
     void Editor::init(Engine *engine)
     {
         m_engine = engine;

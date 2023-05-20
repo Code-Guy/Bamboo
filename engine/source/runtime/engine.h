@@ -7,8 +7,6 @@ namespace Bamboo
     class Engine
     {
         public:
-            Engine();
-
             void init();
             void destroy();
             bool tick(float delta_time);

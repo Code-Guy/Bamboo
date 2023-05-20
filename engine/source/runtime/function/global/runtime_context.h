@@ -5,7 +5,10 @@
 
 namespace Bamboo
 {
+    class FileSystem;
+    class ConfigManager;
     class LogSystem;
+    class WindowSystem;
 
     class RuntimeContext
     {
@@ -13,10 +16,16 @@ namespace Bamboo
             void init();
             void destroy();
 
-            std::shared_ptr<LogSystem> m_log_system;
+			const auto& logSystem() { return m_log_system; }
+			const auto& fileSystem() { return m_file_system; }
+            const auto& configManager() { return m_config_manager; }
+            const auto& windowSystem() { return m_window_system; }
 
         private:
-
+			std::shared_ptr<LogSystem> m_log_system;
+			std::shared_ptr<FileSystem> m_file_system;
+            std::shared_ptr<ConfigManager> m_config_manager;
+			std::shared_ptr<WindowSystem> m_window_system;
     };
 
     extern RuntimeContext g_runtime_context;
