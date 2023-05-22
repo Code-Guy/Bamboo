@@ -3,6 +3,7 @@
 #include "runtime/resource/config/config_manager.h"
 #include "runtime/core/log/log_system.h"
 #include "runtime/function/render/window_system.h"
+#include "runtime/function/framework/world/world_manager.h"
 
 namespace Bamboo
 {
@@ -25,10 +26,15 @@ namespace Bamboo
         window_ci.height = m_config_manager->getWindowHeight();
         window_ci.title = m_config_manager->getWindowTitle();
         m_window_system->init(window_ci);
+
+        m_world_manager = std::make_shared<WorldManager>();
+        m_world_manager->init();
     }
 
     void RuntimeContext::destroy()
     {
+        // destroy with reverse initialize order
+        m_world_manager->destroy();
         m_window_system->destroy();
         m_config_manager->destroy();
         m_file_system->destroy();

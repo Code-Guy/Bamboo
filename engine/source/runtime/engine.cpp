@@ -30,6 +30,7 @@ namespace Bamboo
         renderTick(delta_time);
 
         g_runtime_context.windowSystem()->pollEvents();
+        g_runtime_context.windowSystem()->setTitle(std::string("BambooEngine - " + std::to_string(getFPS()) + " FPS"));
 
         return !g_runtime_context.windowSystem()->shouldClose();
     }

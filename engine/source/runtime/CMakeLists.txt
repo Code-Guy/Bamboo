@@ -8,13 +8,11 @@ add_library(${TARGET_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Engine")
 
-target_include_directories(
-  ${TARGET_NAME} 
-  PUBLIC ${ENGINE_ROOT_DIR}/source
-)
-
 target_link_libraries(${TARGET_NAME} PUBLIC ${Vulkan_LIBRARY})
 target_link_libraries(${TARGET_NAME} PUBLIC glfw)
 target_link_libraries(${TARGET_NAME} PUBLIC imgui)
 target_link_libraries(${TARGET_NAME} PUBLIC spdlog)
 target_link_libraries(${TARGET_NAME} PUBLIC yaml-cpp)
+
+target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/source)
+target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/external/json)

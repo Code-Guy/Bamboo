@@ -2,3 +2,5 @@ window:
   width: 1280
   height: 720
   title: "Bamboo Engine"
+
+default_world_url: "asset/world/hello_world.json"

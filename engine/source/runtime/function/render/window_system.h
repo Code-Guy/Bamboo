@@ -24,6 +24,7 @@ namespace Bamboo
 
 		void pollEvents();
 		bool shouldClose();
+		void setTitle(const std::string& title);
 		GLFWwindow* getWindow() { return m_window; }
 		void getWindowSize(int& width, int& height);
 

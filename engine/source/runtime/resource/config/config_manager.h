@@ -15,6 +15,8 @@ namespace Bamboo
 		int getWindowHeight();
 		std::string getWindowTitle();
 
+		std::string getDefaultWorldUrl();
+
 	private:
 		YAML::Node config_node;
 	};

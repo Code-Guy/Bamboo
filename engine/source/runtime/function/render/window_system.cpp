@@ -57,6 +57,11 @@ namespace Bamboo
 		return (bool)glfwWindowShouldClose(m_window);
 	}
 
+	void WindowSystem::setTitle(const std::string& title)
+	{
+		glfwSetWindowTitle(m_window, title.c_str());
+	}
+
 	void WindowSystem::getWindowSize(int& width, int& height)
 	{
 		width = m_width;

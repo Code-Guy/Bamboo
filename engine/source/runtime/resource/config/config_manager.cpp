@@ -23,4 +23,9 @@ namespace Bamboo
 		return config_node["window"]["title"].as<std::string>();
 	}
 
+	std::string ConfigManager::getDefaultWorldUrl()
+	{
+		return config_node["default_world_url"].as<std::string>();
+	}
+
 }
