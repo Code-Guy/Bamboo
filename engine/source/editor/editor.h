@@ -3,7 +3,6 @@
 namespace Bamboo
 {
     class Engine;
-
     class Editor
     {
         public:

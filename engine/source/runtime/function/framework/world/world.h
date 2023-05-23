@@ -1,5 +1,6 @@
-#include "runtime/function/framework/entity/entity.h"
+#pragma once
 
+#include "runtime/function/framework/entity/entity.h"
 #include <unordered_map>
 
 namespace Bamboo

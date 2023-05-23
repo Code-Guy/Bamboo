@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 namespace Bamboo
 {
 	class RenderSystem
@@ -10,6 +12,6 @@ namespace Bamboo
 		void destroy();
 
 	private:
-
+		std::shared_ptr<class VulkanDevice> vk_device;
 	};
 }

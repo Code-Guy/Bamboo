@@ -4,6 +4,7 @@
 #include "runtime/core/log/log_system.h"
 #include "runtime/function/render/window_system.h"
 #include "runtime/function/framework/world/world_manager.h"
+#include "runtime/function/render/render_system.h"
 
 namespace Bamboo
 {
@@ -29,11 +30,15 @@ namespace Bamboo
 
         m_world_manager = std::make_shared<WorldManager>();
         m_world_manager->init();
+
+        m_render_system = std::make_shared<RenderSystem>();
+        m_render_system->init();
     }
 
     void RuntimeContext::destroy()
     {
         // destroy with reverse initialize order
+        m_render_system->destroy();
         m_world_manager->destroy();
         m_window_system->destroy();
         m_config_manager->destroy();

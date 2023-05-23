@@ -36,7 +36,7 @@ namespace Bamboo
 					break;
 				case LogLevel::FATAL:
 				{
-					m_logger->critical(std::forward<TARGS>(args)...);
+					m_logger->critical(args...);
 
 					// throw application runtime error
 					std::string fatal_str = fmt::format(std::forward<TARGS>(args)...);

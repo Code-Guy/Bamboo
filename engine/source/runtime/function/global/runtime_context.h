@@ -5,12 +5,6 @@
 
 namespace Bamboo
 {
-    class FileSystem;
-    class ConfigManager;
-    class LogSystem;
-    class WindowSystem;
-    class WorldManager;
-
     class RuntimeContext
     {
         public:
@@ -22,13 +16,15 @@ namespace Bamboo
             const auto& configManager() { return m_config_manager; }
             const auto& windowSystem() { return m_window_system; }
             const auto& worldManager() { return m_world_manager; }
+            const auto& renderSystem() { return m_render_system; }
 
         private:
-			std::shared_ptr<LogSystem> m_log_system;
-			std::shared_ptr<FileSystem> m_file_system;
-            std::shared_ptr<ConfigManager> m_config_manager;
-			std::shared_ptr<WindowSystem> m_window_system;
-			std::shared_ptr<WorldManager> m_world_manager;
+			std::shared_ptr<class LogSystem> m_log_system;
+			std::shared_ptr<class FileSystem> m_file_system;
+            std::shared_ptr<class ConfigManager> m_config_manager;
+			std::shared_ptr<class WindowSystem> m_window_system;
+			std::shared_ptr<class WorldManager> m_world_manager;
+			std::shared_ptr<class RenderSystem> m_render_system;
     };
 
     extern RuntimeContext g_runtime_context;
