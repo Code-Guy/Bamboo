@@ -12,6 +12,6 @@ namespace Bamboo
 		void destroy();
 
 	private:
-		std::shared_ptr<class VulkanDevice> vk_device;
+		std::shared_ptr<class VulkanRHI> vulkan_rhi;
 	};
 }

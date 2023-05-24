@@ -1,13 +1,13 @@
 #include "render_system.h"
-#include "runtime/function/render/vulkan/vulkan_device.h"
+#include "runtime/function/render/vulkan/vulkan_rhi.h"
 
 namespace Bamboo
 {
 
 	void RenderSystem::init()
 	{
-		vk_device = std::make_shared<class VulkanDevice>();
-		vk_device->init();
+		vulkan_rhi = std::make_shared<class VulkanRHI>();
+		vulkan_rhi->init();
 	}
 
 	void RenderSystem::tick(float delta_time)
@@ -17,8 +17,8 @@ namespace Bamboo
 
 	void RenderSystem::destroy()
 	{
-		vk_device->destroy();
-		vk_device.reset();
+		vulkan_rhi->destroy();
+		vulkan_rhi.reset();
 	}
 
 }
