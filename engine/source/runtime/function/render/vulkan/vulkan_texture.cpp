@@ -1,8 +1,6 @@
 #define VMA_IMPLEMENTATION
 #include "vulkan_texture.h"
 
-#include "runtime/core/base/macro.h"
-
 namespace Bamboo
 {
 

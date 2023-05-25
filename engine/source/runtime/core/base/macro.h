@@ -3,7 +3,6 @@
 #include "runtime/core/log/log_system.h"
 #include "runtime/platform/file/file_system.h"
 #include "runtime/function/global/runtime_context.h"
-#include "runtime/function/render/vulkan/vulkan_util.h"
 
 #define DEBUG (!NDEBUG)
 
@@ -24,12 +23,6 @@
     if (!(val)) \
     { \
         LOG_FATAL(__VA_ARGS__); \
-    }
-
-#define CHECK_VULKAN_RESULT(result, msg) \
-    if (result != 0) \
-    { \
-        LOG_FATAL("failed to {}, error: {}", msg, Bamboo::vkErrorString(result)); \
     }
 
 #define REDIRECT(path) g_runtime_context.fileSystem()->redirect(path);

@@ -1,12 +1,11 @@
 #include "vulkan_rhi.h"
-#include "runtime/core/base/macro.h"
-#include "runtime/function/render/vulkan/vulkan_util.h"
-#include "runtime/function/global/runtime_context.h"
 #include "runtime/function/render/window_system.h"
 
+#include <array>
 #include <algorithm>
 
 #define ENABLE_VALIDATION_LAYER DEBUG
+#define MAX_FRAMES_IN_FLIGHT 2
 
 namespace Bamboo
 {
@@ -19,27 +18,40 @@ namespace Bamboo
 		createSurface();
 		pickPhysicalDevice();
 		createLogicDevice();
+		getDeviceQueues();
 		createVmaAllocator();
 
 		createSwapchain();
 		createSwapchainObjects();
+		createCommandPools();
 		createCommandBuffers();
 		createSynchronizationPrimitives();
 	}
 
 	void VulkanRHI::destroy()
 	{
+		vkDestroyPipelineCache(m_device, m_pipeline_cache, nullptr);
+		vkDestroyRenderPass(m_device, m_render_pass, nullptr);
 		for (VkFramebuffer framebuffer : m_framebuffers)
 		{
 			vkDestroyFramebuffer(m_device, framebuffer, nullptr);
 		}
-		for (VkFence wait_fence : m_wait_fences)
+		for (VkSemaphore image_avaliable_semaphore : m_image_avaliable_semaphores)
 		{
-			vkDestroyFence(m_device, wait_fence, nullptr);
+			vkDestroySemaphore(m_device, image_avaliable_semaphore, nullptr);
+		}
+		for (VkSemaphore render_finished_semaphore : m_render_finished_semaphores)
+		{
+			vkDestroySemaphore(m_device, render_finished_semaphore, nullptr);
+		}
+		for (VkFence flight_fence : m_flight_fences)
+		{
+			vkDestroyFence(m_device, flight_fence, nullptr);
 		}
 
 		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 		destroySwapchainObjects();
+		vkDestroyCommandPool(m_device, m_transient_command_pool, nullptr);
 		vkDestroyCommandPool(m_device, m_command_pool, nullptr);
 
 #if ENABLE_VALIDATION_LAYER
@@ -49,30 +61,6 @@ namespace Bamboo
 		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 		vkDestroyDevice(m_device, nullptr);
 		vkDestroyInstance(m_instance, nullptr);
-	}
-
-	void VulkanRHI::resize()
-	{
-		// handle the window minimization corner case
-		int width = 0;
-		int height = 0;
-		GLFWwindow* window = g_runtime_context.windowSystem()->getWindow();
-		glfwGetFramebufferSize(window, &width, &height);
-		while (width == 0 || height == 0)
-		{
-			glfwGetFramebufferSize(window, &width, &height);
-			glfwWaitEvents();
-		}
-
-		// ensure all device operations have done
-		vkDeviceWaitIdle(m_device);
-
-		VkSwapchainKHR oldSwapchain = m_swapchain;
-		createSwapchain();
-		vkDestroySwapchainKHR(m_device, oldSwapchain, nullptr);
-
-		destroySwapchainObjects();
-		createSwapchainObjects();
 	}
 
 	void VulkanRHI::createInstance()
@@ -186,6 +174,12 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create device");
 	}
 
+	void VulkanRHI::getDeviceQueues()
+	{
+		// get graphics queue
+		vkGetDeviceQueue(m_device, m_queue_family_indices.graphics, 0, &m_graphics_queue);
+	}
+
 	void VulkanRHI::createVmaAllocator()
 	{
 		VmaAllocatorCreateInfo vma_alloc_ci{};
@@ -232,19 +226,25 @@ namespace Bamboo
 
 	void VulkanRHI::destroySwapchainObjects()
 	{
-		// destroy swapchain image views
+		// 1.destroy swapchain image views
 		for (VkImageView swapchain_image_view : m_swapchain_image_views)
 		{
 			vkDestroyImageView(m_device, swapchain_image_view, nullptr);
 		}
 
-		// destroy depth stencil image and view
+		// 2.destroy depth stencil image and view
 		m_depth_stencil_image_view.destroy(m_device, m_vma_alloc);
+
+		// 3.destroy framebuffers
+		for (VkFramebuffer framebuffer : m_framebuffers)
+		{
+			vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+		}
 	}
 
 	void VulkanRHI::createSwapchainObjects()
 	{
-		// get swapchain images
+		// 1.get swapchain images
 		uint32_t last_swapchain_image_count = m_swapchain_image_count;
 		vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_swapchain_image_count, nullptr);
 		ASSERT(last_swapchain_image_count == 0 || last_swapchain_image_count == m_swapchain_image_count,
@@ -260,113 +260,255 @@ namespace Bamboo
 			m_swapchain_image_views[i] = createImageView(m_device, swapchain_images[i], m_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		}
 
-		// create depth stencil image and view
+		// 2.create depth stencil image and view
 		std::vector<VkFormat> depth_format_candidates = { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
 		VkImageTiling depth_tiling = VK_IMAGE_TILING_OPTIMAL;
 		VkFormatFeatureFlags depth_features = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		VkImageUsageFlags depth_usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
-		VkFormat depth_format = getProperImageFormat(depth_format_candidates, depth_tiling, depth_features);
-		createImageAndView(m_device, m_vma_alloc, m_extent.width, m_extent.height, 1, VK_SAMPLE_COUNT_1_BIT, depth_format, depth_tiling, depth_usage, 
+		m_depth_format = getProperImageFormat(depth_format_candidates, depth_tiling, depth_features);
+		createImageAndView(m_device, m_vma_alloc, m_extent.width, m_extent.height, 1, VK_SAMPLE_COUNT_1_BIT, m_depth_format, depth_tiling, depth_usage,
 			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_ASPECT_DEPTH_BIT, m_depth_stencil_image_view);
+
+		// 3.create framebuffers
+		std::array<VkImageView, 2> attachments{};
+
+		// depth stenci attachment is same for all framebuffers
+		attachments[1] = m_depth_stencil_image_view.view;
+
+		VkFramebufferCreateInfo framebuffer_ci{};
+		framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebuffer_ci.renderPass = m_render_pass;
+		framebuffer_ci.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebuffer_ci.pAttachments = attachments.data();
+		framebuffer_ci.width = m_extent.width;
+		framebuffer_ci.height = m_extent.height;
+		framebuffer_ci.layers = 1;
+
+		// create frame buffer for each swap chain image
+		m_framebuffers.resize(m_swapchain_image_count);
+		for (uint32_t i = 0; i < m_swapchain_image_count; ++i)
+		{
+			attachments[0] = m_swapchain_image_views[i];
+			vkCreateFramebuffer(m_device, &framebuffer_ci, nullptr, &m_framebuffers[i]);
+		}
+	}
+
+	void VulkanRHI::createCommandPools()
+	{
+		VkCommandPoolCreateInfo command_pool_ci = {};
+		command_pool_ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		command_pool_ci.queueFamilyIndex = m_queue_family_indices.graphics;
+		command_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+		vkCreateCommandPool(m_device, &command_pool_ci, nullptr, &m_command_pool);
+
+		command_pool_ci.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+		vkCreateCommandPool(m_device, &command_pool_ci, nullptr, &m_transient_command_pool);
 	}
 
 	void VulkanRHI::createCommandBuffers()
 	{
-		m_command_pool = createCommandPool(m_queue_family_indices.graphics);
-		m_command_buffers.resize(m_swapchain_image_count);
-		for (int i = 0; i < m_swapchain_image_count; ++i)
+		m_command_buffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+		VkCommandBufferAllocateInfo command_buffer_ai{};
+		command_buffer_ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		command_buffer_ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		command_buffer_ai.commandPool = m_command_pool;
+		command_buffer_ai.commandBufferCount = static_cast<uint32_t>(m_command_buffers.size());
+
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 		{
-			m_command_buffers[i] = createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+			VkCommandBuffer command_buffer;
+			vkAllocateCommandBuffers(m_device, &command_buffer_ai, m_command_buffers.data());
 		}
 	}
 
 	void VulkanRHI::createSynchronizationPrimitives()
 	{
-		m_wait_fences.resize(m_swapchain_image_count);
+		m_flight_index = 0;
+
+		// semaphore: GPU-GPU
+		m_image_avaliable_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_render_finished_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+
+		// fence: CPU-GPU
+		m_flight_fences.resize(MAX_FRAMES_IN_FLIGHT);
+
+		VkSemaphoreCreateInfo semaphore_ci{};
+		semaphore_ci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 		VkFenceCreateInfo fence_ci{};
 		fence_ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fence_ci.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		for (VkFence& wait_fence : m_wait_fences)
+		for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 		{
-			vkCreateFence(m_device, &fence_ci, nullptr, &wait_fence);
+			vkCreateSemaphore(m_device, &semaphore_ci, nullptr, &m_image_avaliable_semaphores[i]);
+			vkCreateSemaphore(m_device, &semaphore_ci, nullptr, &m_render_finished_semaphores[i]);
+			vkCreateFence(m_device, &fence_ci, nullptr, &m_flight_fences[i]);
 		}
 	}
 
-	VkCommandPool VulkanRHI::createCommandPool(uint32_t queue_family_index, VkCommandPoolCreateFlags create_flags /*= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT*/)
+	void VulkanRHI::createRenderPass()
 	{
-		VkCommandPoolCreateInfo command_pool_ci = {};
-		command_pool_ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		command_pool_ci.queueFamilyIndex = queue_family_index;
-		command_pool_ci.flags = create_flags;
+		std::array<VkAttachmentDescription, 2> attachments{};
 
-		VkCommandPool command_pool;
-		vkCreateCommandPool(m_device, &command_pool_ci, nullptr, &command_pool);
-		return command_pool;
+		// color attachment
+		attachments[0].format = m_surface_format.format;
+		attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		// depth attachment
+		attachments[1].format = m_depth_format;
+		attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference color_reference{};
+		color_reference.attachment = 0;
+		color_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depth_reference{};
+		depth_reference.attachment = 1;
+		depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		// subpass
+		VkSubpassDescription subpass_desc{};
+		subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass_desc.colorAttachmentCount = 1;
+		subpass_desc.pColorAttachments = &color_reference;
+		subpass_desc.pDepthStencilAttachment = &depth_reference;
+		subpass_desc.inputAttachmentCount = 0;
+		subpass_desc.pInputAttachments = nullptr;
+		subpass_desc.preserveAttachmentCount = 0;
+		subpass_desc.pPreserveAttachments = nullptr;
+		subpass_desc.pResolveAttachments = nullptr;
+
+		// subpass dependencies
+		std::array<VkSubpassDependency, 2> dependencies{};
+		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass = 0;
+		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+		dependencies[0].dependencyFlags = 0;
+
+		dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[1].dstSubpass = 0;
+		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[1].srcAccessMask = 0;
+		dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		dependencies[1].dependencyFlags = 0;
+
+		// create render pass
+		VkRenderPassCreateInfo render_pass_ci{};
+		render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		render_pass_ci.attachmentCount = static_cast<uint32_t>(attachments.size());
+		render_pass_ci.pAttachments = attachments.data();
+		render_pass_ci.subpassCount = 1;
+		render_pass_ci.pSubpasses = &subpass_desc;
+		render_pass_ci.dependencyCount = static_cast<uint32_t>(dependencies.size());
+		render_pass_ci.pDependencies = dependencies.data();
+
+		vkCreateRenderPass(m_device, &render_pass_ci, nullptr, &m_render_pass);
 	}
 
-	VkCommandBuffer VulkanRHI::createCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, bool begin /*= false*/)
+	void VulkanRHI::createPipelineCache()
 	{
-		VkCommandBufferAllocateInfo command_buffer_ai{};
-		command_buffer_ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		command_buffer_ai.commandPool = pool;
-		command_buffer_ai.level = level;
-		command_buffer_ai.commandBufferCount = 1;
+		VkPipelineCacheCreateInfo pipeline_cache_ci{};
+		pipeline_cache_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+		vkCreatePipelineCache(m_device, &pipeline_cache_ci, nullptr, &m_pipeline_cache);
+	}
 
-		VkCommandBuffer command_buffer;
-		vkAllocateCommandBuffers(m_device, &command_buffer_ai, &command_buffer);
+	void VulkanRHI::waitFrame()
+	{
+		// wait sumbitted command buffer finished
+		vkWaitForFences(m_device, 1, &m_flight_fences[m_flight_index], VK_TRUE, UINT64_MAX);
 
-		if (begin)
+		// get free swapchain image
+		VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, m_image_avaliable_semaphores[m_flight_index], VK_NULL_HANDLE, &m_image_index);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
-			VkCommandBufferBeginInfo command_buffer_bi{};
-			command_buffer_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			vkBeginCommandBuffer(command_buffer, &command_buffer_bi);
-		}
-		return command_buffer;
-	}
-
-	VkCommandBuffer VulkanRHI::createCommandBuffer(VkCommandBufferLevel level, bool begin /*= false*/)
-	{
-		return createCommandBuffer(level, m_command_pool, begin);
-	}
-
-	void VulkanRHI::flushCommandBuffer(VkCommandBuffer command_buffer, VkQueue queue, VkCommandPool pool, bool free /*= true*/)
-	{
-		if (command_buffer == VK_NULL_HANDLE)
-		{
+			recreateSwapchain();
 			return;
 		}
-
-		vkEndCommandBuffer(command_buffer);
-
-		VkSubmitInfo submit_info{};
-		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_info.commandBufferCount = 1;
-		submit_info.pCommandBuffers = &command_buffer;
-
-		VkFenceCreateInfo fence_ci{};
-		fence_ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-
-		VkFence fence;
-		vkCreateFence(m_device, &fence_ci, nullptr, &fence);
-
-		vkQueueSubmit(queue, 1, &submit_info, fence);
-
-		const uint64_t k_default_fence_time_out = 100000000000;
-		vkWaitForFences(m_device, 1, &fence, VK_TRUE, k_default_fence_time_out);
-		vkDestroyFence(m_device, fence, nullptr);
-
-		if (free)
-		{
-			vkFreeCommandBuffers(m_device, pool, 1, &command_buffer);
-		}
+		ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "failed to acquire swapchain image!");
 	}
 
-	void VulkanRHI::flushCommandBuffer(VkCommandBuffer command_buffer, VkQueue queue, bool free /*= true*/)
+	void VulkanRHI::submitFrame()
 	{
-		return flushCommandBuffer(command_buffer, queue, m_command_pool, free);
+		VkSubmitInfo submit_info{};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.waitSemaphoreCount = 1;
+		submit_info.pWaitSemaphores = &m_image_avaliable_semaphores[m_flight_index];
+		VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		submit_info.pWaitDstStageMask = wait_stages;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &m_command_buffers[m_flight_index];
+		submit_info.signalSemaphoreCount = 1;
+		submit_info.pSignalSemaphores = &m_render_finished_semaphores[m_flight_index];
+
+		VkResult result = vkQueueSubmit(m_graphics_queue, 1, &submit_info, m_flight_fences[m_flight_index]);
+		CHECK_VULKAN_RESULT(result, "submit queue");
+	}
+
+	void VulkanRHI::presentFrame()
+	{
+		VkPresentInfoKHR present_info{};
+		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores = &m_render_finished_semaphores[m_flight_index];
+		present_info.swapchainCount = 1;
+		present_info.pSwapchains = &m_swapchain;
+		present_info.pImageIndices = &m_image_index;
+
+		VkResult result = vkQueuePresentKHR(m_graphics_queue, &present_info);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			recreateSwapchain();
+		}
+		else
+		{
+			CHECK_VULKAN_RESULT(result, "present swapchain image");
+		}
+
+		m_flight_index = (m_flight_index + 1) % MAX_FRAMES_IN_FLIGHT;
+	}
+
+	void VulkanRHI::recreateSwapchain()
+	{
+		// handle the window minimization corner case
+		int width = 0;
+		int height = 0;
+		GLFWwindow* window = g_runtime_context.windowSystem()->getWindow();
+		glfwGetFramebufferSize(window, &width, &height);
+		while (width == 0 || height == 0)
+		{
+			glfwGetFramebufferSize(window, &width, &height);
+			glfwWaitEvents();
+		}
+
+		// ensure all device operations have done
+		vkDeviceWaitIdle(m_device);
+
+		VkSwapchainKHR oldSwapchain = m_swapchain;
+		createSwapchain();
+		vkDestroySwapchainKHR(m_device, oldSwapchain, nullptr);
+
+		destroySwapchainObjects();
+		createSwapchainObjects();
 	}
 
 	std::vector<const char*> VulkanRHI::getRequiredInstanceExtensions()

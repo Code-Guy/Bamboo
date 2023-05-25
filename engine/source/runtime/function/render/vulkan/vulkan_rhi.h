@@ -12,7 +12,6 @@ namespace Bamboo
 	public:
 		void init();
 		void destroy();
-		void resize();
 
 	private:
 		struct QueueFamilyIndices
@@ -35,18 +34,21 @@ namespace Bamboo
 		void createSurface();
 		void pickPhysicalDevice();
 		void createLogicDevice();
+		void getDeviceQueues();
 		void createVmaAllocator();
 		void createSwapchain();
 		void destroySwapchainObjects();
 		void createSwapchainObjects();
+		void createCommandPools();
 		void createCommandBuffers();
 		void createSynchronizationPrimitives();
+		void createRenderPass();
+		void createPipelineCache();
 
-		VkCommandPool createCommandPool(uint32_t queue_family_index, VkCommandPoolCreateFlags create_flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-		VkCommandBuffer createCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, bool begin = false);
-		VkCommandBuffer createCommandBuffer(VkCommandBufferLevel level, bool begin = false);
-		void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free = true);
-		void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, bool free = true);
+		void waitFrame();
+		void submitFrame();
+		void presentFrame();
+		void recreateSwapchain();
 
 		std::vector<const char*> getRequiredInstanceExtensions();
 		std::vector<const char*> getRequiredInstanceLayers();
@@ -73,10 +75,14 @@ namespace Bamboo
 		VkInstance m_instance;
 		VkPhysicalDevice m_physical_device;
 		VkDevice m_device;
+		VkQueue m_graphics_queue;
 		VkSurfaceKHR m_surface;
 		VmaAllocator m_vma_alloc;
 		VkCommandPool m_command_pool;
+		VkCommandPool m_transient_command_pool;
 		VkSwapchainKHR m_swapchain;
+		VkRenderPass m_render_pass;
+		VkPipelineCache m_pipeline_cache;
 
 		// debug functions
 		PFN_vkCreateDebugUtilsMessengerEXT m_vk_create_debug_func;
@@ -97,12 +103,19 @@ namespace Bamboo
 		VkSurfaceFormatKHR m_surface_format;
 		VkPresentModeKHR m_present_mode;
 		VkExtent2D m_extent;
+		VkFormat m_depth_format;
 
 		uint32_t m_swapchain_image_count;
 		std::vector<VkImageView> m_swapchain_image_views;
 		VmaImageView m_depth_stencil_image_view;
-		std::vector<VkCommandBuffer> m_command_buffers;
-		std::vector<VkFence> m_wait_fences;
 		std::vector<VkFramebuffer> m_framebuffers;
+
+		// synchronization primitives
+		uint32_t m_flight_index;
+		uint32_t m_image_index;
+		std::vector<VkSemaphore> m_image_avaliable_semaphores;
+		std::vector<VkSemaphore> m_render_finished_semaphores;
+		std::vector<VkFence> m_flight_fences;
+		std::vector<VkCommandBuffer> m_command_buffers;
 	};
 }

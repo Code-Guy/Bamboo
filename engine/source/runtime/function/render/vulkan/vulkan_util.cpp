@@ -50,4 +50,40 @@ namespace Bamboo
 		default: return "UNKNOWN_DEVICE_TYPE";
 		}
 	}
+
+
+	VkCommandBuffer beginTransientCommandBuffer(VkDevice device, VkCommandPool command_pool)
+	{
+		VkCommandBufferAllocateInfo command_buffer_ai{};
+		command_buffer_ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		command_buffer_ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		command_buffer_ai.commandPool = command_pool;
+		command_buffer_ai.commandBufferCount = 1;
+
+		VkCommandBuffer command_buffer;
+		vkAllocateCommandBuffers(device, &command_buffer_ai, &command_buffer);
+
+		VkCommandBufferBeginInfo command_buffer_bi{};
+		command_buffer_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		command_buffer_bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(command_buffer, &command_buffer_bi);
+
+		return command_buffer;
+	}
+
+	void endTransientCommandBuffer(VkDevice device, VkQueue queue, VkCommandPool command_pool, VkCommandBuffer command_buffer)
+	{
+		vkEndCommandBuffer(command_buffer);
+
+		VkSubmitInfo submit_info{};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &command_buffer;
+
+		vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
+		vkQueueWaitIdle(queue);
+
+		vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
+	}
 }
