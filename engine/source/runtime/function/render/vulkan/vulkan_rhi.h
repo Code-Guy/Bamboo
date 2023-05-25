@@ -11,6 +11,7 @@ namespace Bamboo
 	{
 	public:
 		void init();
+		void render();
 		void destroy();
 
 	private:
@@ -36,19 +37,20 @@ namespace Bamboo
 		void createLogicDevice();
 		void getDeviceQueues();
 		void createVmaAllocator();
+		void createRenderPass();
 		void createSwapchain();
-		void destroySwapchainObjects();
 		void createSwapchainObjects();
+		void destroySwapchainObjects();
+		void recreateSwapchain();
 		void createCommandPools();
 		void createCommandBuffers();
 		void createSynchronizationPrimitives();
-		void createRenderPass();
 		void createPipelineCache();
 
 		void waitFrame();
+		void recordFrame();
 		void submitFrame();
 		void presentFrame();
-		void recreateSwapchain();
 
 		std::vector<const char*> getRequiredInstanceExtensions();
 		std::vector<const char*> getRequiredInstanceLayers();

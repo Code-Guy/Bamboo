@@ -12,7 +12,7 @@ namespace Bamboo
 
 	void RenderSystem::tick(float delta_time)
 	{
-
+		vulkan_rhi->render();
 	}
 
 	void RenderSystem::destroy()

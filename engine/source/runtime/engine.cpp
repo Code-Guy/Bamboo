@@ -1,7 +1,7 @@
 #include "engine.h"
 #include "runtime/core/base/macro.h"
-#include "runtime/function/global/runtime_context.h"
 #include "runtime/function/render/window_system.h"
+#include "runtime/function/render/render_system.h"
 
 namespace Bamboo
 {
@@ -52,6 +52,7 @@ namespace Bamboo
 
     void Engine::renderTick(float delta_time)
     {
+        g_runtime_context.renderSystem()->tick(delta_time);
     }
 
     void Engine::calcFPS(float delta_time)
