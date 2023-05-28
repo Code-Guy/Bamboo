@@ -136,6 +136,7 @@ namespace Bamboo
 		vkEnumeratePhysicalDevices(m_instance, &gpu_count, physical_devices.data());
 
 		std::vector<VkPhysicalDevice> discrete_physical_devices;
+		std::vector<VkPhysicalDeviceProperties> discrete_physical_device_propertiess;
 		for (uint32_t i = 0; i < gpu_count; ++i)
 		{
 			VkPhysicalDeviceProperties physical_device_properties;
@@ -151,6 +152,7 @@ namespace Bamboo
 			if (physical_device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 			{
 				discrete_physical_devices.push_back(physical_devices[i]);
+				discrete_physical_device_propertiess.push_back(physical_device_properties);
 			}
 		}
 
@@ -161,6 +163,13 @@ namespace Bamboo
 			LOG_FATAL("selected device index {} is out of range {}", selected_device_index, discrete_physical_devices.size());
 		}
 		m_physical_device = discrete_physical_devices[selected_device_index];
+		VkPhysicalDeviceProperties physical_device_properties = discrete_physical_device_propertiess[selected_device_index];
+		LOG_INFO("selected device: {} {} {}.{}.{}",
+			physical_device_properties.deviceName,
+			vkPhysicalDeviceTypeString(physical_device_properties.deviceType),
+			physical_device_properties.apiVersion >> 22,
+			(physical_device_properties.apiVersion >> 12) & 0x3ff,
+			physical_device_properties.apiVersion & 0xfff);
 	}
 
 	void VulkanRHI::createLogicDevice()

@@ -14,6 +14,10 @@ namespace Bamboo
 		{
 			header = std::filesystem::path("../../../../engine/");
 		}
+		else if (std::filesystem::exists(std::filesystem::path("../../../../../engine/asset")))
+		{
+			header = std::filesystem::path("../../../../../engine/");
+		}
 		else
 		{
 			LOG_FATAL("failed to find engine asset");

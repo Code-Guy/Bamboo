@@ -25,4 +25,4 @@
         LOG_FATAL(__VA_ARGS__); \
     }
 
-#define REDIRECT(path) g_runtime_context.fileSystem()->redirect(path);
+#define REDIRECT(path) g_runtime_context.fileSystem()->redirect(path)
