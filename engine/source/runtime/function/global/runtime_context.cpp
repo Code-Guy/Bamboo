@@ -5,6 +5,7 @@
 #include "runtime/function/render/window_system.h"
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/function/render/render_system.h"
+#include "runtime/resource/asset/asset_manager.h"
 
 namespace Bamboo
 {
@@ -33,6 +34,8 @@ namespace Bamboo
 
         m_render_system = std::make_shared<RenderSystem>();
         m_render_system->init();
+
+        m_asset_manager = std::make_shared<AssetManager>();
     }
 
     void RuntimeContext::destroy()

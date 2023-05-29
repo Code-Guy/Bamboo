@@ -15,4 +15,4 @@ target_link_libraries(${TARGET_NAME} PUBLIC spdlog)
 target_link_libraries(${TARGET_NAME} PUBLIC yaml-cpp)
 
 target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/source)
-target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/external/json)
+target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/external)

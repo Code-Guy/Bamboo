@@ -11,7 +11,7 @@ namespace Bamboo
         public:
             enum class LogLevel
             {
-                DEBUG, INFO, WARNING, ERROR, FATAL
+                Debug, Info, Warning, Error, Fatal
             };
 
             void init();
@@ -22,19 +22,19 @@ namespace Bamboo
             {
                 switch (level)
                 {
-				case LogLevel::DEBUG:
+				case LogLevel::Debug:
 					m_logger->debug(std::forward<TARGS>(args)...);
 					break;
-				case LogLevel::INFO:
+				case LogLevel::Info:
 					m_logger->info(std::forward<TARGS>(args)...);
 					break;
-				case LogLevel::WARNING:
+				case LogLevel::Warning:
 					m_logger->warn(std::forward<TARGS>(args)...);
 					break;
-				case LogLevel::ERROR:
+				case LogLevel::Error:
 					m_logger->error(std::forward<TARGS>(args)...);
 					break;
-				case LogLevel::FATAL:
+				case LogLevel::Fatal:
 				{
 					m_logger->critical(args...);
 
