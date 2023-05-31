@@ -32,7 +32,7 @@ namespace Bamboo
 		}
 	}
 
-	std::weak_ptr<Entity> World::getEntity(EntityID id)
+	std::shared_ptr<Entity> World::getEntity(EntityID id)
 	{
 		auto iter = m_entites.find(id);
 		if (iter != m_entites.end())
@@ -40,7 +40,7 @@ namespace Bamboo
 			return iter->second;
 		}
 
-		return std::weak_ptr<Entity>();
+		return std::shared_ptr<Entity>();
 	}
 
 	bool World::removeEntity(EntityID id)

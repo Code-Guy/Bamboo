@@ -14,7 +14,7 @@ namespace Bamboo
 		void tick(float delta_time);
 
 		const auto& getEntities() const { return m_entites; }
-		std::weak_ptr<Entity> getEntity(EntityID id);
+		std::shared_ptr<Entity> getEntity(EntityID id);
 		bool removeEntity(EntityID id);
 
 	private:

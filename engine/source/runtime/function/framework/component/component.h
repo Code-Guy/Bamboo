@@ -9,9 +9,9 @@ namespace Bamboo
 	class Component
 	{
 	public:
-		virtual void init(std::weak_ptr<Entity> parent_entity)
+		virtual void init(std::shared_ptr<Entity> parent)
 		{
-			m_parent_entity = parent_entity;
+			m_parent = parent;
 		}
 
 		virtual void tick(float delta_time) {}
@@ -19,7 +19,7 @@ namespace Bamboo
 		const std::string getName() { return name; }
 
 	protected:
-		std::weak_ptr<Entity> m_parent_entity;
+		std::shared_ptr<Entity> m_parent;
 		std::string name;
 	};
 }

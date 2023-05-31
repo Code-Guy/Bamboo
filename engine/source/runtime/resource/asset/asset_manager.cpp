@@ -40,6 +40,8 @@ namespace Bamboo
 			LOG_WARNING("load gltf file {} warning: {}", url, warning);
 		}
 
+		// 1.load textures
+
 		return true;
 	}
 

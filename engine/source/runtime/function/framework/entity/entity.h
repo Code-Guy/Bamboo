@@ -19,6 +19,9 @@ namespace Bamboo
 
 		static EntityID allocID();
 
+		void attach(std::shared_ptr<Entity> parent);
+		void detach();
+
 		virtual void tick(float delta_time);
 
 		EntityID getID() { return m_id; }
@@ -61,6 +64,7 @@ namespace Bamboo
 
 		EntityID m_id;
 		std::string m_name;
+		std::shared_ptr<Entity> m_parent;
 		std::vector<std::shared_ptr<Component>> m_components;
 
 		static std::atomic<EntityID> m_next_id;

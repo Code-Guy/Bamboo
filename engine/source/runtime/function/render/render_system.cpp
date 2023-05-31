@@ -1,5 +1,5 @@
 #include "render_system.h"
-#include "runtime/function/render/vulkan/vulkan_rhi.h"
+#include "runtime/core/vulkan/vulkan_rhi.h"
 
 namespace Bamboo
 {
