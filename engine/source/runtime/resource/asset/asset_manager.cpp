@@ -1,5 +1,5 @@
 #include "asset_manager.h"
-#include "runtime/core/base/macro.h"
+#include "runtime/resource/asset/texture_2d.h"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -20,6 +20,25 @@ namespace Bamboo
 	}
 
 	bool AssetManager::importAsset(const std::string& filename, const URL& folder)
+	{
+		std::string extension = g_runtime_context.fileSystem()->extension(filename);
+		if (extension == "glb" || extension == "gltf")
+		{
+			return importGltf(filename, folder);
+		}
+		else
+		{
+			LOG_FATAL("unknown import asset format");
+			return false;
+		}
+	}
+
+	std::shared_ptr<Asset> AssetManager::loadAssetImpl(const URL& url)
+	{
+		return nullptr;
+	}
+
+	bool AssetManager::importGltf(const std::string& filename, const URL& folder)
 	{
 		tinygltf::Model gltf_model;
 		tinygltf::TinyGLTF gltf_context;
@@ -54,14 +73,18 @@ namespace Bamboo
 			LOG_WARNING("load gltf file {} warning: {}", filename, warning);
 		}
 
-		// 1.load textures
+		// 1.load textures and samplers
+		for (const tinygltf::Texture& gltf_texture : gltf_model.textures)
+		{
+			const tinygltf::Image& gltf_image = gltf_model.images[gltf_texture.source];
+			const tinygltf::Sampler& gltf_sampler = gltf_model.samplers[gltf_texture.sampler];
+
+			std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
+			texture->loadFromGltf(gltf_image, gltf_sampler);
+			
+		}
 
 		return true;
-	}
-
-	std::shared_ptr<Asset> AssetManager::loadAssetImpl(const URL& url)
-	{
-		return nullptr;
 	}
 
 }

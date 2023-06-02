@@ -1,8 +1,8 @@
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <cereal/cereal.hpp>
+#include <cereal/access.hpp>
+#include <cereal/specialize.hpp>
 
 namespace Bamboo
 {
@@ -20,6 +20,7 @@ namespace Bamboo
         Asset() = default;
         virtual ~Asset() = default;
 
+    protected:
         virtual void inflate() {}
 
     protected:

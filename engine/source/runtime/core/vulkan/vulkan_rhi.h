@@ -16,6 +16,7 @@ namespace Bamboo
 
 		VkDevice getDevice() { return m_device; }
 		VkQueue getGraphicsQueue() { return m_graphics_queue; }
+		VkQueue getTransferQueue() { return m_transfer_queue; }
 		VmaAllocator getAllocator() { return m_allocator; }
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
 		VkPhysicalDeviceProperties getPhysicalDeviceProperties() { return m_physical_device_properties; }
@@ -91,6 +92,7 @@ namespace Bamboo
 		VkPhysicalDeviceProperties m_physical_device_properties;
 		VkDevice m_device;
 		VkQueue m_graphics_queue;
+		VkQueue m_transfer_queue;
 		VkSurfaceKHR m_surface;
 		VmaAllocator m_allocator;
 		VkCommandPool m_command_pool;

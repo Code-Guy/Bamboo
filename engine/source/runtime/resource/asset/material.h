@@ -7,9 +7,9 @@ namespace Bamboo
 {
 	class Material
 	{
-		std::shared_ptr<Texture2D> m_base_color_tex;
-		std::shared_ptr<Texture2D> m_metallic_roughness_color_tex;
-		std::shared_ptr<Texture2D> m_normal_tex;
+		std::shared_ptr<Texture2D> m_base_color_texure;
+		std::shared_ptr<Texture2D> m_metallic_roughness_color_texure;
+		std::shared_ptr<Texture2D> m_normal_texure;
 
 		float m_base_color_factor;
 		float m_metallic_factor;

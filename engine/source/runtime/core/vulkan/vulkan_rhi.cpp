@@ -193,8 +193,8 @@ namespace Bamboo
 
 	void VulkanRHI::getDeviceQueues()
 	{
-		// get graphics queue
 		vkGetDeviceQueue(m_device, m_queue_family_indices.graphics, 0, &m_graphics_queue);
+		vkGetDeviceQueue(m_device, m_queue_family_indices.transfer, 0, &m_transfer_queue);
 	}
 
 	void VulkanRHI::createVmaAllocator()

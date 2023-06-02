@@ -27,7 +27,7 @@ namespace Bamboo
 		m_mag_filter = getVkFilterFromGltf(gltf_sampler.magFilter);
 		m_address_mode_u = getVkAddressModeFromGltf(gltf_sampler.wrapS);
 		m_address_mode_v = getVkAddressModeFromGltf(gltf_sampler.wrapT);
-		m_address_mode_w = getVkAddressModeFromGltf(gltf_sampler.wrapR);
+		m_address_mode_w = m_address_mode_v;
 
 		inflate();
 	}

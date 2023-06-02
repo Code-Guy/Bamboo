@@ -23,6 +23,8 @@ namespace Bamboo
 	private:
 		std::shared_ptr<Asset> loadAssetImpl(const URL& url);
 
+		bool importGltf(const std::string& filename, const URL& folder);
+
 		std::unordered_map<URL, std::shared_ptr<Asset>> m_assets;
 		std::unordered_map<URL, std::vector<URL>> m_refs;
 		std::unordered_map<URL, std::vector<URL>> m_inv_refs;
