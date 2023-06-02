@@ -1,16 +1,14 @@
 #pragma once
 
 #include "runtime/function/framework/entity/entity.h"
+#include "runtime/resource/asset/base/asset.h"
 #include <unordered_map>
 
 namespace Bamboo
 {
-	class World
+	class World : public Asset
 	{
 	public:
-		void load(const std::string& url);
-		void unload();
-
 		void tick(float delta_time);
 
 		const auto& getEntities() const { return m_entites; }

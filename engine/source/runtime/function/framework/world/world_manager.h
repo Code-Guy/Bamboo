@@ -11,7 +11,7 @@ namespace Bamboo
 		void destroy();
 		void tick(float delta_time);
 
-		bool loadWorld(const std::string& url);
+		bool loadWorld(const URL& url);
 
 	private:
 		std::string m_active_world_url;

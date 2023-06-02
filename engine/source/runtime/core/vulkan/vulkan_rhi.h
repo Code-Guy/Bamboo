@@ -14,6 +14,18 @@ namespace Bamboo
 		void render();
 		void destroy();
 
+		VkDevice getDevice() { return m_device; }
+		VkQueue getGraphicsQueue() { return m_graphics_queue; }
+		VmaAllocator getAllocator() { return m_allocator; }
+		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
+		VkPhysicalDeviceProperties getPhysicalDeviceProperties() { return m_physical_device_properties; }
+
+		static VulkanRHI& instance()
+		{
+			static VulkanRHI vulkan_rhi;
+			return vulkan_rhi;
+		}
+
 	private:
 		struct QueueFamilyIndices
 		{
@@ -76,12 +88,13 @@ namespace Bamboo
 		// vulkan objects
 		VkInstance m_instance;
 		VkPhysicalDevice m_physical_device;
+		VkPhysicalDeviceProperties m_physical_device_properties;
 		VkDevice m_device;
 		VkQueue m_graphics_queue;
 		VkSurfaceKHR m_surface;
-		VmaAllocator m_vma_alloc;
+		VmaAllocator m_allocator;
 		VkCommandPool m_command_pool;
-		VkCommandPool m_transient_command_pool;
+		VkCommandPool m_instant_command_pool;
 		VkSwapchainKHR m_swapchain;
 		VkRenderPass m_render_pass;
 		VkPipelineCache m_pipeline_cache;

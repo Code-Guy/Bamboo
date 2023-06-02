@@ -11,7 +11,7 @@ namespace Bamboo
 	using EntityID = std::size_t;
 	constexpr EntityID k_invalid_entity_id = std::numeric_limits<std::size_t>::max();
 
-	class Entity : public std::enable_shared_from_this<Entity>
+	class Entity
 	{
 	public:
 		Entity(EntityID id) : m_id(id) {}
@@ -19,14 +19,12 @@ namespace Bamboo
 
 		static EntityID allocID();
 
-		void attach(std::shared_ptr<Entity> parent);
-		void detach();
-
 		virtual void tick(float delta_time);
 
 		EntityID getID() { return m_id; }
 		void setName(const std::string& name) { m_name = name; }
 		const std::string& getName() const { return m_name; }
+		std::shared_ptr<Entity>& getParent() { return m_parent; }
 
 		bool hasComponent(const std::string& name) const;
 		const auto& getComponents() const { return m_components; }

@@ -8,15 +8,15 @@ namespace Bamboo
 	{
 		if (std::filesystem::exists(std::filesystem::path("asset")))
 		{
-			header = std::filesystem::path(".");
+			m_header = std::filesystem::path(".");
 		}
 		else if (std::filesystem::exists(std::filesystem::path("../../../../engine/asset")))
 		{
-			header = std::filesystem::path("../../../../engine/");
+			m_header = std::filesystem::path("../../../../engine/");
 		}
 		else if (std::filesystem::exists(std::filesystem::path("../../../../../engine/asset")))
 		{
-			header = std::filesystem::path("../../../../../engine/");
+			m_header = std::filesystem::path("../../../../../engine/");
 		}
 		else
 		{
@@ -31,7 +31,7 @@ namespace Bamboo
 
 	std::string FileSystem::redirect(const std::string& path)
 	{
-		return header.append(path).string();
+		return m_header.append(path).string();
 	}
 
 	std::string FileSystem::extension(const std::string& path)

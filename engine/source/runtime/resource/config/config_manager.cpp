@@ -4,28 +4,28 @@ namespace Bamboo
 {
 	void ConfigManager::init(const std::string& config_file_name)
 	{
-		config_node = YAML::LoadFile(config_file_name);
+		m_config_node = YAML::LoadFile(config_file_name);
 
 	}
 
 	int ConfigManager::getWindowWidth()
 	{
-		return config_node["window"]["width"].as<int>();
+		return m_config_node["window"]["width"].as<int>();
 	}
 
 	int ConfigManager::getWindowHeight()
 	{
-		return config_node["window"]["height"].as<int>();
+		return m_config_node["window"]["height"].as<int>();
 	}
 
 	std::string ConfigManager::getWindowTitle()
 	{
-		return config_node["window"]["title"].as<std::string>();
+		return m_config_node["window"]["title"].as<std::string>();
 	}
 
 	std::string ConfigManager::getDefaultWorldUrl()
 	{
-		return config_node["default_world_url"].as<std::string>();
+		return m_config_node["default_world_url"].as<std::string>();
 	}
 
 }

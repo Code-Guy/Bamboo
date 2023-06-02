@@ -2,6 +2,7 @@
 #include "runtime/core/base/macro.h"
 #include "runtime/function/global/runtime_context.h"
 #include "runtime/resource/config/config_manager.h"
+#include "runtime/resource/asset/asset_manager.h"
 
 namespace Bamboo
 {
@@ -14,7 +15,6 @@ namespace Bamboo
 
 	void WorldManager::destroy()
 	{
-		m_active_world->unload();
 		m_active_world.reset();
 	}
 
@@ -26,16 +26,14 @@ namespace Bamboo
 		}
 	}
 
-	bool WorldManager::loadWorld(const std::string& url)
+	bool WorldManager::loadWorld(const URL& url)
 	{
 		if (m_active_world)
 		{
-			m_active_world->unload();
 			m_active_world.reset();
 		}
 
-		m_active_world = std::make_shared<World>();
-		m_active_world->load(url);
+		m_active_world = g_runtime_context.assetManager()->loadAsset<World>(url);
 		m_active_world_url = url;
 
 		return true;

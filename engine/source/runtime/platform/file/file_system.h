@@ -17,6 +17,6 @@ namespace Bamboo
 		std::string dir(const std::string& path);
 
 	private:
-		std::filesystem::path header;
+		std::filesystem::path m_header;
 	};
 }

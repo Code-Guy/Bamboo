@@ -6,19 +6,17 @@ namespace Bamboo
 
 	void RenderSystem::init()
 	{
-		vulkan_rhi = std::make_shared<class VulkanRHI>();
-		vulkan_rhi->init();
+		VulkanRHI::instance().init();
 	}
 
 	void RenderSystem::tick(float delta_time)
 	{
-		vulkan_rhi->render();
+		VulkanRHI::instance().render();
 	}
 
 	void RenderSystem::destroy()
 	{
-		vulkan_rhi->destroy();
-		vulkan_rhi.reset();
+		VulkanRHI::instance().destroy();
 	}
 
 }

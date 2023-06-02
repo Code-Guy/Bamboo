@@ -56,7 +56,7 @@ namespace Bamboo
 		}
 
 		destroySwapchainObjects();
-		vkDestroyCommandPool(m_device, m_transient_command_pool, nullptr);
+		vkDestroyCommandPool(m_device, m_instant_command_pool, nullptr);
 		vkDestroyCommandPool(m_device, m_command_pool, nullptr);
 
 		vkDestroyRenderPass(m_device, m_render_pass, nullptr);
@@ -65,7 +65,7 @@ namespace Bamboo
 #if ENABLE_VALIDATION_LAYER
 		destroyDebugging();
 #endif
-		vmaDestroyAllocator(m_vma_alloc);
+		vmaDestroyAllocator(m_allocator);
 		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 		vkDestroyDevice(m_device, nullptr);
 		vkDestroyInstance(m_instance, nullptr);
@@ -163,13 +163,13 @@ namespace Bamboo
 			LOG_FATAL("selected device index {} is out of range {}", selected_device_index, discrete_physical_devices.size());
 		}
 		m_physical_device = discrete_physical_devices[selected_device_index];
-		VkPhysicalDeviceProperties physical_device_properties = discrete_physical_device_propertiess[selected_device_index];
+		m_physical_device_properties = discrete_physical_device_propertiess[selected_device_index];
 		LOG_INFO("selected device: {} {} {}.{}.{}",
-			physical_device_properties.deviceName,
-			vkPhysicalDeviceTypeString(physical_device_properties.deviceType),
-			physical_device_properties.apiVersion >> 22,
-			(physical_device_properties.apiVersion >> 12) & 0x3ff,
-			physical_device_properties.apiVersion & 0xfff);
+			m_physical_device_properties.deviceName,
+			vkPhysicalDeviceTypeString(m_physical_device_properties.deviceType),
+			m_physical_device_properties.apiVersion >> 22,
+			(m_physical_device_properties.apiVersion >> 12) & 0x3ff,
+			m_physical_device_properties.apiVersion & 0xfff);
 	}
 
 	void VulkanRHI::createLogicDevice()
@@ -206,7 +206,7 @@ namespace Bamboo
 		vma_alloc_ci.device = m_device;
 		vma_alloc_ci.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 
-		VkResult result = vmaCreateAllocator(&vma_alloc_ci, &m_vma_alloc);
+		VkResult result = vmaCreateAllocator(&vma_alloc_ci, &m_allocator);
 		CHECK_VULKAN_RESULT(result, "create vma allocator");
 	}
 
@@ -334,11 +334,11 @@ namespace Bamboo
 		m_swapchain_image_views.resize(m_swapchain_image_count);
 		for (uint32_t i = 0; i < m_swapchain_image_count; ++i)
 		{
-			m_swapchain_image_views[i] = createImageView(m_device, swapchain_images[i], m_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+			m_swapchain_image_views[i] = createImageView(swapchain_images[i], m_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		}
 
 		// 2.create depth stencil image and view
-		createImageAndView(m_device, m_vma_alloc, m_extent.width, m_extent.height, 1, VK_SAMPLE_COUNT_1_BIT, 
+		createImageAndView(m_extent.width, m_extent.height, 1, VK_SAMPLE_COUNT_1_BIT, 
 			m_depth_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_ASPECT_DEPTH_BIT, m_depth_stencil_image_view);
 
@@ -375,7 +375,7 @@ namespace Bamboo
 		}
 
 		// 2.destroy depth stencil image and view
-		m_depth_stencil_image_view.destroy(m_device, m_vma_alloc);
+		m_depth_stencil_image_view.destroy();
 
 		// 3.destroy framebuffers
 		for (VkFramebuffer framebuffer : m_framebuffers)
@@ -418,7 +418,7 @@ namespace Bamboo
 		vkCreateCommandPool(m_device, &command_pool_ci, nullptr, &m_command_pool);
 
 		command_pool_ci.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-		vkCreateCommandPool(m_device, &command_pool_ci, nullptr, &m_transient_command_pool);
+		vkCreateCommandPool(m_device, &command_pool_ci, nullptr, &m_instant_command_pool);
 	}
 
 	void VulkanRHI::createCommandBuffers()

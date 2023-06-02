@@ -18,6 +18,6 @@ namespace Bamboo
 		std::string getDefaultWorldUrl();
 
 	private:
-		YAML::Node config_node;
+		YAML::Node m_config_node;
 	};
 }

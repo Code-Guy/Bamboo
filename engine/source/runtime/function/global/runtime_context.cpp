@@ -36,11 +36,13 @@ namespace Bamboo
         m_render_system->init();
 
         m_asset_manager = std::make_shared<AssetManager>();
+        m_asset_manager->destroy();
     }
 
     void RuntimeContext::destroy()
     {
         // destroy with reverse initialize order
+        m_asset_manager->destroy();
         m_render_system->destroy();
         m_world_manager->destroy();
         m_window_system->destroy();
