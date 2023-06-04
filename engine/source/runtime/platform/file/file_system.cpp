@@ -1,5 +1,3 @@
-#include "file_system.h"
-#include "runtime/core/log/log_system.h"
 #include "runtime/core/base/macro.h"
 
 namespace Bamboo
@@ -29,9 +27,10 @@ namespace Bamboo
 
 	}
 
-	std::string FileSystem::redirect(const std::string& path)
+	std::string FileSystem::absolute(const std::string& path)
 	{
-		return m_header.append(path).string();
+		std::filesystem::path header = m_header;
+		return header.append(path).string();
 	}
 
 	std::string FileSystem::extension(const std::string& path)

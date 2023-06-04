@@ -7,11 +7,7 @@ namespace Bamboo
 
 	Entity::~Entity()
 	{
-		for (auto& component : m_components)
-		{
-			component.reset();
-		}
-		m_components.clear();
+
 	}
 
 	EntityID Entity::allocID()

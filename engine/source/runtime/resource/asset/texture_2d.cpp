@@ -7,6 +7,12 @@
 namespace Bamboo
 {
 
+	Texture2D::Texture2D(const URL& url) : Asset(url)
+	{
+		m_asset_type = EAssetType::Texture2D;
+		m_archive_type = EArchiveType::Json;
+	}
+
 	void Texture2D::loadFromGltf(const tinygltf::Image& gltf_image, const tinygltf::Sampler& gltf_sampler)
 	{
 		if (gltf_image.component != IMAGE_COMPONENT)
@@ -28,7 +34,11 @@ namespace Bamboo
 		m_address_mode_u = getVkAddressModeFromGltf(gltf_sampler.wrapS);
 		m_address_mode_v = getVkAddressModeFromGltf(gltf_sampler.wrapT);
 		m_address_mode_w = m_address_mode_v;
+	}
 
+	void Texture2D::setTextureType(TextureType texture_type)
+	{
+		m_texture_type = texture_type;
 		inflate();
 	}
 
@@ -46,7 +56,7 @@ namespace Bamboo
 		vmaUnmapMemory(VulkanRHI::instance().getAllocator(), stagingBuffer.allocation);
 
 		// create Image
-		VkFormat image_format = VK_FORMAT_R8G8B8A8_SRGB;
+		VkFormat image_format = isSRGB() ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
 		createImageAndView(m_width, m_height, m_mip_levels, VK_SAMPLE_COUNT_1_BIT, image_format, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
 			VK_IMAGE_ASPECT_COLOR_BIT, m_image_view);
@@ -65,14 +75,14 @@ namespace Bamboo
 		createImageMipmaps(image, image_format, m_width, m_height, m_mip_levels);
 
 		// create VkSampler
-		createSampler(m_min_filter, m_mag_filter, m_mip_levels, m_address_mode_u, m_address_mode_v, m_address_mode_w);
+		m_sampler = createSampler(m_min_filter, m_mag_filter, m_mip_levels, m_address_mode_u, m_address_mode_v, m_address_mode_w);
 	}
 
 	VkFilter Texture2D::getVkFilterFromGltf(int gltf_filter)
 	{
 		switch (gltf_filter) 
 		{
-		case -1:
+		case INVALID_INDEX:
 		case TINYGLTF_TEXTURE_FILTER_NEAREST:
 		case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
 		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
@@ -90,7 +100,7 @@ namespace Bamboo
 	{
 		switch (gltf_wrap)
 		{
-		case -1:
+		case INVALID_INDEX:
 		case TINYGLTF_TEXTURE_WRAP_REPEAT:
 			return VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:

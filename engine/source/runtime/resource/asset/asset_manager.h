@@ -2,6 +2,7 @@
 
 #include "runtime/resource/asset/base/asset.h"
 #include <unordered_map>
+#include <map>
 
 namespace Bamboo
 {
@@ -22,11 +23,16 @@ namespace Bamboo
 
 	private:
 		std::shared_ptr<Asset> loadAssetImpl(const URL& url);
-
 		bool importGltf(const std::string& filename, const URL& folder);
+		std::string getAssetName(const std::string& basename, const std::string& asset_name, EAssetType asset_type, int asset_index);
+
+		void serializeAsset(std::shared_ptr<Asset> asset);
+		void deserializeAsset(std::shared_ptr<Asset> asset);
 
 		std::unordered_map<URL, std::shared_ptr<Asset>> m_assets;
 		std::unordered_map<URL, std::vector<URL>> m_refs;
 		std::unordered_map<URL, std::vector<URL>> m_inv_refs;
+
+		std::map<EAssetType, std::string> m_asset_exts;
 	};
 }

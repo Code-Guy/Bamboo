@@ -9,7 +9,7 @@ namespace Bamboo
     class LogSystem
     {
         public:
-            enum class LogLevel
+            enum class ELogLevel
             {
                 Debug, Info, Warning, Error, Fatal
             };
@@ -18,23 +18,23 @@ namespace Bamboo
             void destroy();
         
             template<typename... TARGS>
-            void log(LogLevel level, TARGS&&... args)
+            void log(ELogLevel level, TARGS&&... args)
             {
                 switch (level)
                 {
-				case LogLevel::Debug:
+				case ELogLevel::Debug:
 					m_logger->debug(std::forward<TARGS>(args)...);
 					break;
-				case LogLevel::Info:
+				case ELogLevel::Info:
 					m_logger->info(std::forward<TARGS>(args)...);
 					break;
-				case LogLevel::Warning:
+				case ELogLevel::Warning:
 					m_logger->warn(std::forward<TARGS>(args)...);
 					break;
-				case LogLevel::Error:
+				case ELogLevel::Error:
 					m_logger->error(std::forward<TARGS>(args)...);
 					break;
-				case LogLevel::Fatal:
+				case ELogLevel::Fatal:
 				{
 					m_logger->critical(args...);
 

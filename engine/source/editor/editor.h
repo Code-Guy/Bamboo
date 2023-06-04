@@ -11,6 +11,8 @@ namespace Bamboo
             void run();
 
         private:
+            void onDrop(int n, const char** filenames);
+
             Engine* m_engine;
     };
 }

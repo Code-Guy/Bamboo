@@ -10,7 +10,7 @@ namespace Bamboo
 	{
 	public:
 		Component(std::shared_ptr<Entity> parent) : m_parent(parent) {}
-		virtual ~Component() {}
+		virtual ~Component() = default;
 
 		virtual void tick(float delta_time) {}
 

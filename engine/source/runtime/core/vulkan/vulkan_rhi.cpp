@@ -863,7 +863,7 @@ namespace Bamboo
 				return format;
 			}
 		}
-		LOG_FATAL("no supported swapchain surface format: VK_FORMAT_B8G8R8A8_SRGB");
+		LOG_FATAL("do not supported swapchain surface format: VK_FORMAT_B8G8R8A8_SRGB");
 		return details.formats.front();
 	}
 

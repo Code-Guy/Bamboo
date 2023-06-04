@@ -20,7 +20,7 @@ namespace Bamboo
         m_file_system->init();
 
         m_config_manager = std::make_shared<ConfigManager>();
-        m_config_manager->init(m_file_system->redirect("config/engine.yaml"));
+        m_config_manager->init(m_file_system->absolute("config/engine.yaml"));
 
         m_window_system = std::make_shared<WindowSystem>();
         WindowCreateInfo window_ci;
@@ -36,7 +36,7 @@ namespace Bamboo
         m_render_system->init();
 
         m_asset_manager = std::make_shared<AssetManager>();
-        m_asset_manager->destroy();
+        m_asset_manager->init();
     }
 
     void RuntimeContext::destroy()
