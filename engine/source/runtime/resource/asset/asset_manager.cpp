@@ -11,6 +11,15 @@
 #include <tinygltf/tiny_gltf.h>
 #include <ktx/ktx.h>
 
+#define ARCHIVE_ASSET(type, asset) \
+	case EAssetType:: ##type: \
+		archive(std::dynamic_pointer_cast<##type>(asset)); \
+	break
+
+#define REFERENCE_ASSET(asset, prop_name, ref_asset) \
+	asset-> ##prop_name = ref_asset; \
+	asset->m_ref_urls[#prop_name] = ref_asset->getURL()
+
 namespace Bamboo
 {
 	void AssetManager::init()
@@ -134,35 +143,36 @@ namespace Bamboo
 
 			if (gltf_material.pbrMetallicRoughness.baseColorTexture.index != INVALID_INDEX)
 			{
-				material->m_base_color_texure = textures[gltf_material.pbrMetallicRoughness.baseColorTexture.index];
+				REFERENCE_ASSET(material, m_base_color_texure, textures[gltf_material.pbrMetallicRoughness.baseColorTexture.index]);
 				material->m_base_color_texure->setTextureType(TextureType::BaseColor);
 				ASSERT(gltf_material.pbrMetallicRoughness.baseColorTexture.texCoord == 0, "do not support non-zero texture coordinate index");
 			}
 			if (gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index != INVALID_INDEX)
 			{
-				material->m_metallic_roughness_texure = textures[gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index];
+				REFERENCE_ASSET(material, m_metallic_roughness_texure, textures[gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index]);
 				material->m_metallic_roughness_texure->setTextureType(TextureType::MetallicRoughness);
 				ASSERT(gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord == 0, "do not support non-zero texture coordinate index");
 			}
 			if (gltf_material.normalTexture.index != INVALID_INDEX)
 			{
-				material->m_normal_texure = textures[gltf_material.normalTexture.index];
+				REFERENCE_ASSET(material, m_normal_texure, textures[gltf_material.normalTexture.index]);
 				material->m_normal_texure->setTextureType(TextureType::Normal);
 				ASSERT(gltf_material.normalTexture.texCoord == 0, "do not support non-zero texture coordinate index");
 			}
 			if (gltf_material.occlusionTexture.index != INVALID_INDEX)
 			{
-				material->m_occlusion_texure = textures[gltf_material.occlusionTexture.index];
+				REFERENCE_ASSET(material, m_occlusion_texure, textures[gltf_material.occlusionTexture.index]);
 				material->m_occlusion_texure->setTextureType(TextureType::Occlusion);
 				ASSERT(gltf_material.occlusionTexture.texCoord == 0, "do not support non-zero texture coordinate index");
 			}
 			if (gltf_material.emissiveTexture.index != INVALID_INDEX)
 			{
-				material->m_emissive_texure = textures[gltf_material.emissiveTexture.index];
+				REFERENCE_ASSET(material, m_emissive_texure, textures[gltf_material.emissiveTexture.index]);
 				material->m_emissive_texure->setTextureType(TextureType::Emissive);
 				ASSERT(gltf_material.emissiveTexture.texCoord == 0, "do not support non-zero texture coordinate index");
 			}
 
+			serializeAsset(material);
 			m_assets[url] = material;
 		}
 
@@ -185,11 +195,6 @@ namespace Bamboo
 		std::string filename = TO_ABSOLUTE(asset->getURL());
 		std::ofstream ofs(filename);
 
-#define ARCHIVE_ASSET(type, asset) \
-	case EAssetType:: ##type: \
-		archive(std::dynamic_pointer_cast<##type>(asset)); \
-	break
-
 		switch (asset->getArchiveType())
 		{
 		case EArchiveType::Json:
@@ -199,6 +204,7 @@ namespace Bamboo
 			switch (asset->getAssetType())
 			{
 				ARCHIVE_ASSET(Texture2D, asset);
+				ARCHIVE_ASSET(Material, asset);
 			default:
 				break;
 			}
@@ -211,6 +217,7 @@ namespace Bamboo
 			switch (asset->getAssetType())
 			{
 				ARCHIVE_ASSET(Texture2D, asset);
+				ARCHIVE_ASSET(Material, asset);
 			default:
 				break;
 			}
@@ -219,8 +226,6 @@ namespace Bamboo
 		default:
 			break;
 		}
-
-#undef ARCHIVE_ASSET
 	}
 
 	void AssetManager::deserializeAsset(std::shared_ptr<Asset> asset)

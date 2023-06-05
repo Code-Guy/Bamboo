@@ -1,5 +1,6 @@
 # custom
 build/
+engine/asset/temp/
 
 # mac
 cpm_modules/

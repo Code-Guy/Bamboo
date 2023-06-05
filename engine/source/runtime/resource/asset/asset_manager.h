@@ -2,7 +2,6 @@
 
 #include "runtime/resource/asset/base/asset.h"
 #include <unordered_map>
-#include <map>
 
 namespace Bamboo
 {

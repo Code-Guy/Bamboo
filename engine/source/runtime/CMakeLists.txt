@@ -13,6 +13,8 @@ target_link_libraries(${TARGET_NAME} PUBLIC glfw)
 target_link_libraries(${TARGET_NAME} PUBLIC imgui)
 target_link_libraries(${TARGET_NAME} PUBLIC spdlog)
 target_link_libraries(${TARGET_NAME} PUBLIC yaml-cpp)
+target_link_libraries(${TARGET_NAME} PUBLIC rttr_core_lib)
 
 target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/source)
 target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/external)
+target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/external/rttr/src)
