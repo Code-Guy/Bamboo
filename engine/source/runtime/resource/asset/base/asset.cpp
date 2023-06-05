@@ -1,4 +1,5 @@
 #include "asset.h"
+#include "runtime/core/base/macro.h"
 
 namespace Bamboo
 {
@@ -7,6 +8,7 @@ namespace Bamboo
 	{
 		m_asset_type = EAssetType::Invalid;
 		m_archive_type = EArchiveType::Json;
+		m_name = g_runtime_context.fileSystem()->basename(m_url);
 	}
 
 	void Asset::inflate()

@@ -17,6 +17,9 @@ namespace Bamboo
 		std::string filename(const std::string& path);
 		std::string dir(const std::string& path);
 
+		bool exists(const std::string& path);
+		bool create(const std::string& path);
+
 		template<typename T, typename... Ts>
 		std::string combine(const T& first, const Ts&... rest)
 		{

@@ -27,7 +27,6 @@ namespace Bamboo
 		template<class Archive>
 		void archive(Archive& ar) const
 		{
-			ar(cereal::base_class<Asset>(this));
 			ar(cereal::base_class<Texture>(this));
 			ar(m_image_data.size());
 		}

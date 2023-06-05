@@ -58,4 +58,14 @@ namespace Bamboo
 		return std::filesystem::path(path).parent_path().string();
 	}
 
+	bool FileSystem::exists(const std::string& path)
+	{
+		return std::filesystem::exists(path);
+	}
+
+	bool FileSystem::create(const std::string& path)
+	{
+		return std::filesystem::create_directories(std::filesystem::path(path));
+	}
+
 }

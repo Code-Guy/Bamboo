@@ -28,29 +28,16 @@ namespace Bamboo
 		Json, Binary
 	};
 
-    class Asset
-    {
-    public:
-		Asset() = default;
-        Asset(const URL& url);
-
-        virtual ~Asset() = default;
-
-		const URL& getURL() { return m_url; }
-		EAssetType getAssetType() { return m_asset_type; }
-		EArchiveType getArchiveType() { return m_archive_type; }
-
+	class IAssetRef
+	{
+	public:
 		// store the reference map: property_name -> asset url
 		std::map<std::string, URL> m_ref_urls;
 
-    protected:
-        virtual void inflate();
+	protected:
+		virtual void onBindRefs() = 0;
 
-        URL m_url;
-        EAssetType m_asset_type;
-        EArchiveType m_archive_type;
-
-    private:
+	private:
 		friend class cereal::access;
 		template<class Archive>
 		void archive(Archive& ar) const
@@ -68,7 +55,34 @@ namespace Bamboo
 		void load(Archive& ar)
 		{
 			archive(ar);
+
+			onBindRefs();
 		}
+	};
+
+    class Asset
+    {
+    public:
+		Asset() = default;
+        Asset(const URL& url);
+
+        virtual ~Asset() = default;
+
+		const URL& getURL() { return m_url; }
+		const std::string& getName() { return m_name; }
+		EAssetType getAssetType() { return m_asset_type; }
+		EArchiveType getArchiveType() { return m_archive_type; }
+
+    protected:
+        virtual void inflate();
+
+        URL m_url;
+		std::string m_name;
+        EAssetType m_asset_type;
+        EArchiveType m_archive_type;
+
+    private:
+		
     };
 }
 

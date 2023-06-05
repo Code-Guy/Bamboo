@@ -4,7 +4,7 @@
 
 namespace Bamboo
 {
-	class Material : public Asset
+	class Material : public Asset, public IAssetRef
 	{
 	public:
 		Material() = default;
@@ -21,12 +21,15 @@ namespace Bamboo
 		float m_metallic_factor;
 		float m_roughness_factor;
 
+	protected:
+		virtual void onBindRefs() override;
+
 	private:
 		friend class cereal::access;
 		template<class Archive>
 		void archive(Archive& ar) const
 		{
-			ar(cereal::base_class<Asset>(this));
+			ar(cereal::base_class<IAssetRef>(this));
 			ar(m_base_color_factor, m_emissive_factor, m_metallic_factor, m_roughness_factor);
 		}
 
@@ -42,15 +45,4 @@ namespace Bamboo
 			archive(ar);
 		}
 	};
-
-	RTTR_REGISTRATION
-	{
-	rttr::registration::class_<Material>("Material")
-		 .constructor<>()
-		 .property("m_base_color_texure", &Material::m_base_color_texure)
-		 .property("m_metallic_roughness_texure", &Material::m_metallic_roughness_texure)
-		 .property("m_normal_texure", &Material::m_normal_texure)
-		 .property("m_occlusion_texure", &Material::m_occlusion_texure)
-		 .property("m_emissive_texure", &Material::m_emissive_texure);
-	}
 }

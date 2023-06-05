@@ -5,7 +5,7 @@
 
 namespace Bamboo
 {
-	class SubMesh
+	class SubMesh : public IAssetRef
 	{
 	public:
 		uint32_t m_first_index;
@@ -14,5 +14,8 @@ namespace Bamboo
 		
 		std::shared_ptr<Material> m_material;
 		BoundingBox m_bounding_box;
+
+	protected:
+		virtual void onBindRefs() override;
 	};
 }

@@ -22,7 +22,8 @@ namespace Bamboo
 
 	private:
 		std::shared_ptr<Asset> loadAssetImpl(const URL& url);
-		bool importGltf(const std::string& filename, const URL& folder);
+		bool importGltf(const std::string& filename, const URL& folder, bool is_combined = false);
+
 		std::string getAssetName(const std::string& basename, const std::string& asset_name, EAssetType asset_type, int asset_index);
 
 		void serializeAsset(std::shared_ptr<Asset> asset);
