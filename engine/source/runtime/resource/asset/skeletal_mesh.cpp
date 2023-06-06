@@ -9,4 +9,9 @@ namespace Bamboo
 		m_archive_type = EArchiveType::Json;
 	}
 
+	void SkeletalMesh::inflate()
+	{
+
+	}
+
 }

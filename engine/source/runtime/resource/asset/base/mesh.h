@@ -21,5 +21,27 @@ namespace Bamboo
 	{
 	public:
 		std::vector<SubMesh> m_sub_meshes;
+		std::vector<uint32_t> m_indices;
+
+	private:
+		friend class cereal::access;
+		template<class Archive>
+		void archive(Archive& ar) const
+		{
+			ar(m_sub_meshes);
+			ar(m_indices.size());
+		}
+
+		template<class Archive>
+		void save(Archive& ar) const
+		{
+			archive(ar);
+		}
+
+		template<class Archive>
+		void load(Archive& ar)
+		{
+			archive(ar);
+		}
 	};
 }

@@ -34,7 +34,7 @@ namespace Bamboo
 	{
         for (int i = 0; i < n; ++i)
         {
-            g_runtime_context.assetManager()->importAsset(filenames[i], "asset/texture");
+            g_runtime_context.assetManager()->importAsset(filenames[i], "asset/temp");
         }
 	}
 

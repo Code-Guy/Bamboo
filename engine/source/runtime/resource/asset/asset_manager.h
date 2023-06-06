@@ -30,9 +30,6 @@ namespace Bamboo
 		void deserializeAsset(std::shared_ptr<Asset> asset);
 
 		std::unordered_map<URL, std::shared_ptr<Asset>> m_assets;
-		std::unordered_map<URL, std::vector<URL>> m_refs;
-		std::unordered_map<URL, std::vector<URL>> m_inv_refs;
-
 		std::map<EAssetType, std::string> m_asset_exts;
 	};
 }

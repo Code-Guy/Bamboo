@@ -73,9 +73,9 @@ namespace Bamboo
 		EAssetType getAssetType() { return m_asset_type; }
 		EArchiveType getArchiveType() { return m_archive_type; }
 
-    protected:
-        virtual void inflate();
+		virtual void inflate();
 
+    protected:
         URL m_url;
 		std::string m_name;
         EAssetType m_asset_type;
@@ -89,15 +89,26 @@ namespace Bamboo
 // register all user defined serialization
 namespace cereal
 {
-	template <class Archive>
-	void save(Archive& ar, const glm::vec4& v4)
-	{
-		ar(v4.x, v4.y, v4.z, v4.w);
-	}
+	template<class Archive> void serialize(Archive& archive, glm::vec2& v) { archive(v.x, v.y); }
+	template<class Archive> void serialize(Archive& archive, glm::vec3& v) { archive(v.x, v.y, v.z); }
+	template<class Archive> void serialize(Archive& archive, glm::vec4& v) { archive(v.x, v.y, v.z, v.w); }
+	template<class Archive> void serialize(Archive& archive, glm::ivec2& v) { archive(v.x, v.y); }
+	template<class Archive> void serialize(Archive& archive, glm::ivec3& v) { archive(v.x, v.y, v.z); }
+	template<class Archive> void serialize(Archive& archive, glm::ivec4& v) { archive(v.x, v.y, v.z, v.w); }
+	template<class Archive> void serialize(Archive& archive, glm::uvec2& v) { archive(v.x, v.y); }
+	template<class Archive> void serialize(Archive& archive, glm::uvec3& v) { archive(v.x, v.y, v.z); }
+	template<class Archive> void serialize(Archive& archive, glm::uvec4& v) { archive(v.x, v.y, v.z, v.w); }
+	template<class Archive> void serialize(Archive& archive, glm::dvec2& v) { archive(v.x, v.y); }
+	template<class Archive> void serialize(Archive& archive, glm::dvec3& v) { archive(v.x, v.y, v.z); }
+	template<class Archive> void serialize(Archive& archive, glm::dvec4& v) { archive(v.x, v.y, v.z, v.w); }
 
-	template <class Archive>
-	void load(Archive& ar, glm::vec4& v4)
-	{
-		ar(v4.x, v4.y, v4.z, v4.w);
-	}
+	// glm matrices serialization
+	template<class Archive> void serialize(Archive& archive, glm::mat2& m) { archive(m[0], m[1]); }
+	template<class Archive> void serialize(Archive& archive, glm::dmat2& m) { archive(m[0], m[1]); }
+	template<class Archive> void serialize(Archive& archive, glm::mat3& m) { archive(m[0], m[1], m[2]); }
+	template<class Archive> void serialize(Archive& archive, glm::mat4& m) { archive(m[0], m[1], m[2], m[3]); }
+	template<class Archive> void serialize(Archive& archive, glm::dmat4& m) { archive(m[0], m[1], m[2], m[3]); }
+
+	template<class Archive> void serialize(Archive& archive, glm::quat& q) { archive(q.x, q.y, q.z, q.w); }
+	template<class Archive> void serialize(Archive& archive, glm::dquat& q) { archive(q.x, q.y, q.z, q.w); }
 }

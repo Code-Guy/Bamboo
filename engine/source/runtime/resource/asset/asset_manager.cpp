@@ -23,6 +23,9 @@
 	object-> ##prop_name = ref_asset; \
 	object->m_ref_urls[#prop_name] = ref_asset->getURL()
 
+#define IMAGE_COMPONENT 4
+#define IMAGE_BIT_DEPTH 8
+
 namespace Bamboo
 {
 	void AssetManager::init()
@@ -64,6 +67,327 @@ namespace Bamboo
 	std::shared_ptr<Asset> AssetManager::loadAssetImpl(const URL& url)
 	{
 		return nullptr;
+	}
+
+	VkFilter getVkFilterFromGltf(int gltf_filter)
+	{
+		switch (gltf_filter)
+		{
+		case TINYGLTF_TEXTURE_FILTER_NEAREST:
+		case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
+		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
+			return VK_FILTER_NEAREST;
+		case INVALID_INDEX:
+		case TINYGLTF_TEXTURE_FILTER_LINEAR:
+		case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
+		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
+			return VK_FILTER_LINEAR;
+		}
+
+		return VK_FILTER_NEAREST;
+	}
+
+	VkSamplerAddressMode getVkAddressModeFromGltf(int gltf_wrap)
+	{
+		switch (gltf_wrap)
+		{
+		case INVALID_INDEX:
+		case TINYGLTF_TEXTURE_WRAP_REPEAT:
+			return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:
+			return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT:
+			return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+		}
+
+		return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	}
+
+	glm::mat4 getGltfNodeMatrix(const tinygltf::Node* node)
+	{
+		if (!node->matrix.empty()) 
+		{
+			return glm::make_mat4x4(node->matrix.data());
+		};
+
+		glm::mat4 matrix = glm::mat4(1.0f);
+		if (!node->translation.empty()) 
+		{
+			glm::vec3 translation = glm::make_vec3(node->translation.data());
+			matrix = glm::translate(matrix, translation);
+		}
+
+		if (!node->rotation.empty())
+		{
+			glm::quat quat = glm::make_quat(node->rotation.data());
+			matrix *= glm::mat4_cast(quat);
+		}
+
+		if (!node->scale.empty()) 
+		{
+			glm::vec3 scale = glm::make_vec3(node->scale.data());
+			matrix = glm::scale(matrix, scale);
+		}
+		return matrix;
+	}
+
+	bool validateGltfNode(const tinygltf::Node* node, const tinygltf::Model& gltf_model)
+	{
+		if (node->mesh == INVALID_INDEX)
+		{
+			LOG_WARNING("ignore non-mesh gltf node");
+			return false;
+		}
+		
+		const tinygltf::Mesh& gltf_mesh = gltf_model.meshes[node->mesh];
+		for (const tinygltf::Primitive& primitive : gltf_mesh.primitives)
+		{
+			if (primitive.attributes.find("POSITION") == primitive.attributes.end() ||
+				primitive.attributes.find("NORMAL") == primitive.attributes.end() ||
+				primitive.attributes.find("TEXCOORD_0") == primitive.attributes.end() ||
+				primitive.indices == INVALID_INDEX)
+			{
+				LOG_WARNING("ignore gltf mesh that doesn't have postion or normal/texcoord/index data");
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool isGltfSkeletalMesh(const tinygltf::Mesh& gltf_mesh)
+	{
+		const tinygltf::Primitive& first_primitive = gltf_mesh.primitives.front();
+		return first_primitive.attributes.find("JOINTS_0") != first_primitive.attributes.end() &&
+			first_primitive.attributes.find("WEIGHTS_0") != first_primitive.attributes.end();
+	}
+
+	void importGltfTexture(const tinygltf::Model& gltf_model,
+		const tinygltf::Image& gltf_image,
+		const tinygltf::Sampler& gltf_sampler,
+		uint32_t texture_index,
+		std::shared_ptr<Texture2D>& texture)
+	{
+		if (gltf_image.component != IMAGE_COMPONENT)
+		{
+			LOG_FATAL("unsupported gltf image component: {}", gltf_image.component);
+		}
+		if (gltf_image.bits != IMAGE_BIT_DEPTH)
+		{
+			LOG_FATAL("unsupported gltf image bit depth: {}", gltf_image.bits);
+		}
+
+		texture->m_width = gltf_image.width;
+		texture->m_height = gltf_image.height;
+		texture->m_mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texture->m_width, texture->m_height)))) + 1;
+		texture->m_image_data = gltf_image.image;
+
+		texture->m_min_filter = getVkFilterFromGltf(gltf_sampler.minFilter);
+		texture->m_mag_filter = getVkFilterFromGltf(gltf_sampler.magFilter);
+		texture->m_address_mode_u = getVkAddressModeFromGltf(gltf_sampler.wrapS);
+		texture->m_address_mode_v = getVkAddressModeFromGltf(gltf_sampler.wrapT);
+		texture->m_address_mode_w = texture->m_address_mode_v;
+
+		// find the texture type according to material that reference it
+		for (const tinygltf::Material& gltf_material : gltf_model.materials)
+		{
+			if (texture_index == gltf_material.pbrMetallicRoughness.baseColorTexture.index)
+			{
+				texture->m_texture_type = TextureType::BaseColor;
+			}
+			else if (texture_index == gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index)
+			{
+				texture->m_texture_type = TextureType::MetallicRoughness;
+			}
+			else if (texture_index == gltf_material.normalTexture.index)
+			{
+				texture->m_texture_type = TextureType::Normal;
+			}
+			else if (texture_index == gltf_material.occlusionTexture.index)
+			{
+				texture->m_texture_type = TextureType::Occlusion;
+			}
+			else if (texture_index == gltf_material.emissiveTexture.index)
+			{
+				texture->m_texture_type = TextureType::Emissive;
+			}
+		}
+	}
+
+	void importGltfPrimitives(const tinygltf::Model& gltf_model, 
+		const std::vector<tinygltf::Primitive> primitives, 
+		const std::vector<std::shared_ptr<Material>>& materials,
+		const glm::mat4& matrix,
+		std::shared_ptr<StaticMesh>& static_mesh,
+		std::shared_ptr<SkeletalMesh>& skeletal_mesh)
+	{
+		glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(matrix)));
+
+		size_t vertex_count = 0, index_count = 0;
+		size_t primitive_count = primitives.size();
+		for (const tinygltf::Primitive& primitive : primitives)
+		{
+			vertex_count += gltf_model.accessors[primitive.attributes.find("POSITION")->second].count;
+			index_count += gltf_model.accessors[primitive.indices].count;
+		}
+
+		std::shared_ptr<Mesh> mesh = nullptr;
+		if (static_mesh)
+		{
+			static_mesh->m_sub_meshes.resize(primitive_count);
+			static_mesh->m_vertices.resize(vertex_count);
+			static_mesh->m_indices.resize(index_count);
+			mesh = static_mesh;
+		}
+		else if (skeletal_mesh)
+		{
+			skeletal_mesh->m_sub_meshes.resize(primitive_count);
+			skeletal_mesh->m_vertices.resize(vertex_count);
+			skeletal_mesh->m_indices.resize(index_count);
+			mesh = skeletal_mesh;
+		}
+
+		uint32_t vertex_start = 0;
+		uint32_t index_start = 0;
+		uint32_t index_idx = 0;
+		for (int p = 0; p < primitive_count; ++p)
+		{
+			const tinygltf::Primitive& primitive = primitives[p];
+
+			const tinygltf::Accessor& position_accessor = gltf_model.accessors[primitive.attributes.find("POSITION")->second];
+			const tinygltf::BufferView& position_buffer_view = gltf_model.bufferViews[position_accessor.bufferView];
+			const float* position_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[position_buffer_view.buffer].data[
+				position_accessor.byteOffset + position_buffer_view.byteOffset]));
+			glm::vec3 min_position = glm::vec3(position_accessor.minValues[0], position_accessor.minValues[1], position_accessor.minValues[2]);
+			glm::vec3 max_position = glm::vec3(position_accessor.maxValues[0], position_accessor.maxValues[1], position_accessor.maxValues[2]);
+			size_t primitive_vertex_count = position_accessor.count;
+			int position_byte_stride = position_accessor.ByteStride(position_buffer_view) ? (position_accessor.ByteStride(position_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC3);
+
+			const tinygltf::Accessor& tex_coord_accessor = gltf_model.accessors[primitive.attributes.find("TEXCOORD_0")->second];
+			const tinygltf::BufferView& tex_coord_buffer_view = gltf_model.bufferViews[tex_coord_accessor.bufferView];
+			const float* tex_coord_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[tex_coord_buffer_view.buffer].data[tex_coord_accessor.byteOffset + tex_coord_buffer_view.byteOffset]));
+			int tex_coord_byte_stride = tex_coord_accessor.ByteStride(tex_coord_buffer_view) ? (tex_coord_accessor.ByteStride(tex_coord_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC2);
+
+			const tinygltf::Accessor& normal_accessor = gltf_model.accessors[primitive.attributes.find("NORMAL")->second];
+			const tinygltf::BufferView& normal_buffer_view = gltf_model.bufferViews[normal_accessor.bufferView];
+			const float* normal_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[normal_buffer_view.buffer].data[normal_accessor.byteOffset + normal_buffer_view.byteOffset]));
+			int normal_byte_stride = normal_accessor.ByteStride(normal_buffer_view) ? (normal_accessor.ByteStride(normal_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC3);
+
+			const void* joint_void_buffer = nullptr;
+			const float* weight_buffer = nullptr;
+			int joint_component_type = INVALID_INDEX;
+			int joint_byte_stride = INVALID_INDEX;
+			int weight_byte_stride = INVALID_INDEX;
+			if (!static_mesh)
+			{
+				const tinygltf::Accessor& joint_accessor = gltf_model.accessors[primitive.attributes.find("JOINTS_0")->second];
+				const tinygltf::BufferView& joint_buffer_view = gltf_model.bufferViews[joint_accessor.bufferView];
+				joint_void_buffer = &(gltf_model.buffers[joint_buffer_view.buffer].data[joint_accessor.byteOffset + joint_buffer_view.byteOffset]);
+				joint_component_type = joint_accessor.componentType;
+				joint_byte_stride = joint_accessor.ByteStride(joint_buffer_view) ? (joint_accessor.ByteStride(joint_buffer_view) / tinygltf::GetComponentSizeInBytes(joint_component_type)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC4);
+
+				const tinygltf::Accessor& weight_accessor = gltf_model.accessors[primitive.attributes.find("WEIGHTS_0")->second];
+				const tinygltf::BufferView& weight_buffer_view = gltf_model.bufferViews[weight_accessor.bufferView];
+				weight_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[weight_buffer_view.buffer].data[weight_accessor.byteOffset + weight_buffer_view.byteOffset]));
+				weight_byte_stride = weight_accessor.ByteStride(weight_buffer_view) ? (weight_accessor.ByteStride(weight_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC4);
+			}
+
+			// set vertices
+			for (size_t v = 0; v < primitive_vertex_count; ++v)
+			{
+				StaticVertex* static_vertex = nullptr;
+				SkeletalVertex* skeletal_vertex = nullptr;
+				if (static_mesh)
+				{
+					static_vertex = &static_mesh->m_vertices[v + vertex_start];
+				}
+				else
+				{
+					skeletal_vertex = &skeletal_mesh->m_vertices[v + vertex_start];
+					static_vertex = skeletal_vertex;
+				}
+
+				static_vertex->position = glm::make_vec3(&position_buffer[v * position_byte_stride]);
+				static_vertex->position = matrix * glm::vec4(static_vertex->position, 1.0f);
+				static_vertex->tex_coord = glm::make_vec2(&tex_coord_buffer[v * tex_coord_byte_stride]);
+				static_vertex->normal = glm::make_vec3(&normal_buffer[v * normal_byte_stride]);
+				static_vertex->normal = normal_matrix * static_vertex->normal;
+
+				if (!static_mesh)
+				{
+					switch (joint_component_type)
+					{
+					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+					{
+						const uint16_t* joint_buffer = static_cast<const uint16_t*>(joint_void_buffer);
+						skeletal_vertex->bones = glm::vec4(glm::make_vec4(&joint_buffer[v * joint_byte_stride]));
+						break;
+					}
+					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+					{
+						const uint8_t* joint_buffer = static_cast<const uint8_t*>(joint_void_buffer);
+						skeletal_vertex->bones = glm::vec4(glm::make_vec4(&joint_buffer[v * joint_byte_stride]));
+						break;
+					}
+					default:
+						LOG_FATAL("unknow gltf mesh joint component type");
+						break;
+					}
+				}
+			}
+
+			// set indices
+			const tinygltf::Accessor& index_accessor = gltf_model.accessors[primitive.indices];
+			const tinygltf::BufferView& index_buffer_view = gltf_model.bufferViews[index_accessor.bufferView];
+			const void* index_void_buffer = &(gltf_model.buffers[index_buffer_view.buffer].data[index_accessor.byteOffset + index_buffer_view.byteOffset]);
+			size_t primitive_index_count = static_cast<uint32_t>(index_accessor.count);
+
+			switch (index_accessor.componentType)
+			{
+			case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
+			{
+				const uint32_t* index_buffer = static_cast<const uint32_t*>(index_void_buffer);
+				for (size_t i = 0; i < primitive_index_count; ++i)
+				{
+					mesh->m_indices[index_idx++] = index_buffer[i] + vertex_start;
+				}
+				break;
+			}
+			case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT:
+			{
+				const uint16_t* index_buffer = static_cast<const uint16_t*>(index_void_buffer);
+				for (size_t i = 0; i < primitive_index_count; ++i)
+				{
+					mesh->m_indices[index_idx++] = index_buffer[i] + vertex_start;
+				}
+				break;
+			}
+			case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE:
+			{
+				const uint8_t* index_buffer = static_cast<const uint8_t*>(index_void_buffer);
+				for (size_t i = 0; i < primitive_index_count; ++i)
+				{
+					mesh->m_indices[index_idx++] = index_buffer[i] + vertex_start;
+				}
+				break;
+			}
+			default:
+				LOG_FATAL("unknow gltf mesh index component type");
+				break;
+			}
+
+			// set submesh
+			SubMesh* sub_mesh = &mesh->m_sub_meshes[p];
+			sub_mesh->m_first_index = index_start;
+			sub_mesh->m_index_count = primitive_index_count;
+			sub_mesh->m_vertex_count = primitive_vertex_count;
+			sub_mesh->m_bounding_box = BoundingBox{ min_position, max_position };
+			sub_mesh->m_bounding_box.transform(matrix);
+			REFERENCE_ASSET(sub_mesh, m_material, materials[primitive.material]);
+
+			vertex_start += primitive_vertex_count;
+			index_start += primitive_index_count;
+		}
 	}
 
 	bool AssetManager::importGltf(const std::string& filename, const URL& folder, bool is_combined)
@@ -123,8 +447,9 @@ namespace Bamboo
 			std::string asset_name = getAssetName(basename, gltf_texture.name, asset_type, asset_indices[asset_type]++);
 			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
 			std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>(url);
-			texture->loadFromGltf(gltf_image, gltf_sampler);
+			importGltfTexture(gltf_model, gltf_image, gltf_sampler, static_cast<uint32_t>(textures.size()), texture);
 
+			texture->inflate();
 			serializeAsset(texture);
 			textures.push_back(texture);
 			m_assets[url] = texture;
@@ -147,33 +472,28 @@ namespace Bamboo
 
 			if (gltf_material.pbrMetallicRoughness.baseColorTexture.index != INVALID_INDEX)
 			{
-				REFERENCE_ASSET(material, m_base_color_texure, textures[gltf_material.pbrMetallicRoughness.baseColorTexture.index]);
-				material->m_base_color_texure->setTextureType(TextureType::BaseColor);
 				ASSERT(gltf_material.pbrMetallicRoughness.baseColorTexture.texCoord == 0, "do not support non-zero texture coordinate index");
+				REFERENCE_ASSET(material, m_base_color_texure, textures[gltf_material.pbrMetallicRoughness.baseColorTexture.index]);
 			}
 			if (gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index != INVALID_INDEX)
 			{
-				REFERENCE_ASSET(material, m_metallic_roughness_texure, textures[gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index]);
-				material->m_metallic_roughness_texure->setTextureType(TextureType::MetallicRoughness);
 				ASSERT(gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord == 0, "do not support non-zero texture coordinate index");
+				REFERENCE_ASSET(material, m_metallic_roughness_texure, textures[gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index]);
 			}
 			if (gltf_material.normalTexture.index != INVALID_INDEX)
 			{
-				REFERENCE_ASSET(material, m_normal_texure, textures[gltf_material.normalTexture.index]);
-				material->m_normal_texure->setTextureType(TextureType::Normal);
 				ASSERT(gltf_material.normalTexture.texCoord == 0, "do not support non-zero texture coordinate index");
+				REFERENCE_ASSET(material, m_normal_texure, textures[gltf_material.normalTexture.index]);
 			}
 			if (gltf_material.occlusionTexture.index != INVALID_INDEX)
 			{
-				REFERENCE_ASSET(material, m_occlusion_texure, textures[gltf_material.occlusionTexture.index]);
-				material->m_occlusion_texure->setTextureType(TextureType::Occlusion);
 				ASSERT(gltf_material.occlusionTexture.texCoord == 0, "do not support non-zero texture coordinate index");
+				REFERENCE_ASSET(material, m_occlusion_texure, textures[gltf_material.occlusionTexture.index]);
 			}
 			if (gltf_material.emissiveTexture.index != INVALID_INDEX)
 			{
-				REFERENCE_ASSET(material, m_emissive_texure, textures[gltf_material.emissiveTexture.index]);
-				material->m_emissive_texure->setTextureType(TextureType::Emissive);
 				ASSERT(gltf_material.emissiveTexture.texCoord == 0, "do not support non-zero texture coordinate index");
+				REFERENCE_ASSET(material, m_emissive_texure, textures[gltf_material.emissiveTexture.index]);
 			}
 
 			serializeAsset(material);
@@ -182,212 +502,93 @@ namespace Bamboo
 		}
 
 		// 3.load nodes recursively
+		// load all nodes into one single vector, with global world matrix
+		std::vector<std::pair<glm::mat4, const tinygltf::Node*>> nodes;
 		for (const tinygltf::Scene& gltf_scene : gltf_model.scenes)
 		{
-			std::queue<const tinygltf::Node*> nodes;
+			std::queue<std::pair<glm::mat4, const tinygltf::Node*>> node_queue;
 			for (int index : gltf_scene.nodes)
 			{
-				nodes.push(&gltf_model.nodes[index]);
+				node_queue.push(std::make_pair(glm::mat4(1.0f), &gltf_model.nodes[index]));
 			}
 
-			while (!nodes.empty())
+			while (!node_queue.empty())
 			{
-				const tinygltf::Node* node = nodes.front();
-				nodes.pop();
+				std::pair<glm::mat4, const tinygltf::Node*> node_pair = node_queue.front();
+				node_queue.pop();
 
-				if (node->mesh == INVALID_INDEX)
+				const glm::mat4& parent_matrix = node_pair.first;
+				const tinygltf::Node* parent_node = node_pair.second;
+				if (validateGltfNode(parent_node, gltf_model))
 				{
-					LOG_INFO("ignore non-mesh gltf node");
-					continue;
+					nodes.push_back(node_pair);
 				}
-
-				glm::mat4 local_matrix = glm::mat4(1.0f);
-				if (!node->matrix.empty())
+				
+				for (int children : parent_node->children)
 				{
-					local_matrix = glm::make_mat4x4(node->matrix.data());
+					const tinygltf::Node* children_node = &gltf_model.nodes[children];
+					glm::mat4 children_matrix = parent_matrix * getGltfNodeMatrix(children_node);
+					node_queue.push(std::make_pair(children_matrix, children_node));
 				}
+			}
+		}
 
-				const tinygltf::Mesh gltf_mesh = gltf_model.meshes[node->mesh];
-				ASSERT(!gltf_mesh.primitives.empty(), "gltf mesh's primitives shouldn't be empty");
+		// turn nodes to static mesh/skeletal mesh
+		if (is_combined)
+		{
+			EAssetType asset_type = EAssetType::StaticMesh;
+			std::string asset_name = getAssetName(basename, basename, asset_type, asset_indices[asset_type]++);
+			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
+			std::shared_ptr<StaticMesh> static_mesh = std::make_shared<StaticMesh>(url);
+			std::shared_ptr<SkeletalMesh> skeletal_mesh = nullptr;
 
-				// check whether it's a skeletal mesh 
-				const tinygltf::Primitive& first_primitive = gltf_mesh.primitives.front();
-				bool is_static_mesh = first_primitive.attributes.find("JOINTS_0") == first_primitive.attributes.end() ||
-					first_primitive.attributes.find("WEIGHTS_0") == first_primitive.attributes.end();
+			std::vector<tinygltf::Primitive> primitives;
+			for (const auto& node_pair : nodes)
+			{
+				const tinygltf::Mesh& gltf_mesh = gltf_model.meshes[node_pair.second->mesh];
+				primitives.insert(primitives.end(), gltf_mesh.primitives.begin(), gltf_mesh.primitives.end());
+			}
 
-				EAssetType asset_type = is_static_mesh ? EAssetType::StaticMesh : EAssetType::SkeletalMesh;
+			importGltfPrimitives(gltf_model, primitives, materials, glm::mat4(1.0f), static_mesh, skeletal_mesh);
+
+			static_mesh->inflate();
+			serializeAsset(static_mesh);
+			m_assets[url] = static_mesh;
+		}
+		else
+		{
+			for (const auto& node_pair : nodes)
+			{
+				const tinygltf::Mesh& gltf_mesh = gltf_model.meshes[node_pair.second->mesh];
+				bool is_skeletal_mesh = isGltfSkeletalMesh(gltf_mesh);
+				EAssetType asset_type = is_skeletal_mesh ? EAssetType::SkeletalMesh : EAssetType::StaticMesh;
 				std::string asset_name = getAssetName(basename, gltf_mesh.name, asset_type, asset_indices[asset_type]++);
 				URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
-				size_t vertex_count = 0, index_count = 0;
-				size_t primitive_count = gltf_mesh.primitives.size();
-				for (const tinygltf::Primitive& primitive : gltf_mesh.primitives)
-				{
-					ASSERT(primitive.attributes.find("POSITION") != primitive.attributes.end(), "gltf primitives must have position");
-					ASSERT(primitive.attributes.find("NORMAL") != primitive.attributes.end(), "gltf primitives must have normal");
-					ASSERT(primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end(), "gltf primitives must have 0th texture coordinate");
-					ASSERT(primitive.indices != INVALID_INDEX, "gltf primitive must have indices");
-
-					vertex_count += gltf_model.accessors[primitive.attributes.find("POSITION")->second].count;
-					index_count += gltf_model.accessors[primitive.indices].count;
-				}
 
 				std::shared_ptr<StaticMesh> static_mesh = nullptr;
 				std::shared_ptr<SkeletalMesh> skeletal_mesh = nullptr;
-				std::shared_ptr<Mesh> mesh = nullptr;
-				if (is_static_mesh)
+				if (is_skeletal_mesh)
 				{
-					static_mesh = std::make_shared<StaticMesh>(url);
-					static_mesh->m_sub_meshes.resize(primitive_count);
-					static_mesh->m_vertices.resize(vertex_count);
-					static_mesh->m_indices.resize(index_count);
-					mesh = static_mesh;
+					skeletal_mesh = std::make_shared<SkeletalMesh>(url);
 				}
 				else
 				{
-					skeletal_mesh = std::make_shared<SkeletalMesh>(url);
-					skeletal_mesh->m_sub_meshes.resize(primitive_count);
-					skeletal_mesh->m_vertices.resize(vertex_count);
-					skeletal_mesh->m_indices.resize(index_count);
-					mesh = skeletal_mesh;
+					static_mesh = std::make_shared<StaticMesh>(url);
 				}
 
-				uint32_t vertex_start = 0;
-				uint32_t index_start = 0;
-				uint32_t index_idx = 0;
-				for (int p = 0; p < primitive_count; ++p)
+				importGltfPrimitives(gltf_model, gltf_mesh.primitives, materials, node_pair.first, static_mesh, skeletal_mesh);
+
+				if (is_skeletal_mesh)
 				{
-					const tinygltf::Primitive& primitive = gltf_mesh.primitives[p];
-
-					const tinygltf::Accessor& position_accessor = gltf_model.accessors[primitive.attributes.find("POSITION")->second];
-					const tinygltf::BufferView& position_buffer_view = gltf_model.bufferViews[position_accessor.bufferView];
-					const float* position_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[position_buffer_view.buffer].data[
-						position_accessor.byteOffset + position_buffer_view.byteOffset]));
-					glm::vec3 min_position = glm::vec3(position_accessor.minValues[0], position_accessor.minValues[1], position_accessor.minValues[2]);
-					glm::vec3 max_position = glm::vec3(position_accessor.maxValues[0], position_accessor.maxValues[1], position_accessor.maxValues[2]);
-					size_t primitive_vertex_count = position_accessor.count;
-					int position_byte_stride = position_accessor.ByteStride(position_buffer_view) ? (position_accessor.ByteStride(position_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC3);
-
-					const tinygltf::Accessor& tex_coord_accessor = gltf_model.accessors[primitive.attributes.find("TEXCOORD_0")->second];
-					const tinygltf::BufferView& tex_coord_buffer_view = gltf_model.bufferViews[tex_coord_accessor.bufferView];
-					const float* tex_coord_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[tex_coord_buffer_view.buffer].data[tex_coord_accessor.byteOffset + tex_coord_buffer_view.byteOffset]));
-					int tex_coord_byte_stride = tex_coord_accessor.ByteStride(tex_coord_buffer_view) ? (tex_coord_accessor.ByteStride(tex_coord_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC2);
-
-					const tinygltf::Accessor& normal_accessor = gltf_model.accessors[primitive.attributes.find("NORMAL")->second];
-					const tinygltf::BufferView& normal_buffer_view = gltf_model.bufferViews[normal_accessor.bufferView];
-					const float* normal_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[normal_buffer_view.buffer].data[normal_accessor.byteOffset + normal_buffer_view.byteOffset]));
-					int normal_byte_stride = normal_accessor.ByteStride(normal_buffer_view) ? (normal_accessor.ByteStride(normal_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC3);
-
-					const void* joint_void_buffer = nullptr;
-					const float* weight_buffer = nullptr;
-					int joint_component_type = INVALID_INDEX;
-					int joint_byte_stride = INVALID_INDEX;
-					int weight_byte_stride = INVALID_INDEX;
-					if (!is_static_mesh)
-					{
-						const tinygltf::Accessor& joint_accessor = gltf_model.accessors[primitive.attributes.find("JOINTS_0")->second];
-						const tinygltf::BufferView& joint_buffer_view = gltf_model.bufferViews[joint_accessor.bufferView];
-						joint_void_buffer = &(gltf_model.buffers[joint_buffer_view.buffer].data[joint_accessor.byteOffset + joint_buffer_view.byteOffset]);
-						joint_component_type = joint_accessor.componentType;
-						joint_byte_stride = joint_accessor.ByteStride(joint_buffer_view) ? (joint_accessor.ByteStride(joint_buffer_view) / tinygltf::GetComponentSizeInBytes(joint_component_type)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC4);
-
-						const tinygltf::Accessor& weight_accessor = gltf_model.accessors[primitive.attributes.find("WEIGHTS_0")->second];
-						const tinygltf::BufferView& weight_buffer_view = gltf_model.bufferViews[weight_accessor.bufferView];
-						weight_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[weight_buffer_view.buffer].data[weight_accessor.byteOffset + weight_buffer_view.byteOffset]));
-						weight_byte_stride = weight_accessor.ByteStride(weight_buffer_view) ? (weight_accessor.ByteStride(weight_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC4);
-					}
-
-					// set vertices
-					for (size_t v = 0; v < primitive_vertex_count; ++v)
-					{
-						StaticVertex* static_vertex = nullptr;
-						SkeletalVertex* skeletal_vertex = nullptr;
-						if (is_static_mesh)
-						{
-							static_vertex = &static_mesh->m_vertices[v + vertex_start];
-						}
-						else
-						{
-							skeletal_vertex = &skeletal_mesh->m_vertices[v + vertex_start];
-							static_vertex = skeletal_vertex;
-						}
-
-						static_vertex->position = glm::make_vec3(&position_buffer[v * position_byte_stride]);
-						static_vertex->tex_coord = glm::make_vec2(&tex_coord_buffer[v * tex_coord_byte_stride]);
-						static_vertex->normal = glm::make_vec3(&normal_buffer[v * normal_byte_stride]);
-
-						if (!is_static_mesh)
-						{
-							switch (joint_component_type)
-							{
-							case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: 
-							{
-								const uint16_t* joint_buffer = static_cast<const uint16_t*>(joint_void_buffer);
-								skeletal_vertex->bones = glm::vec4(glm::make_vec4(&joint_buffer[v * joint_byte_stride]));
-								break;
-							}
-							case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: 
-							{
-								const uint8_t* joint_buffer = static_cast<const uint8_t*>(joint_void_buffer);
-								skeletal_vertex->bones = glm::vec4(glm::make_vec4(&joint_buffer[v * joint_byte_stride]));
-								break;
-							}
-							default:
-								LOG_FATAL("unknow gltf mesh joint component type");
-								break;
-							}
-						}
-					}
-
-					// set indices
-					const tinygltf::Accessor& index_accessor = gltf_model.accessors[primitive.indices];
-					const tinygltf::BufferView& index_buffer_view = gltf_model.bufferViews[index_accessor.bufferView];
-					const void* index_void_buffer = &(gltf_model.buffers[index_buffer_view.buffer].data[index_accessor.byteOffset + index_buffer_view.byteOffset]);
-					size_t primitive_index_count = static_cast<uint32_t>(index_accessor.count);
-							
-					switch (index_accessor.componentType) 
-					{
-					case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: 
-					{
-						const uint32_t* index_buffer = static_cast<const uint32_t*>(index_void_buffer);
-						for (size_t i = 0; i < primitive_index_count; ++i)
-						{
-							static_mesh->m_indices[index_idx++] = index_buffer[i] + vertex_start;
-						}
-						break;
-					}
-					case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: 
-					{
-						const uint16_t* index_buffer = static_cast<const uint16_t*>(index_void_buffer);
-						for (size_t i = 0; i < primitive_index_count; ++i)
-						{
-							static_mesh->m_indices[index_idx++] = index_buffer[i] + vertex_start;
-						}
-						break;
-					}
-					case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: 
-					{
-						const uint8_t* index_buffer = static_cast<const uint8_t*>(index_void_buffer);
-						for (size_t i = 0; i < primitive_index_count; ++i)
-						{
-							static_mesh->m_indices[index_idx++] = index_buffer[i] + vertex_start;
-						}
-						break;
-					}
-					default:
-						LOG_FATAL("unknow gltf mesh index component type");
-						break;
-					}
-
-					// set submesh
-					SubMesh* sub_mesh = &mesh->m_sub_meshes[p];
-					sub_mesh->m_first_index = index_start;
-					sub_mesh->m_index_count = primitive_index_count;
-					sub_mesh->m_vertex_count = primitive_vertex_count;
-					sub_mesh->m_bounding_box = BoundingBox{ min_position, max_position };
-					REFERENCE_ASSET(sub_mesh, m_material, materials[primitive.material]);
-
-					vertex_start += primitive_vertex_count;
-					index_start += primitive_index_count;
+					skeletal_mesh->inflate();
+					serializeAsset(skeletal_mesh);
+					m_assets[url] = skeletal_mesh;
+				}
+				else
+				{
+					static_mesh->inflate();
+					serializeAsset(static_mesh);
+					m_assets[url] = static_mesh;
 				}
 			}
 		}
@@ -416,11 +617,12 @@ namespace Bamboo
 		case EArchiveType::Json:
 		{
 			cereal::JSONOutputArchive archive(ofs);
-
 			switch (asset->getAssetType())
 			{
 				ARCHIVE_ASSET(Texture2D, asset);
 				ARCHIVE_ASSET(Material, asset);
+				ARCHIVE_ASSET(StaticMesh, asset);
+				ARCHIVE_ASSET(SkeletalMesh, asset);
 			default:
 				break;
 			}
@@ -429,11 +631,12 @@ namespace Bamboo
 		case EArchiveType::Binary:
 		{
 			cereal::BinaryOutputArchive archive(ofs);
-			
 			switch (asset->getAssetType())
 			{
 				ARCHIVE_ASSET(Texture2D, asset);
 				ARCHIVE_ASSET(Material, asset);
+				ARCHIVE_ASSET(StaticMesh, asset);
+				ARCHIVE_ASSET(SkeletalMesh, asset);
 			default:
 				break;
 			}

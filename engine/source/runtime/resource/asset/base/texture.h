@@ -22,11 +22,11 @@ namespace Bamboo
 		uint32_t m_mip_levels;
 		TextureType m_texture_type;
 
-		VmaImageView m_image_view;
-		VkSampler m_sampler;
-
 	protected:
 		bool isSRGB();
+
+		VmaImageView m_image_view;
+		VkSampler m_sampler;
 
 	private:
 		friend class cereal::access;

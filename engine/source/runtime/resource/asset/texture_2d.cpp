@@ -1,9 +1,6 @@
 #include "texture_2d.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 
-#define IMAGE_COMPONENT 4
-#define IMAGE_BIT_DEPTH 8
-
 namespace Bamboo
 {
 
@@ -11,35 +8,6 @@ namespace Bamboo
 	{
 		m_asset_type = EAssetType::Texture2D;
 		m_archive_type = EArchiveType::Json;
-	}
-
-	void Texture2D::loadFromGltf(const tinygltf::Image& gltf_image, const tinygltf::Sampler& gltf_sampler)
-	{
-		if (gltf_image.component != IMAGE_COMPONENT)
-		{
-			LOG_FATAL("unsupported gltf image component: {}", gltf_image.component);
-		}
-		if (gltf_image.bits != IMAGE_BIT_DEPTH)
-		{
-			LOG_FATAL("unsupported gltf image bit depth: {}", gltf_image.bits);
-		}
-
-		m_width = gltf_image.width;
-		m_height = gltf_image.height;
-		m_mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(m_width, m_height)))) + 1;
-		m_image_data = gltf_image.image;
-
-		m_min_filter = getVkFilterFromGltf(gltf_sampler.minFilter);
-		m_mag_filter = getVkFilterFromGltf(gltf_sampler.magFilter);
-		m_address_mode_u = getVkAddressModeFromGltf(gltf_sampler.wrapS);
-		m_address_mode_v = getVkAddressModeFromGltf(gltf_sampler.wrapT);
-		m_address_mode_w = m_address_mode_v;
-	}
-
-	void Texture2D::setTextureType(TextureType texture_type)
-	{
-		m_texture_type = texture_type;
-		inflate();
 	}
 
 	void Texture2D::inflate()
@@ -76,40 +44,6 @@ namespace Bamboo
 
 		// create VkSampler
 		m_sampler = createSampler(m_min_filter, m_mag_filter, m_mip_levels, m_address_mode_u, m_address_mode_v, m_address_mode_w);
-	}
-
-	VkFilter Texture2D::getVkFilterFromGltf(int gltf_filter)
-	{
-		switch (gltf_filter) 
-		{
-		case INVALID_INDEX:
-		case TINYGLTF_TEXTURE_FILTER_NEAREST:
-		case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
-		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
-			return VK_FILTER_NEAREST;
-		case TINYGLTF_TEXTURE_FILTER_LINEAR:
-		case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
-		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
-			return VK_FILTER_LINEAR;
-		}
-
-		return VK_FILTER_NEAREST;
-	}
-
-	VkSamplerAddressMode Texture2D::getVkAddressModeFromGltf(int gltf_wrap)
-	{
-		switch (gltf_wrap)
-		{
-		case INVALID_INDEX:
-		case TINYGLTF_TEXTURE_WRAP_REPEAT:
-			return VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:
-			return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT:
-			return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-		}
-
-		return VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	}
 
 }
