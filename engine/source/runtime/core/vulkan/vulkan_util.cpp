@@ -6,17 +6,27 @@ namespace Bamboo
 {
 	void VmaBuffer::destroy()
 	{
-		vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), buffer, allocation);
+		if (buffer != VK_NULL_HANDLE)
+		{
+			vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), buffer, allocation);
+		}
 	}
 
 	void VmaImage::destroy()
 	{
-		vmaDestroyImage(VulkanRHI::instance().getAllocator(), image, allocation);
+		if (image != VK_NULL_HANDLE)
+		{
+			vmaDestroyImage(VulkanRHI::instance().getAllocator(), image, allocation);
+		}
 	}
 
 	void VmaImageView::destroy()
 	{
-		vkDestroyImageView(VulkanRHI::instance().getDevice(), view, nullptr);
+		if (view != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(VulkanRHI::instance().getDevice(), view, nullptr);
+		}
+		
 		vma_image.destroy();
 	}
 
@@ -116,7 +126,11 @@ namespace Bamboo
 
 		VmaAllocationCreateInfo alloc_ci{};
 		alloc_ci.usage = memory_usage;
-
+		if (memory_usage == VMA_MEMORY_USAGE_AUTO_PREFER_HOST)
+		{
+			alloc_ci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		}
+		
 		vmaCreateBuffer(VulkanRHI::instance().getAllocator(), &buffer_ci, &alloc_ci, &buffer.buffer, &buffer.allocation, nullptr);
 	}
 
@@ -209,6 +223,56 @@ namespace Bamboo
 		vkCreateSampler(VulkanRHI::instance().getDevice(), &sampler_ci, nullptr, &sampler);
 
 		return sampler;
+	}
+
+	void createVertexBuffer(uint32_t buffer_size, void* vertex_data, VmaBuffer& vertex_buffer)
+	{
+		VmaBuffer staging_buffer;
+		createBuffer(buffer_size, 
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+			VMA_MEMORY_USAGE_AUTO_PREFER_HOST, 
+			staging_buffer);
+
+		// copy vertex staging_buffer_data to staging buffer
+		void* staging_buffer_data;
+		vmaMapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
+		memcpy(staging_buffer_data, vertex_data, static_cast<size_t>(buffer_size));
+		vmaUnmapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation);
+
+		createBuffer(buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+			vertex_buffer);
+
+		copyBuffer(staging_buffer.buffer, vertex_buffer.buffer, buffer_size);
+
+		vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
+	}
+
+	void createIndexBuffer(const std::vector<uint32_t>& indices, VmaBuffer& index_buffer)
+	{
+		VkDeviceSize buffer_size = sizeof(indices[0]) * indices.size();
+
+		VmaBuffer staging_buffer;
+		createBuffer(buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+			staging_buffer);
+
+		// copy index data to staging buffer
+		void* staging_buffer_data;
+		vmaMapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
+		memcpy(staging_buffer_data, indices.data(), static_cast<size_t>(buffer_size));
+		vmaUnmapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation);
+
+		createBuffer(buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+			index_buffer);
+
+		copyBuffer(staging_buffer.buffer, index_buffer.buffer, buffer_size);
+
+		vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
 	}
 
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t mip_levels)

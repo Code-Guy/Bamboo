@@ -26,7 +26,7 @@ namespace Bamboo
 	// VMA Buffer
 	struct VmaBuffer
 	{
-		VkBuffer buffer;
+		VkBuffer buffer = VK_NULL_HANDLE;
 		VmaAllocation allocation;
 
 		void destroy();
@@ -35,7 +35,7 @@ namespace Bamboo
 	// VMA Image
 	struct VmaImage
 	{
-		VkImage image;
+		VkImage image = VK_NULL_HANDLE;
 		VmaAllocation allocation;
 
 		void destroy();
@@ -45,7 +45,7 @@ namespace Bamboo
 	struct VmaImageView
 	{
 		VmaImage vma_image;
-		VkImageView view;
+		VkImageView view = VK_NULL_HANDLE;
 
 		void destroy();
 		VkImage image() { return vma_image.image; }
@@ -61,6 +61,9 @@ namespace Bamboo
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, uint32_t mip_levels);
 	VkSampler createSampler(VkFilter min_filter, VkFilter mag_filter, uint32_t mip_levels,
 		VkSamplerAddressMode address_mode_u, VkSamplerAddressMode address_mode_v, VkSamplerAddressMode address_mode_w);
+
+	void createVertexBuffer(uint32_t buffer_size, void* vertex_data, VmaBuffer& vertex_buffer);
+	void createIndexBuffer(const std::vector<uint32_t>& indices, VmaBuffer& index_buffer);
 
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t mip_levels);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);

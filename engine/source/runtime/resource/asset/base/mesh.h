@@ -20,8 +20,14 @@ namespace Bamboo
 	class Mesh
 	{
 	public:
+		virtual ~Mesh();
+
 		std::vector<SubMesh> m_sub_meshes;
 		std::vector<uint32_t> m_indices;
+
+	protected:
+		VmaBuffer m_vertex_buffer;
+		VmaBuffer m_index_buffer;
 
 	private:
 		friend class cereal::access;

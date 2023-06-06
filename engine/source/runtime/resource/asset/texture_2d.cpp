@@ -14,14 +14,14 @@ namespace Bamboo
 	{
 		// create staging buffer
 		VkDeviceSize image_size = m_image_data.size();
-		VmaBuffer stagingBuffer;
-		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, stagingBuffer);
+		VmaBuffer staging_buffer;
+		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
 
 		// copy image pixel data to staging buffer
 		void* staging_buffer_data;
-		vmaMapMemory(VulkanRHI::instance().getAllocator(), stagingBuffer.allocation, &staging_buffer_data);
+		vmaMapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
 		memcpy(staging_buffer_data, m_image_data.data(), image_size);
-		vmaUnmapMemory(VulkanRHI::instance().getAllocator(), stagingBuffer.allocation);
+		vmaUnmapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation);
 
 		// create Image
 		VkFormat image_format = isSRGB() ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
@@ -34,10 +34,10 @@ namespace Bamboo
 		transitionImageLayout(image, image_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_mip_levels);
 
 		// copy staging buffer to image
-		copyBufferToImage(stagingBuffer.buffer, image, m_width, m_height);
+		copyBufferToImage(staging_buffer.buffer, image, m_width, m_height);
 
 		// clear staging buffer
-		vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
+		vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
 
 		// generate image mipmaps, and transition image to READ_ONLY_OPT state for shader reading
 		createImageMipmaps(image, image_format, m_width, m_height, m_mip_levels);
