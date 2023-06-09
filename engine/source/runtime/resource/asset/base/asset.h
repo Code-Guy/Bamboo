@@ -73,7 +73,7 @@ namespace Bamboo
 		EAssetType getAssetType() { return m_asset_type; }
 		EArchiveType getArchiveType() { return m_archive_type; }
 
-		virtual void inflate();
+		virtual void inflate() {}
 
     protected:
         URL m_url;

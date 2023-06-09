@@ -9,20 +9,20 @@ namespace Bamboo
 		glm::vec3 v0, v1;
 
 		glm::vec3 right = glm::vec3(m[0]);
-		v0 = right * min.x;
-		v1 = right * max.x;
+		v0 = right * m_min.x;
+		v1 = right * m_max.x;
 		tmin += glm::min(v0, v1);
 		tmax += glm::max(v0, v1);
 
 		glm::vec3 up = glm::vec3(m[1]);
-		v0 = up * min.y;
-		v1 = up * max.y;
+		v0 = up * m_min.y;
+		v1 = up * m_max.y;
 		tmin += glm::min(v0, v1);
 		tmax += glm::max(v0, v1);
 
 		glm::vec3 back = glm::vec3(m[2]);
-		v0 = back * min.z;
-		v1 = back * max.z;
+		v0 = back * m_min.z;
+		v1 = back * m_max.z;
 		tmin += glm::min(v0, v1);
 		tmax += glm::max(v0, v1);
 

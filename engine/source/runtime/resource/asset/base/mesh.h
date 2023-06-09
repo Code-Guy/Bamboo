@@ -4,15 +4,15 @@
 
 struct StaticVertex
 {
-	glm::vec3 position;
-	glm::vec2 tex_coord;
-	glm::vec3 normal;
+	glm::vec3 m_position;
+	glm::vec2 m_tex_coord;
+	glm::vec3 m_normal;
 };
 
 struct SkeletalVertex : public StaticVertex
 {
-	glm::ivec4 bones;
-	glm::vec4 weights;
+	glm::ivec4 m_bones;
+	glm::vec4 m_weights;
 };
 
 namespace Bamboo

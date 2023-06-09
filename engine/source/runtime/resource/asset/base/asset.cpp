@@ -11,9 +11,4 @@ namespace Bamboo
 		m_name = g_runtime_context.fileSystem()->basename(m_url);
 	}
 
-	void Asset::inflate()
-	{
-		
-	}
-
 }

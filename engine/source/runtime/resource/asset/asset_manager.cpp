@@ -3,10 +3,14 @@
 #include "runtime/resource/asset/material.h"
 #include "runtime/resource/asset/static_mesh.h"
 #include "runtime/resource/asset/skeletal_mesh.h"
+#include "runtime/resource/asset/skeleton.h"
+#include "runtime/resource/asset/animation.h"
+
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
 #include <fstream>
 #include <queue>
+#include <algorithm>
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -14,7 +18,7 @@
 #include <tinygltf/tiny_gltf.h>
 #include <ktx/ktx.h>
 
-#define ARCHIVE_ASSET(type, asset) \
+#define SERIALIZE_ASSET(type, asset) \
 	case EAssetType:: ##type: \
 		archive(std::dynamic_pointer_cast<##type>(asset)); \
 	break
@@ -162,6 +166,47 @@ namespace Bamboo
 			first_primitive.attributes.find("WEIGHTS_0") != first_primitive.attributes.end();
 	}
 
+	size_t findGltfJointNodeBoneIndex(const std::vector<std::pair<tinygltf::Node, int>>& joint_nodes, int node_index)
+	{
+		for (size_t i = 0; i < joint_nodes.size(); ++i)
+		{
+			if (joint_nodes[i].second == node_index)
+			{
+				return i;
+			}
+		}
+		LOG_FATAL("failed to find corresponding joint node index");
+		return -1;
+	}
+	
+	uint8_t topologizeGltfBones(std::vector<Bone>& bones, const std::vector<std::pair<tinygltf::Node, int>>& joint_nodes)
+	{
+		std::vector<size_t> bone_indices;
+		for (size_t i = 0; i < joint_nodes.size(); ++i)
+		{
+			bone_indices.push_back(i);
+		}
+
+		for (size_t i = 0; i < joint_nodes.size(); ++i)
+		{
+			const tinygltf::Node& joint_node = joint_nodes[i].first;
+			bones[i].m_name = joint_node.name;
+			bones[i].m_local_bind_pose_matrix = getGltfNodeMatrix(&joint_node);
+
+			for (int child_joint_node_index : joint_node.children)
+			{
+				size_t child_bone_index = findGltfJointNodeBoneIndex(joint_nodes, child_joint_node_index);
+				bones[i].m_children.push_back(static_cast<uint8_t>(child_bone_index));
+				bones[child_bone_index].m_parent = static_cast<uint8_t>(i);
+
+				bone_indices.erase(std::remove(bone_indices.begin(), bone_indices.end(), child_bone_index), bone_indices.end());
+			}
+		}
+
+		ASSERT(bone_indices.size() == 1, "failed to find the root bone");
+		return static_cast<uint8_t>(bone_indices.front());
+	}
+
 	void importGltfTexture(const tinygltf::Model& gltf_model,
 		const tinygltf::Image& gltf_image,
 		const tinygltf::Sampler& gltf_sampler,
@@ -307,11 +352,11 @@ namespace Bamboo
 					static_vertex = skeletal_vertex;
 				}
 
-				static_vertex->position = glm::make_vec3(&position_buffer[v * position_byte_stride]);
-				static_vertex->position = matrix * glm::vec4(static_vertex->position, 1.0f);
-				static_vertex->tex_coord = glm::make_vec2(&tex_coord_buffer[v * tex_coord_byte_stride]);
-				static_vertex->normal = glm::make_vec3(&normal_buffer[v * normal_byte_stride]);
-				static_vertex->normal = normal_matrix * static_vertex->normal;
+				static_vertex->m_position = glm::make_vec3(&position_buffer[v * position_byte_stride]);
+				static_vertex->m_position = matrix * glm::vec4(static_vertex->m_position, 1.0f);
+				static_vertex->m_tex_coord = glm::make_vec2(&tex_coord_buffer[v * tex_coord_byte_stride]);
+				static_vertex->m_normal = glm::make_vec3(&normal_buffer[v * normal_byte_stride]);
+				static_vertex->m_normal = normal_matrix * static_vertex->m_normal;
 
 				if (!static_mesh)
 				{
@@ -320,18 +365,24 @@ namespace Bamboo
 					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
 					{
 						const uint16_t* joint_buffer = static_cast<const uint16_t*>(joint_void_buffer);
-						skeletal_vertex->bones = glm::vec4(glm::make_vec4(&joint_buffer[v * joint_byte_stride]));
+						skeletal_vertex->m_bones = glm::vec4(glm::make_vec4(&joint_buffer[v * joint_byte_stride]));
 						break;
 					}
 					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
 					{
 						const uint8_t* joint_buffer = static_cast<const uint8_t*>(joint_void_buffer);
-						skeletal_vertex->bones = glm::vec4(glm::make_vec4(&joint_buffer[v * joint_byte_stride]));
+						skeletal_vertex->m_bones = glm::vec4(glm::make_vec4(&joint_buffer[v * joint_byte_stride]));
 						break;
 					}
 					default:
 						LOG_FATAL("unknow gltf mesh joint component type");
 						break;
+					}
+
+					skeletal_vertex->m_weights = glm::make_vec4(&weight_buffer[v * weight_byte_stride]);
+					if (glm::length(skeletal_vertex->m_weights) < k_epsilon)
+					{
+						skeletal_vertex->m_weights = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 					}
 				}
 			}
@@ -593,6 +644,131 @@ namespace Bamboo
 			}
 		}
 
+		// load skeletons
+		for (const tinygltf::Skin& skin : gltf_model.skins)
+		{
+			EAssetType asset_type = EAssetType::Skeleton;
+			std::string asset_name = getAssetName(basename, skin.name, asset_type, asset_indices[asset_type]++);
+			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
+
+			std::shared_ptr<Skeleton> skeleton = std::make_shared<Skeleton>(url);
+			skeleton->m_name = skin.name;
+
+			uint32_t joint_count = static_cast<uint32_t>(skin.joints.size());
+			skeleton->m_bones.resize(joint_count);
+
+			std::vector<std::pair<tinygltf::Node, int>> joint_nodes(joint_count);
+			for (size_t i = 0; i < joint_count; ++i)
+			{
+				int joint_index = skin.joints[i];
+				joint_nodes[i] = std::make_pair(gltf_model.nodes[joint_index], joint_index);
+			}
+
+			// set bone's children/parent relations
+			skeleton->m_root_bone_index = topologizeGltfBones(skeleton->m_bones, joint_nodes);
+
+			// set bone's global inverse bind matrix
+			ASSERT(skin.inverseBindMatrices != INVALID_INDEX, "gltf skin must have inverse bind matrices");
+			const tinygltf::Accessor& accessor = gltf_model.accessors[skin.inverseBindMatrices];
+			const tinygltf::BufferView& buffer_view = gltf_model.bufferViews[accessor.bufferView];
+			const tinygltf::Buffer& buffer = gltf_model.buffers[buffer_view.buffer];
+			std::vector<glm::mat4> inverse_bind_matrices(accessor.count);
+			memcpy(inverse_bind_matrices.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset], accessor.count * sizeof(glm::mat4));
+			for (size_t i = 0; i < skeleton->m_bones.size(); ++i)
+			{
+				skeleton->m_bones[i].m_global_inverse_bind_pose_matrix = inverse_bind_matrices[i];
+			}
+
+			skeleton->inflate();
+			serializeAsset(skeleton);
+			m_assets[url] = skeleton;
+		}
+
+		// load animations
+		for (const tinygltf::Animation& gltf_animation : gltf_model.animations)
+		{
+			EAssetType asset_type = EAssetType::Animation;
+			std::string asset_name = getAssetName(basename, gltf_animation.name, asset_type, asset_indices[asset_type]++);
+			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
+
+			std::shared_ptr<Animation> animation = std::make_shared<Animation>(url);
+			animation->m_name = gltf_animation.name;
+
+			// get animation samplers
+			animation->m_samplers.resize(gltf_animation.samplers.size());
+			for (size_t i = 0; i < gltf_animation.samplers.size(); ++i)
+			{
+				const tinygltf::AnimationSampler& gltf_sampler = gltf_animation.samplers[i];
+				AnimationSampler& sampler = animation->m_samplers[i];
+
+				sampler.m_interp_type = gltf_sampler.interpolation == "LINEAR" ? AnimationSampler::EInterpolationType::Linear :
+					(gltf_sampler.interpolation == "STEP" ? AnimationSampler::EInterpolationType::Step : AnimationSampler::EInterpolationType::CubicSpline);
+				
+				// get sampler times
+				{
+					const tinygltf::Accessor& accessor = gltf_model.accessors[gltf_sampler.input];
+					const tinygltf::BufferView& buffer_view = gltf_model.bufferViews[accessor.bufferView];
+					const tinygltf::Buffer& buffer = gltf_model.buffers[buffer_view.buffer];
+					ASSERT(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT, "gltf animation sampler's input component type must be float");
+
+					sampler.m_times.resize(accessor.count);
+					memcpy(sampler.m_times.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset], accessor.count * sizeof(float));
+				}
+				
+				// get sampler values
+				{
+					const tinygltf::Accessor& accessor = gltf_model.accessors[gltf_sampler.output];
+					const tinygltf::BufferView& buffer_view = gltf_model.bufferViews[accessor.bufferView];
+					const tinygltf::Buffer& buffer = gltf_model.buffers[buffer_view.buffer];
+					ASSERT(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT, "gltf animation sampler's output component type must be float");
+				
+					sampler.m_values.resize(accessor.count);
+					switch (accessor.type) 
+					{
+					case TINYGLTF_TYPE_VEC3: 
+					{
+						const void* data_ptr = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
+						const glm::vec3* buffer = static_cast<const glm::vec3*>(data_ptr);
+						for (size_t i = 0; i < accessor.count; i++) 
+						{
+							sampler.m_values[i] = glm::vec4(buffer[i], 0.0f);
+						}
+						break;
+					}
+					case TINYGLTF_TYPE_VEC4: 
+					{
+						memcpy(sampler.m_values.data(), &buffer.data[accessor.byteOffset + buffer_view.byteOffset], accessor.count * sizeof(glm::vec4));
+						break;
+					}
+					default: 
+					{
+						LOG_FATAL("unknown gltf animation sampler's value type");
+						break;
+					}
+					}
+				}
+			}
+
+			// get animation channels
+			animation->m_channels.resize(gltf_animation.channels.size());
+			for (size_t i = 0; i < gltf_animation.channels.size(); ++i)
+			{
+				const tinygltf::AnimationChannel& gltf_channel = gltf_animation.channels[i];
+				AnimationChannel& channel = animation->m_channels[i];
+				ASSERT(gltf_channel.target_path == "rotation" || gltf_channel.target_path == "translation" || gltf_channel.target_path == "scale", 
+					"gltf animation channel's target path must be rotation/translation/scale");
+
+				channel.m_path_type = gltf_channel.target_path == "rotation" ? AnimationChannel::EPathType::Rotation :
+					(gltf_channel.target_path == "translation" ? AnimationChannel::EPathType::Translation : AnimationChannel::EPathType::Scale);
+				channel.m_bone_name = gltf_model.nodes[gltf_channel.target_node].name;
+				channel.m_sampler_index = gltf_channel.sampler;
+			}
+
+			animation->inflate();
+			serializeAsset(animation);
+			m_assets[url] = animation;
+		}
+
 		return true;
 	}
 
@@ -619,10 +795,12 @@ namespace Bamboo
 			cereal::JSONOutputArchive archive(ofs);
 			switch (asset->getAssetType())
 			{
-				ARCHIVE_ASSET(Texture2D, asset);
-				ARCHIVE_ASSET(Material, asset);
-				ARCHIVE_ASSET(StaticMesh, asset);
-				ARCHIVE_ASSET(SkeletalMesh, asset);
+				SERIALIZE_ASSET(Texture2D, asset);
+				SERIALIZE_ASSET(Material, asset);
+				SERIALIZE_ASSET(StaticMesh, asset);
+				SERIALIZE_ASSET(SkeletalMesh, asset);
+				SERIALIZE_ASSET(Skeleton, asset);
+				SERIALIZE_ASSET(Animation, asset);
 			default:
 				break;
 			}
@@ -633,10 +811,12 @@ namespace Bamboo
 			cereal::BinaryOutputArchive archive(ofs);
 			switch (asset->getAssetType())
 			{
-				ARCHIVE_ASSET(Texture2D, asset);
-				ARCHIVE_ASSET(Material, asset);
-				ARCHIVE_ASSET(StaticMesh, asset);
-				ARCHIVE_ASSET(SkeletalMesh, asset);
+				SERIALIZE_ASSET(Texture2D, asset);
+				SERIALIZE_ASSET(Material, asset);
+				SERIALIZE_ASSET(StaticMesh, asset);
+				SERIALIZE_ASSET(SkeletalMesh, asset);
+				SERIALIZE_ASSET(Skeleton, asset);
+				SERIALIZE_ASSET(Animation, asset);
 			default:
 				break;
 			}
