@@ -18,21 +18,9 @@ namespace Bamboo
 	private:
 		friend class cereal::access;
 		template<class Archive>
-		void archive(Archive& ar) const
+		void serialize(Archive& ar)
 		{
 			ar(m_path_type, m_bone_name, m_sampler_index);
-		}
-
-		template<class Archive>
-		void save(Archive& ar) const
-		{
-			archive(ar);
-		}
-
-		template<class Archive>
-		void load(Archive& ar)
-		{
-			archive(ar);
 		}
 	};
 
@@ -50,29 +38,15 @@ namespace Bamboo
 	private:
 		friend class cereal::access;
 		template<class Archive>
-		void archive(Archive& ar) const
+		void serialize(Archive& ar)
 		{
 			ar(m_interp_type, m_times, m_values);
-		}
-
-		template<class Archive>
-		void save(Archive& ar) const
-		{
-			archive(ar);
-		}
-
-		template<class Archive>
-		void load(Archive& ar)
-		{
-			archive(ar);
 		}
 	};
 
 	class Animation : public Asset
 	{
 	public:
-		Animation(const URL& url);
-
 		std::string m_name;
 		std::vector<AnimationSampler> m_samplers;
 		std::vector<AnimationChannel> m_channels;
@@ -86,21 +60,9 @@ namespace Bamboo
 	private:
 		friend class cereal::access;
 		template<class Archive>
-		void archive(Archive& ar) const
+		void serialize(Archive& ar)
 		{
 			ar(m_name, m_samplers, m_channels);
-		}
-
-		template<class Archive>
-		void save(Archive& ar) const
-		{
-			archive(ar);
-		}
-
-		template<class Archive>
-		void load(Archive& ar)
-		{
-			archive(ar);
 		}
 	};
 }

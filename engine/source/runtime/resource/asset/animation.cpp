@@ -4,12 +4,6 @@
 namespace Bamboo
 {
 
-	Animation::Animation(const URL& url) : Asset(url)
-	{
-		m_asset_type = EAssetType::Animation;
-		m_archive_type = EArchiveType::Json;
-	}
-
 	void Animation::inflate()
 	{
 		m_start_time = std::numeric_limits<float>::max();

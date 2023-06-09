@@ -6,6 +6,7 @@
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/function/render/render_system.h"
 #include "runtime/resource/asset/asset_manager.h"
+#include "runtime/core/vulkan/vulkan_rhi.h"
 
 namespace Bamboo
 {
@@ -29,23 +30,26 @@ namespace Bamboo
         window_ci.title = m_config_manager->getWindowTitle();
         m_window_system->init(window_ci);
 
+        VulkanRHI::instance().init();
+
+		m_asset_manager = std::make_shared<AssetManager>();
+		m_asset_manager->init();
+
         m_world_manager = std::make_shared<WorldManager>();
         m_world_manager->init();
 
         m_render_system = std::make_shared<RenderSystem>();
         m_render_system->init();
-
-        m_asset_manager = std::make_shared<AssetManager>();
-        m_asset_manager->init();
     }
 
     void RuntimeContext::destroy()
     {
         // destroy with reverse initialize order
-        m_asset_manager->destroy();
         m_render_system->destroy();
         m_world_manager->destroy();
-        m_window_system->destroy();
+		m_asset_manager->destroy();
+        VulkanRHI::instance().destroy();
+		m_window_system->destroy();
         m_config_manager->destroy();
         m_file_system->destroy();
         m_log_system->destroy();

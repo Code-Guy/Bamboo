@@ -15,25 +15,18 @@ namespace Bamboo
 		 .property("m_emissive_texure", &Material::m_emissive_texure);
 	}
 
-	Material::Material(const URL& url) : Asset(url)
+	void Material::bindRefs()
 	{
-		m_asset_type = EAssetType::Material;
-		m_archive_type = EArchiveType::Json;
+		if (m_base_color_texure)
+		{
+			return;
+		}
 
-		m_base_color_factor = glm::vec4(1.0f);
-		m_emissive_factor = glm::vec4(1.0f);
-		m_metallic_factor = 1.0f;
-		m_roughness_factor = 1.0f;
-	}
-
-	void Material::onBindRefs()
-	{
 		for (const auto& iter : m_ref_urls)
 		{
 			std::shared_ptr<Texture2D> texture = g_runtime_context.assetManager()->loadAsset<Texture2D>(iter.second);
 			rttr::type::get(*this).get_property(iter.first).set_value(*this, texture);
 		}
-		
 	}
 
 }

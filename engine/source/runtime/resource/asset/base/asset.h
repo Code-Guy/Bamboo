@@ -23,11 +23,6 @@ namespace Bamboo
 		Invalid, Texture2D, TextureCube, Material, Skeleton, StaticMesh, SkeletalMesh, Animation
 	};
 
-	enum class EArchiveType
-	{
-		Json, Binary
-	};
-
 	class IAssetRef
 	{
 	public:
@@ -35,43 +30,26 @@ namespace Bamboo
 		std::map<std::string, URL> m_ref_urls;
 
 	protected:
-		virtual void onBindRefs() = 0;
+		virtual void bindRefs() = 0;
 
 	private:
 		friend class cereal::access;
 		template<class Archive>
-		void archive(Archive& ar) const
+		void serialize(Archive& ar)
 		{
 			ar(m_ref_urls);
-		}
 
-		template<class Archive>
-		void save(Archive& ar) const
-		{
-			archive(ar);
-		}
-
-		template<class Archive>
-		void load(Archive& ar)
-		{
-			archive(ar);
-
-			onBindRefs();
+			bindRefs();
 		}
 	};
 
     class Asset
     {
     public:
-		Asset() = default;
-        Asset(const URL& url);
-
-        virtual ~Asset() = default;
-
+		void setURL(const URL& url);
 		const URL& getURL() { return m_url; }
 		const std::string& getName() { return m_name; }
 		EAssetType getAssetType() { return m_asset_type; }
-		EArchiveType getArchiveType() { return m_archive_type; }
 
 		virtual void inflate() {}
 
@@ -79,10 +57,9 @@ namespace Bamboo
         URL m_url;
 		std::string m_name;
         EAssetType m_asset_type;
-        EArchiveType m_archive_type;
 
     private:
-		
+
     };
 }
 

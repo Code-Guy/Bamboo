@@ -16,21 +16,9 @@ namespace Bamboo
 	private:
 		friend class cereal::access;
 		template<class Archive>
-		void archive(Archive& ar) const
+		void serialize(Archive& ar)
 		{
 			ar(m_min, m_max);
-		}
-
-		template<class Archive>
-		void save(Archive& ar) const
-		{
-			archive(ar);
-		}
-
-		template<class Archive>
-		void load(Archive& ar)
-		{
-			archive(ar);
 		}
 	};
 }

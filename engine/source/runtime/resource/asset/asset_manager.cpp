@@ -23,6 +23,16 @@
 		archive(std::dynamic_pointer_cast<##type>(asset)); \
 	break
 
+#define DESERIALIZE_ASSET(type, url) \
+	case EAssetType:: ##type: \
+	{ \
+		std::shared_ptr<##type> asset = std::make_shared<##type>(); \
+		archive(asset); \
+		asset->setURL(url); \
+		asset->inflate(); \
+		return asset; \
+	} \
+
 #define REFERENCE_ASSET(object, prop_name, ref_asset) \
 	object-> ##prop_name = ref_asset; \
 	object->m_ref_urls[#prop_name] = ref_asset->getURL()
@@ -34,15 +44,30 @@ namespace Bamboo
 {
 	void AssetManager::init()
 	{
-		m_asset_exts = {
-			{ EAssetType::Texture2D, "tex"},
-			{ EAssetType::TextureCube, "texc"}, 
-			{ EAssetType::Material, "mat"}, 
-			{ EAssetType::Skeleton, "skl"},
-			{ EAssetType::StaticMesh, "sm"}, 
-			{ EAssetType::SkeletalMesh, "skm"}, 
-			{ EAssetType::Animation, "anim"}
+		m_asset_type_exts = {
+			{ EAssetType::Texture2D, "tex" },
+			{ EAssetType::TextureCube, "texc" }, 
+			{ EAssetType::Material, "mat" }, 
+			{ EAssetType::Skeleton, "skl" },
+			{ EAssetType::StaticMesh, "sm "}, 
+			{ EAssetType::SkeletalMesh, "skm" }, 
+			{ EAssetType::Animation, "anim" }
 		};
+
+		m_asset_archive_types = {
+			{ EAssetType::Texture2D, EArchiveType::Binary },
+			{ EAssetType::TextureCube, EArchiveType::Binary },
+			{ EAssetType::Material, EArchiveType::Json },
+			{ EAssetType::Skeleton, EArchiveType::Binary },
+			{ EAssetType::StaticMesh, EArchiveType::Binary },
+			{ EAssetType::SkeletalMesh, EArchiveType::Binary },
+			{ EAssetType::Animation, EArchiveType::Binary }
+		};
+
+		for (const auto& iter : m_asset_type_exts)
+		{
+			m_ext_asset_types[iter.second] = iter.first;
+		}
 	}
 
 	void AssetManager::destroy()
@@ -68,9 +93,11 @@ namespace Bamboo
 		}
 	}
 
-	std::shared_ptr<Asset> AssetManager::loadAssetImpl(const URL& url)
+	Bamboo::EAssetType AssetManager::getAssetType(const URL& url)
 	{
-		return nullptr;
+		std::string extension = g_runtime_context.fileSystem()->extension(url);
+		EAssetType asset_type = m_ext_asset_types[extension];
+		return asset_type;
 	}
 
 	VkFilter getVkFilterFromGltf(int gltf_filter)
@@ -135,11 +162,10 @@ namespace Bamboo
 		return matrix;
 	}
 
-	bool validateGltfNode(const tinygltf::Node* node, const tinygltf::Model& gltf_model)
+	bool validateGltfMeshNode(const tinygltf::Node* node, const tinygltf::Model& gltf_model)
 	{
 		if (node->mesh == INVALID_INDEX)
 		{
-			LOG_WARNING("ignore non-mesh gltf node");
 			return false;
 		}
 		
@@ -497,7 +523,8 @@ namespace Bamboo
 			EAssetType asset_type = EAssetType::Texture2D;
 			std::string asset_name = getAssetName(basename, gltf_texture.name, asset_type, asset_indices[asset_type]++);
 			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
-			std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>(url);
+			std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
+			texture->setURL(url);
 			importGltfTexture(gltf_model, gltf_image, gltf_sampler, static_cast<uint32_t>(textures.size()), texture);
 
 			texture->inflate();
@@ -514,7 +541,8 @@ namespace Bamboo
 			std::string asset_name = getAssetName(basename, gltf_material.name, asset_type, asset_indices[asset_type]++);
 			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
 
-			std::shared_ptr<Material> material = std::make_shared<Material>(url);
+			std::shared_ptr<Material> material = std::make_shared<Material>();
+			material->setURL(url);
 
 			material->m_base_color_factor = glm::make_vec4(gltf_material.pbrMetallicRoughness.baseColorFactor.data());
 			material->m_emissive_factor = glm::make_vec4(gltf_material.emissiveFactor.data());
@@ -570,7 +598,7 @@ namespace Bamboo
 
 				const glm::mat4& parent_matrix = node_pair.first;
 				const tinygltf::Node* parent_node = node_pair.second;
-				if (validateGltfNode(parent_node, gltf_model))
+				if (validateGltfMeshNode(parent_node, gltf_model))
 				{
 					nodes.push_back(node_pair);
 				}
@@ -590,7 +618,8 @@ namespace Bamboo
 			EAssetType asset_type = EAssetType::StaticMesh;
 			std::string asset_name = getAssetName(basename, basename, asset_type, asset_indices[asset_type]++);
 			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
-			std::shared_ptr<StaticMesh> static_mesh = std::make_shared<StaticMesh>(url);
+			std::shared_ptr<StaticMesh> static_mesh = std::make_shared<StaticMesh>();
+			static_mesh->setURL(url);
 			std::shared_ptr<SkeletalMesh> skeletal_mesh = nullptr;
 
 			std::vector<tinygltf::Primitive> primitives;
@@ -620,11 +649,13 @@ namespace Bamboo
 				std::shared_ptr<SkeletalMesh> skeletal_mesh = nullptr;
 				if (is_skeletal_mesh)
 				{
-					skeletal_mesh = std::make_shared<SkeletalMesh>(url);
+					skeletal_mesh = std::make_shared<SkeletalMesh>();
+					skeletal_mesh->setURL(url);
 				}
 				else
 				{
-					static_mesh = std::make_shared<StaticMesh>(url);
+					static_mesh = std::make_shared<StaticMesh>();
+					static_mesh->setURL(url);
 				}
 
 				importGltfPrimitives(gltf_model, gltf_mesh.primitives, materials, node_pair.first, static_mesh, skeletal_mesh);
@@ -651,7 +682,8 @@ namespace Bamboo
 			std::string asset_name = getAssetName(basename, skin.name, asset_type, asset_indices[asset_type]++);
 			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
 
-			std::shared_ptr<Skeleton> skeleton = std::make_shared<Skeleton>(url);
+			std::shared_ptr<Skeleton> skeleton = std::make_shared<Skeleton>();
+			skeleton->setURL(url);
 			skeleton->m_name = skin.name;
 
 			uint32_t joint_count = static_cast<uint32_t>(skin.joints.size());
@@ -691,7 +723,8 @@ namespace Bamboo
 			std::string asset_name = getAssetName(basename, gltf_animation.name, asset_type, asset_indices[asset_type]++);
 			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
 
-			std::shared_ptr<Animation> animation = std::make_shared<Animation>(url);
+			std::shared_ptr<Animation> animation = std::make_shared<Animation>();
+			animation->setURL(url);
 			animation->m_name = gltf_animation.name;
 
 			// get animation samplers
@@ -772,28 +805,19 @@ namespace Bamboo
 		return true;
 	}
 
-	std::string AssetManager::getAssetName(const std::string& basename, const std::string& asset_name, EAssetType asset_type, int asset_index)
-	{
-		const std::string& ext = m_asset_exts[asset_type];
-		if (!asset_name.empty())
-		{
-			std::string asset_basename = g_runtime_context.fileSystem()->basename(asset_name);
-			return g_runtime_context.fileSystem()->format("%s_%s.%s", ext.c_str(), asset_basename.c_str(), ext.c_str());
-		}
-		return g_runtime_context.fileSystem()->format("%s_%s_%d.%s", ext.c_str(), basename.c_str(), asset_index, ext.c_str());
-	}
-
 	void AssetManager::serializeAsset(std::shared_ptr<Asset> asset)
 	{
+		EAssetType asset_type = asset->getAssetType();
+		EArchiveType archive_type = m_asset_archive_types[asset_type];
 		std::string filename = TO_ABSOLUTE(asset->getURL());
-		std::ofstream ofs(filename);
 
-		switch (asset->getArchiveType())
+		switch (archive_type)
 		{
 		case EArchiveType::Json:
 		{
+			std::ofstream ofs(filename);
 			cereal::JSONOutputArchive archive(ofs);
-			switch (asset->getAssetType())
+			switch (asset_type)
 			{
 				SERIALIZE_ASSET(Texture2D, asset);
 				SERIALIZE_ASSET(Material, asset);
@@ -801,15 +825,14 @@ namespace Bamboo
 				SERIALIZE_ASSET(SkeletalMesh, asset);
 				SERIALIZE_ASSET(Skeleton, asset);
 				SERIALIZE_ASSET(Animation, asset);
-			default:
-				break;
 			}
 		}
 		break;
 		case EArchiveType::Binary:
 		{
+			std::ofstream ofs(filename, std::ios::binary);
 			cereal::BinaryOutputArchive archive(ofs);
-			switch (asset->getAssetType())
+			switch (asset_type)
 			{
 				SERIALIZE_ASSET(Texture2D, asset);
 				SERIALIZE_ASSET(Material, asset);
@@ -817,8 +840,6 @@ namespace Bamboo
 				SERIALIZE_ASSET(SkeletalMesh, asset);
 				SERIALIZE_ASSET(Skeleton, asset);
 				SERIALIZE_ASSET(Animation, asset);
-			default:
-				break;
 			}
 		}
 		break;
@@ -827,8 +848,60 @@ namespace Bamboo
 		}
 	}
 
-	void AssetManager::deserializeAsset(std::shared_ptr<Asset> asset)
+	std::shared_ptr<Asset> AssetManager::deserializeAsset(const URL& url)
 	{
+		EAssetType asset_type = getAssetType(url);
+		EArchiveType archive_type = m_asset_archive_types[asset_type];
+		std::string filename = TO_ABSOLUTE(url);
+		
+		switch (archive_type)
+		{
+		case EArchiveType::Json:
+		{
+			std::ifstream ifs(filename);
+			cereal::JSONInputArchive archive(ifs);
+			switch (asset_type)
+			{
+				DESERIALIZE_ASSET(Texture2D, url);
+				DESERIALIZE_ASSET(Material, url);
+				DESERIALIZE_ASSET(StaticMesh, url);
+				DESERIALIZE_ASSET(SkeletalMesh, url);
+				DESERIALIZE_ASSET(Skeleton, url);
+				DESERIALIZE_ASSET(Animation, url);
+			}
+		}
+		break;
+		case EArchiveType::Binary:
+		{
+			std::ifstream ifs(filename, std::ios::binary);
+			cereal::BinaryInputArchive archive(ifs);
+			switch (asset_type)
+			{
+				DESERIALIZE_ASSET(Texture2D, url);
+				DESERIALIZE_ASSET(Material, url);
+				DESERIALIZE_ASSET(StaticMesh, url);
+				DESERIALIZE_ASSET(SkeletalMesh, url);
+				DESERIALIZE_ASSET(Skeleton, url);
+				DESERIALIZE_ASSET(Animation, url);
+			}
+		}
+		break;
+		default:
+			break;
+		}
 
+		LOG_FATAL("unknown asset type to deserialize");
+		return nullptr;
+	}
+
+	std::string AssetManager::getAssetName(const std::string& basename, const std::string& asset_name, EAssetType asset_type, int asset_index)
+	{
+		const std::string& ext = m_asset_type_exts[asset_type];
+		if (!asset_name.empty())
+		{
+			std::string asset_basename = g_runtime_context.fileSystem()->basename(asset_name);
+			return g_runtime_context.fileSystem()->format("%s_%s.%s", ext.c_str(), asset_basename.c_str(), ext.c_str());
+		}
+		return g_runtime_context.fileSystem()->format("%s_%s_%d.%s", ext.c_str(), basename.c_str(), asset_index, ext.c_str());
 	}
 }

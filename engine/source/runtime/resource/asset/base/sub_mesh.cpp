@@ -11,12 +11,17 @@ namespace Bamboo
 		 .property("m_material", &SubMesh::m_material);
 	}
 
-	void SubMesh::onBindRefs()
+	void SubMesh::bindRefs()
 	{
+		if (m_material)
+		{
+			return;
+		}
+
 		for (const auto& iter : m_ref_urls)
 		{
-			std::shared_ptr<Texture2D> texture = g_runtime_context.assetManager()->loadAsset<Texture2D>(iter.second);
-			rttr::type::get(*this).get_property(iter.first).set_value(*this, texture);
+			std::shared_ptr<Material> material = g_runtime_context.assetManager()->loadAsset<Material>(iter.second);
+			rttr::type::get(*this).get_property(iter.first).set_value(*this, material);
 		}
 	}
 

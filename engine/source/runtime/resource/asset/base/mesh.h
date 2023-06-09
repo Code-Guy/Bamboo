@@ -7,12 +7,29 @@ struct StaticVertex
 	glm::vec3 m_position;
 	glm::vec2 m_tex_coord;
 	glm::vec3 m_normal;
+
+private:
+	friend class cereal::access;
+	template<class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(m_position, m_tex_coord, m_normal);
+	}
 };
 
 struct SkeletalVertex : public StaticVertex
 {
 	glm::ivec4 m_bones;
 	glm::vec4 m_weights;
+
+private:
+	friend class cereal::access;
+	template<class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(cereal::base_class<StaticVertex>(this));
+		ar(m_bones, m_weights);
+	}
 };
 
 namespace Bamboo
@@ -32,22 +49,10 @@ namespace Bamboo
 	private:
 		friend class cereal::access;
 		template<class Archive>
-		void archive(Archive& ar) const
+		void serialize(Archive& ar)
 		{
 			ar(m_sub_meshes);
-			ar(m_indices.size());
-		}
-
-		template<class Archive>
-		void save(Archive& ar) const
-		{
-			archive(ar);
-		}
-
-		template<class Archive>
-		void load(Archive& ar)
-		{
-			archive(ar);
+			ar(m_indices);
 		}
 	};
 }

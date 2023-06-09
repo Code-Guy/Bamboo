@@ -16,28 +16,16 @@ namespace Bamboo
 		BoundingBox m_bounding_box;
 
 	protected:
-		virtual void onBindRefs() override;
+		virtual void bindRefs() override;
 
 	private:
 		friend class cereal::access;
 		template<class Archive>
-		void archive(Archive& ar) const
+		void serialize(Archive& ar)
 		{
 			ar(cereal::base_class<IAssetRef>(this));
 			ar(m_first_index, m_index_count, m_vertex_count);
 			ar(m_bounding_box);
-		}
-
-		template<class Archive>
-		void save(Archive& ar) const
-		{
-			archive(ar);
-		}
-
-		template<class Archive>
-		void load(Archive& ar)
-		{
-			archive(ar);
 		}
 	};
 }

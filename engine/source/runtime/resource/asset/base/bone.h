@@ -31,22 +31,10 @@ namespace Bamboo
 	private:
 		friend class cereal::access;
 		template<class Archive>
-		void archive(Archive& ar) const
+		void serialize(Archive& ar)
 		{
 			ar(m_name, m_parent, m_children);
 			ar(m_local_bind_pose_matrix, m_global_inverse_bind_pose_matrix);
-		}
-
-		template<class Archive>
-		void save(Archive& ar) const
-		{
-			archive(ar);
-		}
-
-		template<class Archive>
-		void load(Archive& ar)
-		{
-			archive(ar);
 		}
 
 		QTranform m_anim_transform;

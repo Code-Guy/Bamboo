@@ -3,13 +3,6 @@
 
 namespace Bamboo
 {
-
-	Texture2D::Texture2D(const URL& url) : Asset(url)
-	{
-		m_asset_type = EAssetType::Texture2D;
-		m_archive_type = EArchiveType::Json;
-	}
-
 	void Texture2D::inflate()
 	{
 		// create staging buffer

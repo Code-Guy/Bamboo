@@ -4,12 +4,6 @@
 namespace Bamboo
 {
 
-	Skeleton::Skeleton(const URL& url) : Asset(url)
-	{
-		m_asset_type = EAssetType::Skeleton;
-		m_archive_type = EArchiveType::Json;
-	}
-
 	void Skeleton::inflate()
 	{
 		for (size_t i = 0; i < m_bones.size(); ++i)

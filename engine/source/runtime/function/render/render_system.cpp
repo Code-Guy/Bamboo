@@ -6,7 +6,7 @@ namespace Bamboo
 
 	void RenderSystem::init()
 	{
-		VulkanRHI::instance().init();
+		
 	}
 
 	void RenderSystem::tick(float delta_time)
@@ -16,7 +16,7 @@ namespace Bamboo
 
 	void RenderSystem::destroy()
 	{
-		VulkanRHI::instance().destroy();
+
 	}
 
 }
