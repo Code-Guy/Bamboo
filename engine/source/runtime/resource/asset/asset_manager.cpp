@@ -30,6 +30,7 @@
 		archive(asset); \
 		asset->setURL(url); \
 		asset->inflate(); \
+		m_assets[url] = asset; \
 		return asset; \
 	} \
 
@@ -850,6 +851,18 @@ namespace Bamboo
 
 	std::shared_ptr<Asset> AssetManager::deserializeAsset(const URL& url)
 	{
+		// check if the asset url exists
+		if (!g_runtime_context.fileSystem()->exists(url))
+		{
+			return nullptr;
+		}
+
+		// check if the asset has been loaded
+		if (m_assets.find(url) != m_assets.end())
+		{
+			return m_assets[url];
+		}
+
 		EAssetType asset_type = getAssetType(url);
 		EArchiveType archive_type = m_asset_archive_types[asset_type];
 		std::string filename = TO_ABSOLUTE(url);

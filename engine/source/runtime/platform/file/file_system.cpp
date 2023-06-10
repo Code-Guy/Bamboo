@@ -60,7 +60,7 @@ namespace Bamboo
 
 	bool FileSystem::exists(const std::string& path)
 	{
-		return std::filesystem::exists(path);
+		return std::filesystem::exists(path) || std::filesystem::exists(absolute(path));
 	}
 
 	bool FileSystem::create(const std::string& path)
