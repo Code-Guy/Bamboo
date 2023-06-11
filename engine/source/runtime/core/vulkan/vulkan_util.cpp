@@ -136,13 +136,13 @@ namespace Bamboo
 
 	void copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
 	{
-		VkCommandBuffer commandBuffer = beginInstantCommands();
+		VkCommandBuffer command_buffer = beginInstantCommands();
 
 		VkBufferCopy copy_region{};
 		copy_region.size = size;
-		vkCmdCopyBuffer(commandBuffer, src_buffer, dst_buffer, 1, &copy_region);
+		vkCmdCopyBuffer(command_buffer, src_buffer, dst_buffer, 1, &copy_region);
 
-		endInstantCommands(commandBuffer);
+		endInstantCommands(command_buffer);
 	}
 
 	void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,

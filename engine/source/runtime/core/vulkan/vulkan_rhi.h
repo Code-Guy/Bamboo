@@ -14,12 +14,20 @@ namespace Bamboo
 		void render();
 		void destroy();
 
+		VkInstance getInstance() { return m_instance; }
+		VkPhysicalDevice getPhysicalDevice() { return m_physical_device; }
+		VkPhysicalDeviceProperties getPhysicalDeviceProperties() { return m_physical_device_properties; }
 		VkDevice getDevice() { return m_device; }
+		uint32_t getGraphicsQueueFamily() { return m_queue_family_indices.graphics; }
 		VkQueue getGraphicsQueue() { return m_graphics_queue; }
 		VkQueue getTransferQueue() { return m_transfer_queue; }
 		VmaAllocator getAllocator() { return m_allocator; }
+		uint32_t getSwapchainImageCount() { return m_swapchain_image_count; }
+		const std::vector<VkImageView>& getSwapchainImageViews() { return m_swapchain_image_views; }
+		const VkExtent2D& getSwapchainImageSize() { return m_extent; }
+		uint32_t getImageIndex() { return m_image_index; }
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
-		VkPhysicalDeviceProperties getPhysicalDeviceProperties() { return m_physical_device_properties; }
+		VkCommandBuffer getCommandBuffer() { return m_command_buffers[m_flight_index]; }
 
 		static VulkanRHI& instance()
 		{

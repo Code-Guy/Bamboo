@@ -256,7 +256,7 @@ namespace Bamboo
 		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		// depth attachment
 		attachments[1].format = m_depth_format;
@@ -289,22 +289,13 @@ namespace Bamboo
 		subpass_desc.pResolveAttachments = nullptr;
 
 		// subpass dependencies
-		std::array<VkSubpassDependency, 2> dependencies{};
-		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass = 0;
-		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		dependencies[0].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-		dependencies[0].dependencyFlags = 0;
-
-		dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[1].dstSubpass = 0;
-		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[1].srcAccessMask = 0;
-		dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-		dependencies[1].dependencyFlags = 0;
+		VkSubpassDependency dependency{};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 		// create render pass
 		VkRenderPassCreateInfo render_pass_ci{};
@@ -313,8 +304,8 @@ namespace Bamboo
 		render_pass_ci.pAttachments = attachments.data();
 		render_pass_ci.subpassCount = 1;
 		render_pass_ci.pSubpasses = &subpass_desc;
-		render_pass_ci.dependencyCount = static_cast<uint32_t>(dependencies.size());
-		render_pass_ci.pDependencies = dependencies.data();
+		render_pass_ci.dependencyCount = 1;
+		render_pass_ci.pDependencies = &dependency;
 
 		vkCreateRenderPass(m_device, &render_pass_ci, nullptr, &m_render_pass);
 	}
