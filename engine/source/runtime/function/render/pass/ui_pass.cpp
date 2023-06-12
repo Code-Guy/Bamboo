@@ -1,4 +1,5 @@
 #include "ui_pass.h"
+#include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/function/render/window_system.h"
 #include <imgui/imgui.h>
@@ -17,7 +18,7 @@ namespace Bamboo
 		// setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
@@ -41,7 +42,7 @@ namespace Bamboo
 
 		// create renderpass
 		VkAttachmentDescription attachment{};
-		attachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+		attachment.format = VulkanRHI::instance().getSurfaceFormat().format;
 		attachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 		attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -94,7 +95,8 @@ namespace Bamboo
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.Allocator = nullptr;
 		init_info.CheckVkResultFn = &checkVkResult;
-		ImGui_ImplVulkan_Init(&init_info, m_render_pass);
+		bool is_success = ImGui_ImplVulkan_Init(&init_info, m_render_pass);
+		ASSERT(is_success, "failed to init imgui");
 
 		// upload fonts
 		VkCommandBuffer command_buffer = beginInstantCommands();
@@ -106,20 +108,43 @@ namespace Bamboo
 		createSwapchainObjects();
 	}
 
-	void UIPass::render()
+	void UIPass::prepare()
 	{
 		// process imgui frame and get draw data
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		ImGui::Render();
-		ImDrawData* imgui_draw_data = ImGui::GetDrawData();
 
-		// TODO
 		// setup imgui widgets
+		static float f = 0.0f;
+		static int counter = 0;
+		bool show_demo_window = true;
+		bool show_another_window = false;
+		ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
+		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-		// start render pass
+		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+		ImGui::Checkbox("Another Window", &show_another_window);
+
+		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+			counter++;
+		ImGui::SameLine();
+		ImGui::Text("counter = %d", counter);
+
+		ImGui::End();
+
+		// calculate imgui draw data
+		ImGui::Render();
+	}
+
+	void UIPass::record()
+	{
+		// record render pass
 		VkRenderPassBeginInfo renderpass_bi{};
 		renderpass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderpass_bi.renderPass = m_render_pass;
@@ -134,7 +159,7 @@ namespace Bamboo
 		vkCmdBeginRenderPass(command_buffer, &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
 		// record dear imgui primitives into command buffer
-		ImGui_ImplVulkan_RenderDrawData(imgui_draw_data, command_buffer);
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer);
 
 		vkCmdEndRenderPass(command_buffer);
 	}
@@ -145,9 +170,6 @@ namespace Bamboo
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
-
-		// destroy swapchain related objects
-		destroySwapchainObjects();
 
 		vkDestroyRenderPass(VulkanRHI::instance().getDevice(), m_render_pass, nullptr);
 		vkDestroyDescriptorPool(VulkanRHI::instance().getDevice(), m_descriptor_pool, nullptr);
@@ -165,7 +187,10 @@ namespace Bamboo
 		framebuffer_ci.width = VulkanRHI::instance().getSwapchainImageSize().width;
 		framebuffer_ci.height = VulkanRHI::instance().getSwapchainImageSize().height;
 		framebuffer_ci.layers = 1;
-		for (uint32_t i = 0; i < VulkanRHI::instance().getSwapchainImageCount(); ++i)
+
+		uint32_t image_count = VulkanRHI::instance().getSwapchainImageCount();
+		m_framebuffers.resize(image_count);
+		for (uint32_t i = 0; i < image_count; ++i)
 		{
 			image_view = VulkanRHI::instance().getSwapchainImageViews()[i];
 			VkResult result = vkCreateFramebuffer(VulkanRHI::instance().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);

@@ -10,5 +10,7 @@ layout(location = 0) in struct {
 
 void main()
 {
-    fColor = In.Color * texture(sTexture, In.UV.st);
+    vec4 SRGBColor = In.Color;
+    SRGBColor.xyz = pow(SRGBColor.xyz, vec3(2.2));
+    fColor = SRGBColor * texture(sTexture, In.UV.st);
 }

@@ -32,6 +32,7 @@ namespace Bamboo
 	void VulkanRHI::render()
 	{
 		waitFrame();
+		prepareFrame();
 		recordFrame();
 		submitFrame();
 		presentFrame();
@@ -39,7 +40,15 @@ namespace Bamboo
 
 	void VulkanRHI::destroy()
 	{
+		// wait all gpu operations done
 		vkDeviceWaitIdle(m_device);
+
+		// destroy all render passes
+		for (auto& render_pass : m_render_passes)
+		{
+			render_pass->destroy();
+		}
+
 		vkDestroyPipelineCache(m_device, m_pipeline_cache, nullptr);
 		
 		for (VkSemaphore image_avaliable_semaphore : m_image_avaliable_semaphores)
@@ -355,6 +364,12 @@ namespace Bamboo
 			attachments[0] = m_swapchain_image_views[i];
 			vkCreateFramebuffer(m_device, &framebuffer_ci, nullptr, &m_framebuffers[i]);
 		}
+
+		// 4.create all render passes' swapchain related objects
+		for (auto& render_pass : m_render_passes)
+		{
+			render_pass->createSwapchainObjects();
+		}
 	}
 
 	void VulkanRHI::destroySwapchainObjects()
@@ -372,6 +387,12 @@ namespace Bamboo
 		for (VkFramebuffer framebuffer : m_framebuffers)
 		{
 			vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+		}
+
+		// 4.destroy all render passes' swapchain related objects
+		for (auto& render_pass : m_render_passes)
+		{
+			render_pass->destroySwapchainObjects();
 		}
 	}
 
@@ -477,6 +498,15 @@ namespace Bamboo
 		ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "failed to acquire swapchain image!");
 	}
 
+	void VulkanRHI::prepareFrame()
+	{
+		// prepare all render passes
+		for (auto& render_pass : m_render_passes)
+		{
+			render_pass->prepare();
+		}
+	}
+
 	void VulkanRHI::recordFrame()
 	{
 		VkCommandBuffer command_buffer = m_command_buffers[m_flight_index];
@@ -521,6 +551,12 @@ namespace Bamboo
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
 		vkCmdEndRenderPass(command_buffer);
+
+		// record all render passes
+		for (auto& render_pass : m_render_passes)
+		{
+			render_pass->record();
+		}
 
 		vkEndCommandBuffer(command_buffer);
 	}

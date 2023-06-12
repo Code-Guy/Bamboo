@@ -1,7 +1,6 @@
 #pragma once
 
-#include "vulkan_util.h"
-
+#include "render_pass.h"
 #include <string>
 #include <vector>
 
@@ -17,6 +16,7 @@ namespace Bamboo
 		VkInstance getInstance() { return m_instance; }
 		VkPhysicalDevice getPhysicalDevice() { return m_physical_device; }
 		VkPhysicalDeviceProperties getPhysicalDeviceProperties() { return m_physical_device_properties; }
+		VkSurfaceFormatKHR getSurfaceFormat() { return m_surface_format; }
 		VkDevice getDevice() { return m_device; }
 		uint32_t getGraphicsQueueFamily() { return m_queue_family_indices.graphics; }
 		VkQueue getGraphicsQueue() { return m_graphics_queue; }
@@ -28,6 +28,8 @@ namespace Bamboo
 		uint32_t getImageIndex() { return m_image_index; }
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
 		VkCommandBuffer getCommandBuffer() { return m_command_buffers[m_flight_index]; }
+
+		void addRenderPass(std::shared_ptr<RenderPass> render_pass) { m_render_passes.push_back(render_pass); }
 
 		static VulkanRHI& instance()
 		{
@@ -69,6 +71,7 @@ namespace Bamboo
 		void createPipelineCache();
 
 		void waitFrame();
+		void prepareFrame();
 		void recordFrame();
 		void submitFrame();
 		void presentFrame();
@@ -142,5 +145,8 @@ namespace Bamboo
 		std::vector<VkSemaphore> m_render_finished_semaphores;
 		std::vector<VkFence> m_flight_fences;
 		std::vector<VkCommandBuffer> m_command_buffers;
+
+		// render passes
+		std::vector<std::shared_ptr<RenderPass>> m_render_passes;
 	};
 }
