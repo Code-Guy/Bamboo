@@ -21,6 +21,7 @@ namespace Bamboo
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 		// setup Dear ImGui style
 		ImGui::StyleColorsDark();
@@ -99,6 +100,7 @@ namespace Bamboo
 		ASSERT(is_success, "failed to init imgui");
 
 		// upload fonts
+		io.Fonts->AddFontFromFileTTF(g_runtime_context.fileSystem()->absolute("asset/font/consola.ttf").c_str(), 14.0f);
 		VkCommandBuffer command_buffer = beginInstantCommands();
 		ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
 		endInstantCommands(command_buffer);
@@ -122,7 +124,45 @@ namespace Bamboo
 		bool show_another_window = false;
 		ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
-		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+		ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+		dockspace_flags |= ImGuiDockNodeFlags_NoDockingInCentralNode;
+
+		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
+
+		ImGui::Begin("AAA");                          // Create a window called "Hello, world!" and append into it.
+
+		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+		ImGui::Checkbox("Another Window", &show_another_window);
+
+		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+			counter++;
+		ImGui::SameLine();
+		ImGui::Text("counter = %d", counter);
+
+		ImGui::End();
+
+
+		ImGui::Begin("BBB");                          // Create a window called "Hello, world!" and append into it.
+
+		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+		ImGui::Checkbox("Another Window", &show_another_window);
+
+		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+			counter++;
+		ImGui::SameLine();
+		ImGui::Text("counter = %d", counter);
+
+		ImGui::End();
+
+		ImGui::Begin("CCC");                          // Create a window called "Hello, world!" and append into it.
 
 		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
