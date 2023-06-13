@@ -1,18 +1,21 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
 namespace Bamboo
 {
-    class Engine;
     class Editor
     {
         public:
-            void init(Engine* engine);
+            void init(class Engine* engine);
             void destroy();
             void run();
 
         private:
             void onDrop(int n, const char** filenames);
 
-            Engine* m_engine;
+            class Engine* m_engine;
+            std::vector<std::shared_ptr<class EditorUI>> m_editor_uis;
     };
 }
