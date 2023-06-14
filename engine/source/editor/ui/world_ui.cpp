@@ -3,9 +3,14 @@
 namespace Bamboo
 {
 
-	void WorldUI::construct()
+	void WorldUI::init()
 	{
 		m_title = "World";
+	}
+
+	void WorldUI::construct()
+	{
+		EditorUI::construct();
 
 		ImGui::Begin(m_title.c_str());
 
@@ -15,6 +20,11 @@ namespace Bamboo
 		}
 		
 		ImGui::End();
+	}
+
+	void WorldUI::destroy()
+	{
+
 	}
 
 }

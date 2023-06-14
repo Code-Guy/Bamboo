@@ -94,7 +94,7 @@ namespace Bamboo
 		}
 	}
 
-	Bamboo::EAssetType AssetManager::getAssetType(const URL& url)
+	EAssetType AssetManager::getAssetType(const URL& url)
 	{
 		std::string extension = g_runtime_context.fileSystem()->extension(url);
 		EAssetType asset_type = m_ext_asset_types[extension];

@@ -1,11 +1,10 @@
 #pragma once
 
 #include "runtime/core/vulkan/render_pass.h"
-#include <functional>
 
 namespace Bamboo
 {
-	class UIPass : public RenderPass
+	class BasePass : public RenderPass
 	{
 	public:
 		virtual void init() override;
@@ -15,10 +14,11 @@ namespace Bamboo
 		virtual void createResizableObjects(uint32_t width, uint32_t height) override;
 		virtual void destroyResizableObjects() override;
 
-		void setConstructFunc(const std::function<void()>& construct_func) { m_construct_func = construct_func; }
+		VkImageView getColorImageView();
 
 	private:
-		std::function<void()> m_construct_func;
-		std::vector<VkFramebuffer> m_framebuffers;
+		VmaImageView m_depth_stencil_image_view;
+		VmaImageView m_color_image_view;
+		VkFramebuffer m_framebuffer;
 	};
 }

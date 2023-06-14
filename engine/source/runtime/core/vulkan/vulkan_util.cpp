@@ -8,7 +8,7 @@ namespace Bamboo
 	{
 		if (buffer != VK_NULL_HANDLE)
 		{
-			vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), buffer, allocation);
+			vmaDestroyBuffer(VulkanRHI::get().getAllocator(), buffer, allocation);
 		}
 	}
 
@@ -16,7 +16,7 @@ namespace Bamboo
 	{
 		if (image != VK_NULL_HANDLE)
 		{
-			vmaDestroyImage(VulkanRHI::instance().getAllocator(), image, allocation);
+			vmaDestroyImage(VulkanRHI::get().getAllocator(), image, allocation);
 		}
 	}
 
@@ -24,7 +24,7 @@ namespace Bamboo
 	{
 		if (view != VK_NULL_HANDLE)
 		{
-			vkDestroyImageView(VulkanRHI::instance().getDevice(), view, nullptr);
+			vkDestroyImageView(VulkanRHI::get().getDevice(), view, nullptr);
 		}
 		
 		vma_image.destroy();
@@ -42,6 +42,7 @@ namespace Bamboo
 			STR(INCOMPLETE);
 			STR(ERROR_OUT_OF_HOST_MEMORY);
 			STR(ERROR_OUT_OF_DEVICE_MEMORY);
+			STR(ERROR_OUT_OF_POOL_MEMORY);
 			STR(ERROR_INITIALIZATION_FAILED);
 			STR(ERROR_DEVICE_LOST);
 			STR(ERROR_MEMORY_MAP_FAILED);
@@ -84,11 +85,11 @@ namespace Bamboo
 		VkCommandBufferAllocateInfo command_buffer_ai{};
 		command_buffer_ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		command_buffer_ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		command_buffer_ai.commandPool = VulkanRHI::instance().getInstantCommandPool();
+		command_buffer_ai.commandPool = VulkanRHI::get().getInstantCommandPool();
 		command_buffer_ai.commandBufferCount = 1;
 
 		VkCommandBuffer command_buffer;
-		vkAllocateCommandBuffers(VulkanRHI::instance().getDevice(), &command_buffer_ai, &command_buffer);
+		vkAllocateCommandBuffers(VulkanRHI::get().getDevice(), &command_buffer_ai, &command_buffer);
 
 		VkCommandBufferBeginInfo command_buffer_bi{};
 		command_buffer_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -108,11 +109,11 @@ namespace Bamboo
 		submit_info.commandBufferCount = 1;
 		submit_info.pCommandBuffers = &command_buffer;
 
-		VkQueue queue = VulkanRHI::instance().getGraphicsQueue();
+		VkQueue queue = VulkanRHI::get().getGraphicsQueue();
 		vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
 		vkQueueWaitIdle(queue);
 
-		vkFreeCommandBuffers(VulkanRHI::instance().getDevice(), VulkanRHI::instance().getInstantCommandPool(), 1, &command_buffer);
+		vkFreeCommandBuffers(VulkanRHI::get().getDevice(), VulkanRHI::get().getInstantCommandPool(), 1, &command_buffer);
 	}
 
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer)
@@ -131,7 +132,7 @@ namespace Bamboo
 			alloc_ci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
 		}
 		
-		vmaCreateBuffer(VulkanRHI::instance().getAllocator(), &buffer_ci, &alloc_ci, &buffer.buffer, &buffer.allocation, nullptr);
+		vmaCreateBuffer(VulkanRHI::get().getAllocator(), &buffer_ci, &alloc_ci, &buffer.buffer, &buffer.allocation, nullptr);
 	}
 
 	void copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
@@ -174,7 +175,7 @@ namespace Bamboo
 		VmaAllocationCreateInfo vma_alloc_ci{};
 		vma_alloc_ci.usage = memory_usage;
 
-		VkResult result = vmaCreateImage(VulkanRHI::instance().getAllocator(), &image_ci, &vma_alloc_ci, &image.image, &image.allocation, nullptr);
+		VkResult result = vmaCreateImage(VulkanRHI::get().getAllocator(), &image_ci, &vma_alloc_ci, &image.image, &image.allocation, nullptr);
 		CHECK_VULKAN_RESULT(result, "vma create image");
 	}
 
@@ -193,7 +194,7 @@ namespace Bamboo
 		image_view_ci.subresourceRange.layerCount = 1;
 
 		VkImageView image_view;
-		vkCreateImageView(VulkanRHI::instance().getDevice(), &image_view_ci, nullptr, &image_view);
+		vkCreateImageView(VulkanRHI::get().getDevice(), &image_view_ci, nullptr, &image_view);
 
 		return image_view;
 	}
@@ -209,7 +210,7 @@ namespace Bamboo
 		sampler_ci.addressModeV = address_mode_v;
 		sampler_ci.addressModeW = address_mode_w;
 		sampler_ci.anisotropyEnable = true;
-		sampler_ci.maxAnisotropy = VulkanRHI::instance().getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
+		sampler_ci.maxAnisotropy = VulkanRHI::get().getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
 		sampler_ci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 		sampler_ci.unnormalizedCoordinates = VK_FALSE;
 		sampler_ci.compareEnable = VK_FALSE;
@@ -220,7 +221,7 @@ namespace Bamboo
 		sampler_ci.maxLod = static_cast<float>(mip_levels);
 
 		VkSampler sampler;
-		vkCreateSampler(VulkanRHI::instance().getDevice(), &sampler_ci, nullptr, &sampler);
+		vkCreateSampler(VulkanRHI::get().getDevice(), &sampler_ci, nullptr, &sampler);
 
 		return sampler;
 	}
@@ -235,9 +236,9 @@ namespace Bamboo
 
 		// copy vertex staging_buffer_data to staging buffer
 		void* staging_buffer_data;
-		vmaMapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
+		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
 		memcpy(staging_buffer_data, vertex_data, static_cast<size_t>(buffer_size));
-		vmaUnmapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation);
+		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation);
 
 		createBuffer(buffer_size,
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -246,7 +247,7 @@ namespace Bamboo
 
 		copyBuffer(staging_buffer.buffer, vertex_buffer.buffer, buffer_size);
 
-		vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
+		vmaDestroyBuffer(VulkanRHI::get().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
 	}
 
 	void createIndexBuffer(const std::vector<uint32_t>& indices, VmaBuffer& index_buffer)
@@ -261,9 +262,9 @@ namespace Bamboo
 
 		// copy index data to staging buffer
 		void* staging_buffer_data;
-		vmaMapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
+		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
 		memcpy(staging_buffer_data, indices.data(), static_cast<size_t>(buffer_size));
-		vmaUnmapMemory(VulkanRHI::instance().getAllocator(), staging_buffer.allocation);
+		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation);
 
 		createBuffer(buffer_size,
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -272,10 +273,53 @@ namespace Bamboo
 
 		copyBuffer(staging_buffer.buffer, index_buffer.buffer, buffer_size);
 
-		vmaDestroyBuffer(VulkanRHI::instance().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
+		vmaDestroyBuffer(VulkanRHI::get().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
 	}
 
-	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t mip_levels)
+	VkAccessFlags accessFlagsForImageLayout(VkImageLayout layout)
+	{
+		switch (layout)
+		{
+		case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			return VK_ACCESS_HOST_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+			return VK_ACCESS_TRANSFER_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			return VK_ACCESS_TRANSFER_READ_BIT;
+		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			return VK_ACCESS_SHADER_READ_BIT;
+		default:
+			return VK_IMAGE_LAYOUT_UNDEFINED;
+		}
+	}
+
+	VkPipelineStageFlags pipelineStageForLayout(VkImageLayout layout)
+	{
+		switch (layout)
+		{
+		case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+		case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+			return VK_PIPELINE_STAGE_TRANSFER_BIT;
+		case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+			return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+			return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+			return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		case VK_IMAGE_LAYOUT_PREINITIALIZED:
+			return VK_PIPELINE_STAGE_HOST_BIT;
+		case VK_IMAGE_LAYOUT_UNDEFINED:
+			return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		default:
+			return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		}
+	}
+
+	void transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkFormat format, uint32_t mip_levels)
 	{
 		VkCommandBuffer command_buffer = beginInstantCommands();
 
@@ -309,38 +353,10 @@ namespace Bamboo
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = 1;
 
-		VkPipelineStageFlags src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		VkPipelineStageFlags dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-		// enumerate all possible image layout combination
-		if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-		{
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-			src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			dst_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		}
-		else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-		{
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-			src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-			dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		}
-		else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-		{
-			barrier.srcAccessMask = 0;
-			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-			src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			dst_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		}
-		else
-		{
-			LOG_FATAL("unsupported image layout transition");
-		}
+		VkPipelineStageFlags src_stage = pipelineStageForLayout(old_layout);
+		VkPipelineStageFlags dst_stage = pipelineStageForLayout(new_layout);
+		barrier.srcAccessMask = accessFlagsForImageLayout(old_layout);
+		barrier.dstAccessMask = accessFlagsForImageLayout(new_layout);
 
 		vkCmdPipelineBarrier(
 			command_buffer,

@@ -22,7 +22,6 @@ namespace Bamboo
 		createVmaAllocator();
 
 		createSwapchain();
-		createRenderPass();
 		createSwapchainObjects();
 		createCommandPools();
 		createCommandBuffers();
@@ -46,7 +45,7 @@ namespace Bamboo
 		// destroy all render passes
 		for (auto& render_pass : m_render_passes)
 		{
-			render_pass->destroy();
+			render_pass.second->destroy();
 		}
 
 		vkDestroyPipelineCache(m_device, m_pipeline_cache, nullptr);
@@ -68,7 +67,6 @@ namespace Bamboo
 		vkDestroyCommandPool(m_device, m_instant_command_pool, nullptr);
 		vkDestroyCommandPool(m_device, m_command_pool, nullptr);
 
-		vkDestroyRenderPass(m_device, m_render_pass, nullptr);
 		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 
 #if ENABLE_VALIDATION_LAYER
@@ -253,72 +251,6 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create swapchain");
 	}
 
-	void VulkanRHI::createRenderPass()
-	{
-		std::array<VkAttachmentDescription, 2> attachments{};
-
-		// color attachment
-		attachments[0].format = m_surface_format.format;
-		attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		// depth attachment
-		attachments[1].format = m_depth_format;
-		attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference color_reference{};
-		color_reference.attachment = 0;
-		color_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference depth_reference{};
-		depth_reference.attachment = 1;
-		depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		// subpass
-		VkSubpassDescription subpass_desc{};
-		subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass_desc.colorAttachmentCount = 1;
-		subpass_desc.pColorAttachments = &color_reference;
-		subpass_desc.pDepthStencilAttachment = &depth_reference;
-		subpass_desc.inputAttachmentCount = 0;
-		subpass_desc.pInputAttachments = nullptr;
-		subpass_desc.preserveAttachmentCount = 0;
-		subpass_desc.pPreserveAttachments = nullptr;
-		subpass_desc.pResolveAttachments = nullptr;
-
-		// subpass dependencies
-		VkSubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependency.srcAccessMask = 0;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-		// create render pass
-		VkRenderPassCreateInfo render_pass_ci{};
-		render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_ci.attachmentCount = static_cast<uint32_t>(attachments.size());
-		render_pass_ci.pAttachments = attachments.data();
-		render_pass_ci.subpassCount = 1;
-		render_pass_ci.pSubpasses = &subpass_desc;
-		render_pass_ci.dependencyCount = 1;
-		render_pass_ci.pDependencies = &dependency;
-
-		vkCreateRenderPass(m_device, &render_pass_ci, nullptr, &m_render_pass);
-	}
-
 	void VulkanRHI::createSwapchainObjects()
 	{
 		// 1.get swapchain images
@@ -337,38 +269,10 @@ namespace Bamboo
 			m_swapchain_image_views[i] = createImageView(swapchain_images[i], m_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		}
 
-		// 2.create depth stencil image and view
-		createImageAndView(m_extent.width, m_extent.height, 1, VK_SAMPLE_COUNT_1_BIT, 
-			m_depth_format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_ASPECT_DEPTH_BIT, m_depth_stencil_image_view);
-
-		// 3.create framebuffers
-		std::array<VkImageView, 2> attachments{};
-
-		// depth stenci attachment is same for all framebuffers
-		attachments[1] = m_depth_stencil_image_view.view;
-
-		VkFramebufferCreateInfo framebuffer_ci{};
-		framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_ci.renderPass = m_render_pass;
-		framebuffer_ci.attachmentCount = static_cast<uint32_t>(attachments.size());
-		framebuffer_ci.pAttachments = attachments.data();
-		framebuffer_ci.width = m_extent.width;
-		framebuffer_ci.height = m_extent.height;
-		framebuffer_ci.layers = 1;
-
-		// create frame buffer for each swap chain image
-		m_framebuffers.resize(m_swapchain_image_count);
-		for (uint32_t i = 0; i < m_swapchain_image_count; ++i)
+		// 2.create ui passes' swapchain related objects
+		if (m_render_passes.find(ERenderPassType::UI) != m_render_passes.end())
 		{
-			attachments[0] = m_swapchain_image_views[i];
-			vkCreateFramebuffer(m_device, &framebuffer_ci, nullptr, &m_framebuffers[i]);
-		}
-
-		// 4.create all render passes' swapchain related objects
-		for (auto& render_pass : m_render_passes)
-		{
-			render_pass->createSwapchainObjects();
+			m_render_passes[ERenderPassType::UI]->createResizableObjects(m_extent.width, m_extent.height);
 		}
 	}
 
@@ -380,19 +284,10 @@ namespace Bamboo
 			vkDestroyImageView(m_device, swapchain_image_view, nullptr);
 		}
 
-		// 2.destroy depth stencil image and view
-		m_depth_stencil_image_view.destroy();
-
-		// 3.destroy framebuffers
-		for (VkFramebuffer framebuffer : m_framebuffers)
+		// 2.destroy ui passes' swapchain related objects
+		if (m_render_passes.find(ERenderPassType::UI) != m_render_passes.end())
 		{
-			vkDestroyFramebuffer(m_device, framebuffer, nullptr);
-		}
-
-		// 4.destroy all render passes' swapchain related objects
-		for (auto& render_pass : m_render_passes)
-		{
-			render_pass->destroySwapchainObjects();
+			m_render_passes[ERenderPassType::UI]->destroyResizableObjects();
 		}
 	}
 
@@ -503,7 +398,7 @@ namespace Bamboo
 		// prepare all render passes
 		for (auto& render_pass : m_render_passes)
 		{
-			render_pass->prepare();
+			render_pass.second->prepare();
 		}
 	}
 
@@ -516,46 +411,13 @@ namespace Bamboo
 		command_buffer_bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		vkBeginCommandBuffer(command_buffer, &command_buffer_bi);
 
-		VkRenderPassBeginInfo render_pass_bi{};
-		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		render_pass_bi.renderPass = m_render_pass;
-		render_pass_bi.framebuffer = m_framebuffers[m_image_index];
-		render_pass_bi.renderArea.offset = {0, 0};
-		render_pass_bi.renderArea.extent = m_extent;
-
-		std::array<VkClearValue, 2> clear_values{};
-		clear_values[0].color = {{0.0f, 0.3f, 0.0f, 1.0f}};
-		clear_values[1].depthStencil = {1.0f, 0};
-		render_pass_bi.clearValueCount = static_cast<uint32_t>(clear_values.size());
-		render_pass_bi.pClearValues = clear_values.data();
-
-		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
-
-		// 1.bind pipeline
-		// TODO
-		
-		// 2.set viewport
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)m_extent.width;
-		viewport.height = (float)m_extent.height;
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
-
-		// 3.set scissor
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = m_extent;
-		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
-
-		vkCmdEndRenderPass(command_buffer);
-
 		// record all render passes
 		for (auto& render_pass : m_render_passes)
 		{
-			render_pass->record();
+			if (!render_pass.second->is_minimize())
+			{
+				render_pass.second->record();
+			}
 		}
 
 		vkEndCommandBuffer(command_buffer);

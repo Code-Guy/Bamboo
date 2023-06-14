@@ -16,7 +16,7 @@ namespace Bamboo
 	Texture::~Texture()
 	{
 		m_image_view.destroy();
-		vkDestroySampler(VulkanRHI::instance().getDevice(), m_sampler, nullptr);
+		vkDestroySampler(VulkanRHI::get().getDevice(), m_sampler, nullptr);
 	}
 
 	bool Texture::isSRGB()

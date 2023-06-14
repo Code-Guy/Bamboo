@@ -27,6 +27,7 @@ namespace Bamboo
 		void setTitle(const std::string& title);
 		GLFWwindow* getWindow() { return m_window; }
 		void getWindowSize(int& width, int& height);
+		void getScreenSize(int& width, int& height);
 
 		typedef std::function<void()> OnResetFunc;
 		typedef std::function<void(int, int, int, int)> OnKeyFunc;

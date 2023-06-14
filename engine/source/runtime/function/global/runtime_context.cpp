@@ -30,7 +30,7 @@ namespace Bamboo
         window_ci.title = m_config_manager->getWindowTitle();
         m_window_system->init(window_ci);
 
-        VulkanRHI::instance().init();
+        VulkanRHI::get().init();
 
 		m_asset_manager = std::make_shared<AssetManager>();
 		m_asset_manager->init();
@@ -48,7 +48,7 @@ namespace Bamboo
         m_render_system->destroy();
         m_world_manager->destroy();
 		m_asset_manager->destroy();
-        VulkanRHI::instance().destroy();
+        VulkanRHI::get().destroy();
 		m_window_system->destroy();
         m_config_manager->destroy();
         m_file_system->destroy();

@@ -3,9 +3,14 @@
 namespace Bamboo
 {
 
-	void AssetUI::construct()
+	void AssetUI::init()
 	{
 		m_title = "Asset";
+	}
+
+	void AssetUI::construct()
+	{
+		EditorUI::construct();
 
 		ImGui::Begin(m_title.c_str());
 
@@ -15,6 +20,11 @@ namespace Bamboo
 		}
 
 		ImGui::End();
+	}
+
+	void AssetUI::destroy()
+	{
+
 	}
 
 }

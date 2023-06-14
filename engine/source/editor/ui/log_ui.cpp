@@ -3,9 +3,14 @@
 namespace Bamboo
 {
 
-	void LogUI::construct()
+	void LogUI::init()
 	{
 		m_title = "Log";
+	}
+
+	void LogUI::construct()
+	{
+		EditorUI::construct();
 
 		ImGui::Begin(m_title.c_str());
 
@@ -15,6 +20,11 @@ namespace Bamboo
 		}
 
 		ImGui::End();
+	}
+
+	void LogUI::destroy()
+	{
+
 	}
 
 }

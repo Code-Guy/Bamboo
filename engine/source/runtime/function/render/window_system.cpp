@@ -68,6 +68,14 @@ namespace Bamboo
 		height = m_height;
 	}
 
+	void WindowSystem::getScreenSize(int& width, int& height)
+	{
+		const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+		width = mode->width;
+		height = mode->height;
+	}
+
 	bool WindowSystem::isMouseButtonDown(int button)
 	{
 		if (button < GLFW_MOUSE_BUTTON_1 || button > GLFW_MOUSE_BUTTON_LAST)

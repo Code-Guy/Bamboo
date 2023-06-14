@@ -7,6 +7,7 @@
 #include "editor/ui/log_ui.h"
 #include "runtime/engine.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/window_system.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/render/render_system.h"
@@ -28,6 +29,12 @@ namespace Bamboo
         std::shared_ptr<EditorUI> log_ui = std::make_shared<LogUI>();
         m_editor_uis = { world_ui, property_ui, game_ui, asset_ui, log_ui };
 
+        // init all editor uis
+		for (auto& editor_ui : m_editor_uis)
+		{
+			editor_ui->init();
+		}
+
         // set construct ui function to UIPass through RenderSystem
         g_runtime_context.renderSystem()->setConstructUIFunc([this]() {
             for (auto& editor_ui : m_editor_uis)
@@ -39,6 +46,14 @@ namespace Bamboo
 
     void Editor::destroy()
     {
+		// wait all gpu operations done
+		vkDeviceWaitIdle(VulkanRHI::get().getDevice());
+
+		// destroy all editor uis
+		for (auto& editor_ui : m_editor_uis)
+		{
+			editor_ui->destroy();
+		}
     }
 
     void Editor::run()

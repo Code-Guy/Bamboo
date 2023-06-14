@@ -3,6 +3,7 @@
 #include "render_pass.h"
 #include <string>
 #include <vector>
+#include <map>
 
 namespace Bamboo
 {
@@ -16,7 +17,8 @@ namespace Bamboo
 		VkInstance getInstance() { return m_instance; }
 		VkPhysicalDevice getPhysicalDevice() { return m_physical_device; }
 		VkPhysicalDeviceProperties getPhysicalDeviceProperties() { return m_physical_device_properties; }
-		VkSurfaceFormatKHR getSurfaceFormat() { return m_surface_format; }
+		VkFormat getColorFormat() { return m_surface_format.format; }
+		VkFormat getDepthFormat() { return m_depth_format; }
 		VkDevice getDevice() { return m_device; }
 		uint32_t getGraphicsQueueFamily() { return m_queue_family_indices.graphics; }
 		VkQueue getGraphicsQueue() { return m_graphics_queue; }
@@ -28,10 +30,9 @@ namespace Bamboo
 		uint32_t getImageIndex() { return m_image_index; }
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
 		VkCommandBuffer getCommandBuffer() { return m_command_buffers[m_flight_index]; }
+		auto& getRenderPasses() { return m_render_passes; }
 
-		void addRenderPass(std::shared_ptr<RenderPass> render_pass) { m_render_passes.push_back(render_pass); }
-
-		static VulkanRHI& instance()
+		static VulkanRHI& get()
 		{
 			static VulkanRHI vulkan_rhi;
 			return vulkan_rhi;
@@ -60,7 +61,6 @@ namespace Bamboo
 		void createLogicDevice();
 		void getDeviceQueues();
 		void createVmaAllocator();
-		void createRenderPass();
 		void createSwapchain();
 		void createSwapchainObjects();
 		void destroySwapchainObjects();
@@ -109,7 +109,6 @@ namespace Bamboo
 		VkCommandPool m_command_pool;
 		VkCommandPool m_instant_command_pool;
 		VkSwapchainKHR m_swapchain;
-		VkRenderPass m_render_pass;
 		VkPipelineCache m_pipeline_cache;
 
 		// debug functions
@@ -135,8 +134,6 @@ namespace Bamboo
 
 		uint32_t m_swapchain_image_count;
 		std::vector<VkImageView> m_swapchain_image_views;
-		VmaImageView m_depth_stencil_image_view;
-		std::vector<VkFramebuffer> m_framebuffers;
 
 		// synchronization primitives
 		uint32_t m_flight_index;
@@ -147,6 +144,6 @@ namespace Bamboo
 		std::vector<VkCommandBuffer> m_command_buffers;
 
 		// render passes
-		std::vector<std::shared_ptr<RenderPass>> m_render_passes;
+		std::map<ERenderPassType, std::shared_ptr<RenderPass>> m_render_passes;
 	};
 }

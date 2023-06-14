@@ -30,26 +30,26 @@ namespace Bamboo
 		// create descriptor pool
 		VkDescriptorPoolSize pool_sizes[] =
 		{
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 8 }
 		};
 		VkDescriptorPoolCreateInfo pool_info{};
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-		pool_info.maxSets = 1;
+		pool_info.maxSets = 8;
 		pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
-		VkResult result = vkCreateDescriptorPool(VulkanRHI::instance().getDevice(), &pool_info, nullptr, &m_descriptor_pool);
+		VkResult result = vkCreateDescriptorPool(VulkanRHI::get().getDevice(), &pool_info, nullptr, &m_descriptor_pool);
 		CHECK_VULKAN_RESULT(result, "create imgui descriptor pool");
 
 		// create renderpass
 		VkAttachmentDescription attachment{};
-		attachment.format = VulkanRHI::instance().getSurfaceFormat().format;
+		attachment.format = VulkanRHI::get().getColorFormat();
 		attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 		VkAttachmentReference color_attachment{};
@@ -77,22 +77,22 @@ namespace Bamboo
 		render_pass_ci.pSubpasses = &subpass;
 		render_pass_ci.dependencyCount = 1;
 		render_pass_ci.pDependencies = &dependency;
-		result = vkCreateRenderPass(VulkanRHI::instance().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
+		result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
 		CHECK_VULKAN_RESULT(result, "create imgui render pass");
 
 		// setup platform/renderer backends
 		ImGui_ImplGlfw_InitForVulkan(g_runtime_context.windowSystem()->getWindow(), true);
 		ImGui_ImplVulkan_InitInfo init_info{};
-		init_info.Instance = VulkanRHI::instance().getInstance();
-		init_info.PhysicalDevice = VulkanRHI::instance().getPhysicalDevice();
-		init_info.Device = VulkanRHI::instance().getDevice();
-		init_info.QueueFamily = VulkanRHI::instance().getGraphicsQueueFamily();
-		init_info.Queue = VulkanRHI::instance().getGraphicsQueue();
+		init_info.Instance = VulkanRHI::get().getInstance();
+		init_info.PhysicalDevice = VulkanRHI::get().getPhysicalDevice();
+		init_info.Device = VulkanRHI::get().getDevice();
+		init_info.QueueFamily = VulkanRHI::get().getGraphicsQueueFamily();
+		init_info.Queue = VulkanRHI::get().getGraphicsQueue();
 		init_info.PipelineCache = VK_NULL_HANDLE;
 		init_info.DescriptorPool = m_descriptor_pool;
 		init_info.Subpass = 0;
-		init_info.MinImageCount = VulkanRHI::instance().getSwapchainImageCount();
-		init_info.ImageCount = VulkanRHI::instance().getSwapchainImageCount();
+		init_info.MinImageCount = VulkanRHI::get().getSwapchainImageCount();
+		init_info.ImageCount = VulkanRHI::get().getSwapchainImageCount();
 		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		init_info.Allocator = nullptr;
 		init_info.CheckVkResultFn = &checkVkResult;
@@ -107,7 +107,8 @@ namespace Bamboo
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 
 		// create swapchain related objects
-		createSwapchainObjects();
+		const VkExtent2D& extent = VulkanRHI::get().getSwapchainImageSize();
+		createResizableObjects(extent.width, extent.height);
 	}
 
 	void UIPass::prepare()
@@ -137,14 +138,15 @@ namespace Bamboo
 		VkRenderPassBeginInfo renderpass_bi{};
 		renderpass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderpass_bi.renderPass = m_render_pass;
-		renderpass_bi.framebuffer = m_framebuffers[VulkanRHI::instance().getImageIndex()];
+		renderpass_bi.framebuffer = m_framebuffers[VulkanRHI::get().getImageIndex()];
 		renderpass_bi.renderArea.offset = { 0, 0 };
-		renderpass_bi.renderArea.extent = VulkanRHI::instance().getSwapchainImageSize();
+		renderpass_bi.renderArea.extent = { m_width, m_height };
 
 		VkClearValue clear_value = {0.0f, 0.0f, 0.0f, 1.0f};
 		renderpass_bi.clearValueCount = 1;
 		renderpass_bi.pClearValues = &clear_value;
-		VkCommandBuffer command_buffer = VulkanRHI::instance().getCommandBuffer();
+
+		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
 		vkCmdBeginRenderPass(command_buffer, &renderpass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
 		// record dear imgui primitives into command buffer
@@ -160,12 +162,13 @@ namespace Bamboo
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 
-		vkDestroyRenderPass(VulkanRHI::instance().getDevice(), m_render_pass, nullptr);
-		vkDestroyDescriptorPool(VulkanRHI::instance().getDevice(), m_descriptor_pool, nullptr);
+		RenderPass::destroy();
 	}
 
-	void UIPass::createSwapchainObjects()
+	void UIPass::createResizableObjects(uint32_t width, uint32_t height)
 	{
+		RenderPass::createResizableObjects(width, height);
+
 		// create framebuffers
 		VkImageView image_view;
 		VkFramebufferCreateInfo framebuffer_ci{};
@@ -173,26 +176,27 @@ namespace Bamboo
 		framebuffer_ci.renderPass = m_render_pass;
 		framebuffer_ci.attachmentCount = 1;
 		framebuffer_ci.pAttachments = &image_view;
-		framebuffer_ci.width = VulkanRHI::instance().getSwapchainImageSize().width;
-		framebuffer_ci.height = VulkanRHI::instance().getSwapchainImageSize().height;
+		framebuffer_ci.width = m_width;
+		framebuffer_ci.height = m_height;
 		framebuffer_ci.layers = 1;
 
-		uint32_t image_count = VulkanRHI::instance().getSwapchainImageCount();
+		uint32_t image_count = VulkanRHI::get().getSwapchainImageCount();
 		m_framebuffers.resize(image_count);
 		for (uint32_t i = 0; i < image_count; ++i)
 		{
-			image_view = VulkanRHI::instance().getSwapchainImageViews()[i];
-			VkResult result = vkCreateFramebuffer(VulkanRHI::instance().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);
+			image_view = VulkanRHI::get().getSwapchainImageViews()[i];
+			VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);
 			CHECK_VULKAN_RESULT(result, "create imgui frame buffer");
 		}
 	}
 
-	void UIPass::destroySwapchainObjects()
+	void UIPass::destroyResizableObjects()
 	{
 		for (VkFramebuffer framebuffer : m_framebuffers)
 		{
-			vkDestroyFramebuffer(VulkanRHI::instance().getDevice(), framebuffer, nullptr);
+			vkDestroyFramebuffer(VulkanRHI::get().getDevice(), framebuffer, nullptr);
 		}
+		m_framebuffers.clear();
 	}
 
 }
