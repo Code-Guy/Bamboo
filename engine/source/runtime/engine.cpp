@@ -25,9 +25,10 @@ namespace Bamboo
     bool Engine::tick(float delta_time)
     {
         logicTick(delta_time);
-        calcFPS(delta_time);
-
         renderTick(delta_time);
+
+		m_frame_count++;
+		calcFPS(delta_time);
 
         g_runtime_context.windowSystem()->pollEvents();
         g_runtime_context.windowSystem()->setTitle(std::string(APP_NAME) + " - " + std::to_string(getFPS()) + " FPS");
@@ -57,16 +58,16 @@ namespace Bamboo
 
     void Engine::calcFPS(float delta_time)
     {
-        const float k_fps_alpha = 0.01f;
-        if (m_frame_count++ == 0)
+        const float k_update_fps_time = 1.0f;
+        static float update_fps_timer = 0.0f;
+        if (update_fps_timer > k_update_fps_time)
         {
-            m_average_duration = delta_time;
+            m_fps = static_cast<int>(1.0f / delta_time);
+            update_fps_timer -= k_update_fps_time;
         }
         else
         {
-            m_average_duration = m_average_duration * (1 - k_fps_alpha) + delta_time * k_fps_alpha;
+            update_fps_timer += delta_time;
         }
-
-        m_fps = static_cast<int>(1.0f / m_average_duration);
     }
 }
