@@ -41,44 +41,8 @@ namespace Bamboo
 		VkResult result = vkCreateDescriptorPool(VulkanRHI::get().getDevice(), &pool_info, nullptr, &m_descriptor_pool);
 		CHECK_VULKAN_RESULT(result, "create imgui descriptor pool");
 
-		// create renderpass
-		VkAttachmentDescription attachment{};
-		attachment.format = VulkanRHI::get().getColorFormat();
-		attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-		VkAttachmentReference color_attachment{};
-		color_attachment.attachment = 0;
-		color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkSubpassDescription subpass{};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &color_attachment;
-
-		VkSubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		VkRenderPassCreateInfo render_pass_ci{};
-		render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_ci.attachmentCount = 1;
-		render_pass_ci.pAttachments = &attachment;
-		render_pass_ci.subpassCount = 1;
-		render_pass_ci.pSubpasses = &subpass;
-		render_pass_ci.dependencyCount = 1;
-		render_pass_ci.pDependencies = &dependency;
-		result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
-		CHECK_VULKAN_RESULT(result, "create imgui render pass");
+		// create render pass
+		createRenderPass();
 
 		// setup platform/renderer backends
 		ImGui_ImplGlfw_InitForVulkan(g_runtime_context.windowSystem()->getWindow(), true);
@@ -165,10 +129,50 @@ namespace Bamboo
 		RenderPass::destroy();
 	}
 
-	void UIPass::createResizableObjects(uint32_t width, uint32_t height)
+	void UIPass::createRenderPass()
 	{
-		RenderPass::createResizableObjects(width, height);
+		// create renderpass
+		VkAttachmentDescription attachment{};
+		attachment.format = VulkanRHI::get().getColorFormat();
+		attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+		VkAttachmentReference color_attachment{};
+		color_attachment.attachment = 0;
+		color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass{};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &color_attachment;
+
+		VkSubpassDependency dependency{};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		VkRenderPassCreateInfo render_pass_ci{};
+		render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		render_pass_ci.attachmentCount = 1;
+		render_pass_ci.pAttachments = &attachment;
+		render_pass_ci.subpassCount = 1;
+		render_pass_ci.pSubpasses = &subpass;
+		render_pass_ci.dependencyCount = 1;
+		render_pass_ci.pDependencies = &dependency;
+		VkResult result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
+		CHECK_VULKAN_RESULT(result, "create imgui render pass");
+	}
+
+	void UIPass::createFramebuffer()
+	{
 		// create framebuffers
 		VkImageView image_view;
 		VkFramebufferCreateInfo framebuffer_ci{};
@@ -188,6 +192,13 @@ namespace Bamboo
 			VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);
 			CHECK_VULKAN_RESULT(result, "create imgui frame buffer");
 		}
+	}
+
+	void UIPass::createResizableObjects(uint32_t width, uint32_t height)
+	{
+		RenderPass::createResizableObjects(width, height);
+
+		createFramebuffer();
 	}
 
 	void UIPass::destroyResizableObjects()

@@ -8,7 +8,62 @@ namespace Bamboo
 
 	void BasePass::init()
 	{
-		// 1.create render pass
+		createRenderPass();
+
+	}
+
+	void BasePass::prepare()
+	{
+		
+	}
+
+	void BasePass::record()
+	{
+		VkRenderPassBeginInfo render_pass_bi{};
+		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		render_pass_bi.renderPass = m_render_pass;
+		render_pass_bi.framebuffer = m_framebuffer;
+		render_pass_bi.renderArea.offset = { 0, 0 };
+		render_pass_bi.renderArea.extent = { m_width, m_height };
+
+		std::array<VkClearValue, 2> clear_values{};
+		clear_values[0].color = { {0.0f, 0.3f, 0.0f, 1.0f} };
+		clear_values[1].depthStencil = { 1.0f, 0 };
+		render_pass_bi.clearValueCount = static_cast<uint32_t>(clear_values.size());
+		render_pass_bi.pClearValues = clear_values.data();
+
+		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
+		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
+
+		// 1.bind pipeline
+		// TODO
+
+		// 2.set viewport
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(m_width);
+		viewport.height = static_cast<float>(m_height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+		// 3.set scissor
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = { m_width, m_height };
+		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+		vkCmdEndRenderPass(command_buffer);
+	}
+
+	void BasePass::destroy()
+	{
+		RenderPass::destroy();
+	}
+
+	void BasePass::createRenderPass()
+	{
 		std::array<VkAttachmentDescription, 2> attachments{};
 
 		// color attachment
@@ -82,62 +137,31 @@ namespace Bamboo
 		vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
 	}
 
-	void BasePass::prepare()
+	void BasePass::createPipeline()
 	{
-		
+		VkPipelineInputAssemblyStateCreateInfo input_assembly_state_ci{};
+		input_assembly_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		input_assembly_state_ci.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		input_assembly_state_ci.primitiveRestartEnable = VK_FALSE;
+
+		VkPipelineRasterizationStateCreateInfo rasterize_state_ci{};
+		rasterize_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterize_state_ci.depthClampEnable = VK_FALSE;
+		rasterize_state_ci.rasterizerDiscardEnable = VK_FALSE;
+		rasterize_state_ci.polygonMode = VK_POLYGON_MODE_FILL;
+		rasterize_state_ci.lineWidth = 1.0f;
+		rasterize_state_ci.cullMode = VK_CULL_MODE_BACK_BIT;
+		rasterize_state_ci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterize_state_ci.depthBiasEnable = VK_FALSE;
+		rasterize_state_ci.depthBiasConstantFactor = 0.0f;
+		rasterize_state_ci.depthBiasClamp = 0.0f;
+		rasterize_state_ci.depthBiasSlopeFactor = 0.0f;
 	}
 
-	void BasePass::record()
+	void BasePass::createFramebuffer()
 	{
-		VkRenderPassBeginInfo render_pass_bi{};
-		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		render_pass_bi.renderPass = m_render_pass;
-		render_pass_bi.framebuffer = m_framebuffer;
-		render_pass_bi.renderArea.offset = { 0, 0 };
-		render_pass_bi.renderArea.extent = { m_width, m_height };
-
-		std::array<VkClearValue, 2> clear_values{};
-		clear_values[0].color = { {0.0f, 0.3f, 0.0f, 1.0f} };
-		clear_values[1].depthStencil = { 1.0f, 0 };
-		render_pass_bi.clearValueCount = static_cast<uint32_t>(clear_values.size());
-		render_pass_bi.pClearValues = clear_values.data();
-
-		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
-		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
-
-		// 1.bind pipeline
-		// TODO
-
-		// 2.set viewport
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(m_width);
-		viewport.height = static_cast<float>(m_height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
-
-		// 3.set scissor
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = { m_width, m_height };
-		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
-
-		vkCmdEndRenderPass(command_buffer);
-	}
-
-	void BasePass::destroy()
-	{
-		RenderPass::destroy();
-	}
-
-	void BasePass::createResizableObjects(uint32_t width, uint32_t height)
-	{
-		RenderPass::createResizableObjects(width, height);
-
 		// 1.create depth stencil image and view
-		createImageAndView(m_width, m_height, 1, VK_SAMPLE_COUNT_1_BIT, VulkanRHI::get().getDepthFormat(), 
+		createImageAndView(m_width, m_height, 1, VK_SAMPLE_COUNT_1_BIT, VulkanRHI::get().getDepthFormat(),
 			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_ASPECT_DEPTH_BIT, m_depth_stencil_image_view);
 
@@ -161,6 +185,13 @@ namespace Bamboo
 		framebuffer_ci.layers = 1;
 
 		vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffer);
+	}
+
+	void BasePass::createResizableObjects(uint32_t width, uint32_t height)
+	{
+		RenderPass::createResizableObjects(width, height);
+
+		createFramebuffer();
 	}
 
 	void BasePass::destroyResizableObjects()

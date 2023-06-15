@@ -12,6 +12,10 @@ namespace Bamboo
 		virtual void prepare() override;
 		virtual void record() override;
 		virtual void destroy() override;
+
+		virtual void createRenderPass() override;
+		virtual void createPipeline() override {}
+		virtual void createFramebuffer() override;
 		virtual void createResizableObjects(uint32_t width, uint32_t height) override;
 		virtual void destroyResizableObjects() override;
 

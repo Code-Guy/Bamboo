@@ -8,6 +8,7 @@ namespace Bamboo
 	{
 		vkDestroyRenderPass(VulkanRHI::get().getDevice(), m_render_pass, nullptr);
 		vkDestroyDescriptorPool(VulkanRHI::get().getDevice(), m_descriptor_pool, nullptr);
+		vkDestroyPipeline(VulkanRHI::get().getDevice(), m_pipeline, nullptr);
 		destroyResizableObjects();
 	}
 
