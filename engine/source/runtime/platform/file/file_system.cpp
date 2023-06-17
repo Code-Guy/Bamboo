@@ -58,6 +58,11 @@ namespace Bamboo
 		return std::filesystem::path(path).parent_path().string();
 	}
 
+	std::string FileSystem::asset_dir()
+	{
+		return absolute("asset");
+	}
+
 	bool FileSystem::exists(const std::string& path)
 	{
 		return std::filesystem::exists(path) || std::filesystem::exists(absolute(path));

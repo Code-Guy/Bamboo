@@ -17,6 +17,8 @@ namespace Bamboo
 		std::string filename(const std::string& path);
 		std::string dir(const std::string& path);
 
+		std::string asset_dir();
+
 		bool exists(const std::string& path);
 		bool create(const std::string& path);
 
