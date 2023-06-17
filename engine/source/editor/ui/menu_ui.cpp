@@ -1,5 +1,6 @@
 #include "menu_ui.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/resource/config/config_manager.h"
 #include <imgui/imgui_internal.h>
 
 namespace Bamboo
@@ -8,6 +9,11 @@ namespace Bamboo
 	void MenuUI::init()
 	{
 		m_title = "Menu";
+
+		// load editor layout
+		std::string layout_name = g_runtime_context.configManager()->getEditorLayout();
+		std::string layout_path = g_runtime_context.fileSystem()->absolute("asset/engine/layout/" + layout_name);
+		ImGui::LoadIniSettingsFromDisk(layout_path.c_str());
 	}
 
 	void MenuUI::construct()

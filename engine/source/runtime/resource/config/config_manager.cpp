@@ -28,4 +28,9 @@ namespace Bamboo
 		return m_config_node["default_world_url"].as<std::string>();
 	}
 
+	std::string ConfigManager::getEditorLayout()
+	{
+		return m_config_node["editor_layout"].as<std::string>();
+	}
+
 }

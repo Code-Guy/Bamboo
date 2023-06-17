@@ -3,4 +3,5 @@ window:
   height: 720
   title: "Bamboo Engine"
 
-default_world_url: "asset/world/hello_world.json"
+default_world_url: "asset/world/default_world.json"
+editor_layout: "default.layout"
