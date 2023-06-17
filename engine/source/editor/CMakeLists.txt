@@ -11,3 +11,11 @@ add_executable(${TARGET_NAME} ${HEADER_FILES} ${SOURCE_FILES} ${RESOURCE})
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Engine")
 
 target_link_libraries(${TARGET_NAME} BambooRuntime)
+
+if (WIN32)
+    set(SUBSYSTEM_LINKER_OPTIONS "$<IF:$<CONFIG:Debug>,/SUBSYSTEM:CONSOLE,/SUBSYSTEM:WINDOWS>" "/ENTRY:mainCRTStartup")
+else()
+    set(SUBSYSTEM_LINKER_OPTIONS "$<IF:$<NOT:$<CONFIG:Debug>>,-mwindows,>")
+endif()
+
+target_link_options(${TARGET_NAME} PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
