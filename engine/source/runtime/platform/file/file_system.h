@@ -1,9 +1,15 @@
 #pragma once
 
+#include <vector>
 #include <filesystem>
 
 namespace Bamboo
 {
+	enum class EFileOrderType
+	{
+		Name, Time, Size
+	};
+
 	class FileSystem
 	{
 	public:
@@ -16,11 +22,16 @@ namespace Bamboo
 		std::string basename(const std::string& path);
 		std::string filename(const std::string& path);
 		std::string dir(const std::string& path);
+		std::vector<std::string> traverse(const std::string& path, bool is_recursive = false, 
+			EFileOrderType file_order_type = EFileOrderType::Name, bool is_reverse = false);
 
 		std::string asset_dir();
 
 		bool exists(const std::string& path);
-		bool create(const std::string& path);
+		bool create_file(const std::string& filename, std::ios_base::openmode mode = std::ios_base::out);
+		bool create_dir(const std::string& path, bool is_recursive = false);
+		bool remove_file(const std::string& filename);
+		bool remove_dir(const std::string& path, bool is_recursive = false);
 
 		template<typename T, typename... Ts>
 		std::string combine(const T& first, const Ts&... rest)

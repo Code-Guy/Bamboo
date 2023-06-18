@@ -49,6 +49,8 @@ namespace Bamboo
             }
 
         private:
+			std::string getLogFilename();
+
             std::shared_ptr<spdlog::logger> m_logger;
     };
 }

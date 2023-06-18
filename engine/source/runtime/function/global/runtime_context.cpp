@@ -14,11 +14,11 @@ namespace Bamboo
 
     void RuntimeContext::init()
     {
+		m_file_system = std::make_shared<FileSystem>();
+		m_file_system->init();
+
 		m_log_system = std::make_shared<LogSystem>();
 		m_log_system->init();
-
-        m_file_system = std::make_shared<FileSystem>();
-        m_file_system->init();
 
         m_config_manager = std::make_shared<ConfigManager>();
         m_config_manager->init(m_file_system->absolute("config/engine.yaml"));
@@ -51,7 +51,7 @@ namespace Bamboo
         VulkanRHI::get().destroy();
 		m_window_system->destroy();
         m_config_manager->destroy();
-        m_file_system->destroy();
         m_log_system->destroy();
-    }
+		m_file_system->destroy();
+	}
 }

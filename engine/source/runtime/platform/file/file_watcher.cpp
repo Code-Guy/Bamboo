@@ -10,7 +10,7 @@ namespace Bamboo
 		m_root_path = root_path;
 		m_poll_delay = poll_delay;
 
-		for (auto& file : std::filesystem::recursive_directory_iterator(m_root_path))
+		for (const auto& file : std::filesystem::recursive_directory_iterator(m_root_path))
 		{
 			m_paths[file.path().string()] = std::filesystem::last_write_time(file);
 		}

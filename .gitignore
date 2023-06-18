@@ -1,5 +1,6 @@
 # custom
 build/
+engine/log/
 engine/asset/temp/
 
 # mac

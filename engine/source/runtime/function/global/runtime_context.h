@@ -11,8 +11,8 @@ namespace Bamboo
             void init();
             void destroy();
 
-			const auto& logSystem() { return m_log_system; }
 			const auto& fileSystem() { return m_file_system; }
+			const auto& logSystem() { return m_log_system; }
             const auto& configManager() { return m_config_manager; }
             const auto& windowSystem() { return m_window_system; }
             const auto& assetManager() { return m_asset_manager; }
@@ -20,8 +20,8 @@ namespace Bamboo
             const auto& renderSystem() { return m_render_system; }
 
         private:
-			std::shared_ptr<class LogSystem> m_log_system;
 			std::shared_ptr<class FileSystem> m_file_system;
+			std::shared_ptr<class LogSystem> m_log_system;
             std::shared_ptr<class ConfigManager> m_config_manager;
 			std::shared_ptr<class WindowSystem> m_window_system;
 			std::shared_ptr<class AssetManager> m_asset_manager;
