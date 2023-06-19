@@ -12,6 +12,6 @@ namespace Bamboo
 		virtual void destroy() override;
 
 	private:
-
+		void showLogText(const std::string& log);
 	};
 }

@@ -1,22 +1,24 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/ringbuffer_sink.h>
 #include <stdexcept>
 #include <memory>
 
 namespace Bamboo
 {
+	enum class ELogLevel
+	{
+		Debug, Info, Warning, Error, Fatal
+	};
+
     class LogSystem
     {
         public:
-            enum class ELogLevel
-            {
-                Debug, Info, Warning, Error, Fatal
-            };
-
             void init();
             void destroy();
-        
+			std::vector<std::string> getLastestLogs();
+
             template<typename... TARGS>
             void log(ELogLevel level, TARGS&&... args)
             {
@@ -51,6 +53,7 @@ namespace Bamboo
         private:
 			std::string getLogFilename();
 
+			std::shared_ptr<spdlog::sinks::ringbuffer_sink_mt> m_ringbuffer_sink;
             std::shared_ptr<spdlog::logger> m_logger;
     };
 }

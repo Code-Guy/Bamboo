@@ -12,6 +12,7 @@
 #define MAX_LOG_FILE_NUM 100
 #define MAX_ROTATE_FILE_NUM 5
 #define MAX_ROTATE_FILE_SIZE 1048576 * 10
+#define MAX_RINGBUFFER_SIZE 100
 
 namespace Bamboo
 {
@@ -28,13 +29,18 @@ namespace Bamboo
 		file_sink->set_level(spdlog::level::trace);
 		file_sink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
 
+        // ring-buffer sink
+        m_ringbuffer_sink = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(MAX_RINGBUFFER_SIZE);
+        m_ringbuffer_sink->set_level(spdlog::level::trace);
+        m_ringbuffer_sink->set_pattern("[%l] %v");
+
         // create multi-sink logger
         spdlog::init_thread_pool(8192, 1);
 
 #ifdef DEBUG
-        const spdlog::sinks_init_list sink_list = { console_sink, file_sink };
+        const spdlog::sinks_init_list sink_list = { console_sink, file_sink, m_ringbuffer_sink };
 #else
-        const spdlog::sinks_init_list sink_list = { file_sink };
+        const spdlog::sinks_init_list sink_list = { file_sink, m_ringbuffer_sink };
 #endif
         
         m_logger = std::make_shared<spdlog::async_logger>("multi_sink_logger",
@@ -51,7 +57,12 @@ namespace Bamboo
         spdlog::drop_all();
     }
 
-    std::string getCurrentDateTimeStr()
+	std::vector<std::string> LogSystem::getLastestLogs()
+	{
+        return m_ringbuffer_sink->last_formatted();
+	}
+
+	std::string getCurrentDateTimeStr()
     {
 		auto current_time = std::time(nullptr);
 		auto local_time = *std::localtime(&current_time);
