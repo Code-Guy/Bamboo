@@ -12,7 +12,7 @@ namespace Bamboo
 	{
 		EditorUI::construct();
 
-		ImGui::Begin(m_title.c_str());
+		ImGui::Begin(combine(ICON_FA_STREAM, m_title).c_str());
 
 		for (int i = 0; i < 10; ++i)
 		{
@@ -24,6 +24,7 @@ namespace Bamboo
 
 	void PropertyUI::destroy()
 	{
+		EditorUI::destroy();
 
 	}
 

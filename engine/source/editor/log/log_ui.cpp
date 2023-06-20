@@ -17,9 +17,8 @@ namespace Bamboo
 
 		ImGuiWindowFlags window_flags = 0;
 		window_flags |= ImGuiWindowFlags_AlwaysHorizontalScrollbar;
-		ImGui::Begin(m_title.c_str(), nullptr, window_flags);
+		ImGui::Begin(combine(ICON_FA_RECEIPT, m_title).c_str(), nullptr, window_flags);
 
-		//ImGui::SetWindowFontScale(0.86f);
 		for (const std::string& log : lastest_logs)
 		{
 			showLogText(log);
@@ -30,6 +29,7 @@ namespace Bamboo
 
 	void LogUI::destroy()
 	{
+		EditorUI::destroy();
 
 	}
 

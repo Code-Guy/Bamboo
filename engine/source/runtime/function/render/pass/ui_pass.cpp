@@ -5,6 +5,7 @@
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
 #include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/font/IconsFontAwesome5.h>
 
 namespace Bamboo
 {
@@ -64,8 +65,21 @@ namespace Bamboo
 		bool is_success = ImGui_ImplVulkan_Init(&init_info, m_render_pass);
 		ASSERT(is_success, "failed to init imgui");
 
+		// add console font
+		const float k_base_font_size = 14.0f;
+		const float k_icon_font_size = k_base_font_size * 0.8f;
+		const auto& fs = g_runtime_context.fileSystem();
+		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/consola.ttf").c_str(), k_base_font_size);
+
+		// add icon font
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;
+		icons_config.PixelSnapH = true;
+		icons_config.GlyphMinAdvanceX = k_icon_font_size;
+		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
+		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/fa-solid-900.ttf").c_str(), k_icon_font_size, &icons_config, icons_ranges);
+
 		// upload fonts
-		io.Fonts->AddFontFromFileTTF(g_runtime_context.fileSystem()->absolute("asset/engine/font/consola.ttf").c_str(), 14.0f);
 		VkCommandBuffer command_buffer = beginInstantCommands();
 		ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
 		endInstantCommands(command_buffer);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "editor_ui.h"
+#include "editor/base/editor_ui.h"
 #include <map>
 
 namespace Bamboo

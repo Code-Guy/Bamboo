@@ -25,8 +25,7 @@ namespace Bamboo
 	protected:
 		bool isSRGB();
 
-		VmaImageView m_image_view;
-		VkSampler m_sampler;
+		VmaImageViewSampler m_image_view_sampler;
 
 	private:
 		friend class cereal::access;

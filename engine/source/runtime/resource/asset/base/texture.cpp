@@ -1,5 +1,4 @@
 #include "texture.h"
-#include "runtime/core/vulkan/vulkan_rhi.h"
 
 namespace Bamboo
 {
@@ -15,8 +14,7 @@ namespace Bamboo
 
 	Texture::~Texture()
 	{
-		m_image_view.destroy();
-		vkDestroySampler(VulkanRHI::get().getDevice(), m_sampler, nullptr);
+		m_image_view_sampler.destroy();
 	}
 
 	bool Texture::isSRGB()

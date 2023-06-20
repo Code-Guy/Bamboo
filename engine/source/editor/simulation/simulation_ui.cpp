@@ -1,4 +1,4 @@
-#include "game_ui.h"
+#include "simulation_ui.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/pass/base_pass.h"
 #include <imgui/backends/imgui_impl_vulkan.h>
@@ -6,31 +6,34 @@
 namespace Bamboo
 {
 
-	void GameUI::init()
+	void SimulationUI::init()
 	{
-		m_title = "Game";
+		m_title = "Simulation";
 		m_color_texture_sampler = createSampler(VK_FILTER_LINEAR, VK_FILTER_LINEAR, 1, VK_SAMPLER_ADDRESS_MODE_REPEAT, 
 			VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 	}
 
-	void GameUI::construct()
+	void SimulationUI::construct()
 	{
 		EditorUI::construct();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin(m_title.c_str());
+		ImGui::Begin(combine(ICON_FA_GAMEPAD, m_title).c_str());
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		ImGui::Image(m_color_texture_desc_set, ImVec2{content_size.x, content_size.y});
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}
 
-	void GameUI::destroy()
+	void SimulationUI::destroy()
 	{
+		EditorUI::destroy();
+
 		vkDestroySampler(VulkanRHI::get().getDevice(), m_color_texture_sampler, nullptr);
+		ImGui_ImplVulkan_RemoveTexture(m_color_texture_desc_set);
 	}
 
-	void GameUI::on_window_resize()
+	void SimulationUI::onWindowResize()
 	{
 		std::shared_ptr<RenderPass> render_pass = VulkanRHI::get().getRenderPasses()[ERenderPassType::Base];
 		std::shared_ptr<BasePass> base_pass = std::dynamic_pointer_cast<BasePass>(render_pass);

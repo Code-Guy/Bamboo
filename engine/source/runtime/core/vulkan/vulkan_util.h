@@ -51,8 +51,23 @@ namespace Bamboo
 		VkImage image() { return vma_image.image; }
 	};
 
+	// VMA Image + Image view + Sampler
+	struct VmaImageViewSampler
+	{
+		VmaImage vma_image;
+		VkImageView view = VK_NULL_HANDLE;
+		VkSampler sampler = VK_NULL_HANDLE;
+
+		void destroy();
+		VkImage image() { return vma_image.image; }
+	};
+
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer);
 	void copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
+
+	void createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
+		uint32_t mip_levels, bool is_srgb, VkFilter min_filter, VkFilter mag_filter,
+		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler);
 
 	void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VkImageAspectFlags aspect_flags, VmaImageView& vma_image_view);

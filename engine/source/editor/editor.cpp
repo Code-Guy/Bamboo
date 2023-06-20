@@ -1,10 +1,10 @@
 #include "editor.h"
-#include "editor/ui/menu_ui.h"
-#include "editor/ui/world_ui.h"
-#include "editor/ui/property_ui.h"
-#include "editor/ui/game_ui.h"
-#include "editor/ui/asset_ui.h"
-#include "editor/ui/log_ui.h"
+#include "editor/menu/menu_ui.h"
+#include "editor/world/world_ui.h"
+#include "editor/property/property_ui.h"
+#include "editor/simulation/simulation_ui.h"
+#include "editor/asset/asset_ui.h"
+#include "editor/log/log_ui.h"
 #include "runtime/engine.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
@@ -25,7 +25,7 @@ namespace Bamboo
         std::shared_ptr<EditorUI> menu_ui = std::make_shared<MenuUI>();
         std::shared_ptr<EditorUI> world_ui = std::make_shared<WorldUI>();
         std::shared_ptr<EditorUI> property_ui = std::make_shared<PropertyUI>();
-        std::shared_ptr<EditorUI> game_ui = std::make_shared<GameUI>();
+        std::shared_ptr<EditorUI> game_ui = std::make_shared<SimulationUI>();
         std::shared_ptr<EditorUI> asset_ui = std::make_shared<AssetUI>();
         std::shared_ptr<EditorUI> log_ui = std::make_shared<LogUI>();
         m_editor_uis = { menu_ui, world_ui, property_ui, game_ui, asset_ui, log_ui };

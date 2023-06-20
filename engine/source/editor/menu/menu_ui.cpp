@@ -58,6 +58,7 @@ namespace Bamboo
 
 	void MenuUI::destroy()
 	{
+		EditorUI::destroy();
 
 	}
 
@@ -156,12 +157,12 @@ namespace Bamboo
 	{
 		if (ImGui::MenuItem("Load Layout"))
 		{
-
+			
 		}
 
 		if (ImGui::MenuItem("Save Layout"))
 		{
-
+			
 		}
 	}
 

@@ -30,6 +30,19 @@ namespace Bamboo
 		vma_image.destroy();
 	}
 
+	void VmaImageViewSampler::destroy()
+	{
+		if (sampler != VK_NULL_HANDLE)
+		{
+			vkDestroySampler(VulkanRHI::get().getDevice(), sampler, nullptr);
+		}
+		if (view != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(VulkanRHI::get().getDevice(), view, nullptr);
+		}
+		vma_image.destroy();
+	}
+
 	const char* vkErrorString(VkResult result)
 	{
 		switch (result)
@@ -144,6 +157,46 @@ namespace Bamboo
 		vkCmdCopyBuffer(command_buffer, src_buffer, dst_buffer, 1, &copy_region);
 
 		endInstantCommands(command_buffer);
+	}
+
+	void createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
+		uint32_t mip_levels, bool is_srgb, VkFilter min_filter, VkFilter mag_filter,
+		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler)
+	{
+		const uint32_t k_channels = 4;
+		VkDeviceSize image_size = width * height * k_channels;
+		VmaBuffer staging_buffer;
+		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
+
+		// copy image pixel data to staging buffer
+		void* staging_buffer_data;
+		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
+		memcpy(staging_buffer_data, image_data, image_size);
+		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation);
+
+		// create Image
+		VkFormat image_format = is_srgb ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+		createImage(width, height, mip_levels, VK_SAMPLE_COUNT_1_BIT, image_format, VK_IMAGE_TILING_OPTIMAL, 
+			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 
+			vma_image_view_sampler.vma_image);
+
+		VkImage image = vma_image_view_sampler.image();
+		vma_image_view_sampler.view = createImageView(image, image_format, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
+
+		// transition image to DST_OPT state for copy into
+		transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image_format, mip_levels);
+
+		// copy staging buffer to image
+		copyBufferToImage(staging_buffer.buffer, image, width, height);
+
+		// clear staging buffer
+		vmaDestroyBuffer(VulkanRHI::get().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
+
+		// generate image mipmaps, and transition image to READ_ONLY_OPT state for shader reading
+		createImageMipmaps(image, image_format, width, height, mip_levels);
+
+		// create VkSampler
+		vma_image_view_sampler.sampler = createSampler(min_filter, mag_filter, mip_levels, address_mode, address_mode, address_mode);
 	}
 
 	void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
