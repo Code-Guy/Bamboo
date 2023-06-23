@@ -19,8 +19,21 @@ namespace Bamboo
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin(combine(ICON_FA_GAMEPAD, m_title).c_str());
+
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		ImGui::Image(m_color_texture_desc_set, ImVec2{content_size.x, content_size.y});
+
+		// allow drag from asset ui
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("load_asset"))
+			{
+				std::string asset_url((const char*)payload->Data, payload->DataSize);
+				LOG_INFO("load asset: {}", asset_url);
+			}
+			ImGui::EndDragDropTarget();
+		}
+
 		ImGui::End();
 		ImGui::PopStyleVar();
 	}

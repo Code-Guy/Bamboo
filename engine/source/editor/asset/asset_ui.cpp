@@ -96,7 +96,7 @@ namespace Bamboo
 		{
 			tree_node_flags |= ImGuiTreeNodeFlags_Leaf;
 		}
-		if (folder_node.name == m_selected_folder)
+		if (folder_node.dir == m_selected_folder)
 		{
 			tree_node_flags |= ImGuiTreeNodeFlags_Selected;
 		}
@@ -235,6 +235,26 @@ namespace Bamboo
 		if (ImGui::IsItemClicked())
 		{
 			m_selected_file = filename;
+		}
+
+		// set drag source
+		if (g_runtime_context.fileSystem()->is_file(filename))
+		{
+			if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+			{
+				std::string ref_filename = g_runtime_context.fileSystem()->relative(filename);
+				ImGui::SetDragDropPayload("load_asset", ref_filename.data(), ref_filename.size());
+				ImGui::Text(" load %s ", basename.c_str());
+				ImGui::EndDragDropSource();
+			}
+		}
+		else if (g_runtime_context.fileSystem()->is_dir(filename))
+		{
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+			{
+				m_selected_folder = filename;
+				pollSelectedFolder();
+			}
 		}
 	}
 
