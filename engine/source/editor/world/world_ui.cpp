@@ -12,7 +12,11 @@ namespace Bamboo
 	{
 		EditorUI::construct();
 
-		ImGui::Begin(combine(ICON_FA_GLOBE, m_title).c_str());
+		if (!ImGui::Begin(combine(ICON_FA_GLOBE, m_title).c_str()))
+		{
+			ImGui::End();
+			return;
+		}
 
 		for (int i = 0; i < 10; ++i)
 		{

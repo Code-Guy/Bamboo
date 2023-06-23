@@ -17,11 +17,20 @@ namespace Bamboo
 
 		ImGuiWindowFlags window_flags = 0;
 		window_flags |= ImGuiWindowFlags_AlwaysHorizontalScrollbar;
-		ImGui::Begin(combine(ICON_FA_RECEIPT, m_title).c_str(), nullptr, window_flags);
-
-		for (const std::string& log : lastest_logs)
+		if (!ImGui::Begin(combine(ICON_FA_RECEIPT, m_title).c_str(), nullptr, window_flags))
 		{
-			showLogText(log);
+			ImGui::End();
+			return;
+		}
+
+		ImGuiListClipper clipper;
+		clipper.Begin(lastest_logs.size());
+		while (clipper.Step())
+		{
+			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
+			{
+				showLogText(lastest_logs[row]);
+			}
 		}
 
 		ImGui::SetScrollHereY(1.0f);

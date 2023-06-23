@@ -68,6 +68,10 @@ namespace Bamboo
 	std::vector<std::string> FileSystem::traverse(const std::string& path, bool is_recursive, EFileOrderType file_order_type, bool is_reverse)
 	{
 		std::vector<std::string> filenames;
+		if (!std::filesystem::exists(path))
+		{
+			return filenames;
+		}
 
 		if (is_recursive)
 		{

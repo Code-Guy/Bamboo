@@ -38,10 +38,15 @@ namespace Bamboo
 	{
 		EditorUI::construct();
 
-		// render asset widget
+		// draw asset widget
+		if (!ImGui::Begin(combine(ICON_FA_FAN, m_title).c_str()))
+		{
+			ImGui::End();
+			return;
+		}
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f, 4.0f));
-		ImGui::Begin(combine(ICON_FA_FAN, m_title).c_str());
 
 		const float k_folder_tree_width_scale = 0.2f;
 		const uint32_t k_spacing = 4;
@@ -78,9 +83,9 @@ namespace Bamboo
 
 		ImGui::EndChild();
 
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
 		ImGui::End();
-		ImGui::PopStyleVar();
-		ImGui::PopStyleVar();
 	}
 
 	void AssetUI::destroy()
@@ -160,10 +165,32 @@ namespace Bamboo
 		ImGuiStyle& style = ImGui::GetStyle();
 		float max_pos_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
 
+		float clip_rect_min_y = ImGui::GetCursorScreenPos().y + ImGui::GetScrollY();
+		float clip_rect_max_y = clip_rect_min_y + ImGui::GetContentRegionAvail().y;
+
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(15.0f, 24.0f));
 		for (size_t i = 0; i < m_selected_files.size(); ++i)
 		{
-			constructAsset(m_selected_files[i], icon_size);
+			bool is_clipping = false;
+			HoverState& hover_state = m_selected_file_hover_states[m_selected_files[i]];
+			if (hover_state.rect_min.y != 0.0f && hover_state.rect_max.y != 0.0f)
+			{
+				if (hover_state.rect_max.y < clip_rect_min_y || hover_state.rect_min.y > clip_rect_max_y)
+				{
+					is_clipping = true;
+				}
+			}
+
+			if (!is_clipping)
+			{
+				constructAsset(m_selected_files[i], icon_size);
+			}
+			else
+			{
+				ImGui::Dummy(icon_size);
+			}
+			hover_state.rect_min = ImGui::GetItemRectMin();
+			hover_state.rect_max = ImGui::GetItemRectMax();
 
 			float current_pos_x = ImGui::GetItemRectMax().x;
 			float next_pos_x = current_pos_x + style.ItemSpacing.x + icon_size.x;
@@ -190,6 +217,10 @@ namespace Bamboo
 			bool is_empty = g_runtime_context.fileSystem()->is_empty_dir(filename);
 			tex_id = is_empty ? m_empty_folder_image->desc_set : m_non_empty_folder_image->desc_set;
 		}
+		else
+		{
+			return;
+		}
 		
 		ImGui::BeginGroup();
 
@@ -210,7 +241,10 @@ namespace Bamboo
 			}
 
 			ImDrawFlags draw_flags = ImDrawFlags_RoundCornersBottom;
-			ImGui::GetWindowDrawList()->AddRectFilled(hover_state.rect_min, hover_state.rect_max, IM_COL32(color.x, color.y, color.z, color.w), 3.0f, draw_flags);
+			const float k_margin = 4;
+			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(hover_state.rect_min.x - k_margin, hover_state.rect_min.y - k_margin),
+				ImVec2(hover_state.rect_max.x + k_margin, hover_state.rect_max.y + k_margin), 
+				IM_COL32(color.x, color.y, color.z, color.w), 3.0f, draw_flags);
 		}
 		
 		// draw image
@@ -235,10 +269,6 @@ namespace Bamboo
 
 		// update asset hover and selection status
 		hover_state.is_hovered = ImGui::IsItemHovered();
-		const float k_spacing = 4;
-		hover_state.rect_min = ImVec2(ImGui::GetItemRectMin().x - k_spacing, ImGui::GetItemRectMin().y - k_spacing);
-		hover_state.rect_max = ImVec2(ImGui::GetItemRectMax().x + k_spacing, ImGui::GetItemRectMax().y + k_spacing);
-
 		if (ImGui::IsItemClicked())
 		{
 			m_selected_file = filename;
@@ -358,8 +388,10 @@ namespace Bamboo
 		std::string import_folder = g_runtime_context.fileSystem()->relative(m_selected_folder);
 		for (const std::string& import_file : m_imported_files)
 		{
-			LOG_INFO("import asset: {} to folder: {}", import_file, import_folder);
-			//g_runtime_context.assetManager()->importAsset(import_file, import_folder);
+			StopWatch stop_watch;
+			stop_watch.start();
+			g_runtime_context.assetManager()->importAsset(import_file, import_folder);
+			LOG_INFO("import asset {} to {}, elapsed time {} ms", import_file, import_folder, stop_watch.stop());
 		}
 		m_imported_files.clear();
 	}

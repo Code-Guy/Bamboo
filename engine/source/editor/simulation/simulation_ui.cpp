@@ -18,7 +18,11 @@ namespace Bamboo
 		EditorUI::construct();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin(combine(ICON_FA_GAMEPAD, m_title).c_str());
+		if (!ImGui::Begin(combine(ICON_FA_GAMEPAD, m_title).c_str()))
+		{
+			ImGui::End();
+			return;
+		}
 
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		ImGui::Image(m_color_texture_desc_set, ImVec2{content_size.x, content_size.y});
