@@ -32,8 +32,10 @@ namespace Bamboo
 		void constructAsset(const std::string& filename, const ImVec2& size);
 
 		void pollFolders();
-		void pollSelectedFolder();
-		std::string getFormattedFolderStr();
+		void pollSelectedFolder(const std::string& selected_folder = "");
+		void pollImportFiles();
+
+		void onDropFiles(int n, const char** filenames);
 
 		// icon images
 		std::map<EAssetType, std::shared_ptr<ImGuiImage>> m_asset_images;
@@ -46,6 +48,7 @@ namespace Bamboo
 		std::map<std::string, bool> m_folder_opened_map;
 
 		std::string m_selected_folder;
+		std::string m_formatted_selected_folder;
 		std::string m_selected_file;
 		std::vector<std::string> m_selected_files;
 
@@ -57,5 +60,8 @@ namespace Bamboo
 		};
 
 		std::map<std::string, HoverState> m_selected_file_hover_states;
+
+		// import files
+		std::vector<std::string> m_imported_files;
 	};
 }

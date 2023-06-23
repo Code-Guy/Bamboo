@@ -1,6 +1,7 @@
 #include "asset_ui.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/platform/timer/timer.h"
+#include "runtime/function/render/window_system.h"
 #include <queue>
 
 namespace Bamboo
@@ -11,7 +12,9 @@ namespace Bamboo
 
 		// set poll folder timer
 		const float k_poll_folder_time = 1.0f;
-		m_poll_folder_timer_handle = g_runtime_context.timerManager()->addTimer(k_poll_folder_time, [this](){ pollFolders(); }, true, true);
+		m_poll_folder_timer_handle = g_runtime_context.timerManager()->addTimer(k_poll_folder_time, [this](){ pollFolders(); }, true);
+		pollFolders();
+		pollSelectedFolder(g_runtime_context.fileSystem()->asset_dir());
 
 		// load icon images
 		const auto& fs = g_runtime_context.fileSystem();
@@ -26,6 +29,9 @@ namespace Bamboo
 		m_asset_images[EAssetType::Font] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/font.png"));
 		m_empty_folder_image = loadImGuiImage(fs->absolute("asset/engine/texture/asset/empty_folder.png"));
 		m_non_empty_folder_image = loadImGuiImage(fs->absolute("asset/engine/texture/asset/non_empty_folder.png"));
+
+		// register drop callback
+		g_runtime_context.windowSystem()->registerOnDropFunc(std::bind(&AssetUI::onDropFiles, this, std::placeholders::_1, std::placeholders::_2));
 	}
 
 	void AssetUI::construct()
@@ -68,6 +74,8 @@ namespace Bamboo
 		constructFolderFiles();
 		ImGui::EndChild();
 
+		pollImportFiles();
+
 		ImGui::EndChild();
 
 		ImGui::End();
@@ -105,8 +113,7 @@ namespace Bamboo
 		m_folder_opened_map[folder_node.name] = is_treenode_opened && !folder_node.is_leaf;
 		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 		{
-			m_selected_folder = folder_node.dir;
-			pollSelectedFolder();
+			pollSelectedFolder(folder_node.dir);
 		}
 
 		if (is_treenode_opened)
@@ -142,7 +149,7 @@ namespace Bamboo
 
 		ImGui::SameLine();
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
-		ImGui::Text(getFormattedFolderStr().c_str());
+		ImGui::Text(m_formatted_selected_folder.c_str());
 	}
 
 	void AssetUI::constructFolderFiles()
@@ -252,8 +259,7 @@ namespace Bamboo
 		{
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 			{
-				m_selected_folder = filename;
-				pollSelectedFolder();
+				pollSelectedFolder(filename);
 			}
 		}
 	}
@@ -313,8 +319,17 @@ namespace Bamboo
 		pollSelectedFolder();
 	}
 
-	void AssetUI::pollSelectedFolder()
+	void AssetUI::pollSelectedFolder(const std::string& selected_folder)
 	{
+		if (!selected_folder.empty() && m_selected_folder != selected_folder)
+		{
+			m_selected_folder = selected_folder;
+
+			m_formatted_selected_folder = g_runtime_context.fileSystem()->relative(m_selected_folder);
+			replace_all(m_formatted_selected_folder, "/", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
+			replace_all(m_formatted_selected_folder, "\\", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
+		}
+
 		if (!m_selected_folder.empty())
 		{
 			m_selected_files = g_runtime_context.fileSystem()->traverse(m_selected_folder);
@@ -328,12 +343,33 @@ namespace Bamboo
 		}
 	}
 
-	std::string AssetUI::getFormattedFolderStr()
+	void AssetUI::pollImportFiles()
 	{
-		std::string rel_folder_str = g_runtime_context.fileSystem()->relative(m_selected_folder);
-		replace_all(rel_folder_str, "/", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
-		replace_all(rel_folder_str, "\\", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
-		return rel_folder_str;
+		if (m_imported_files.empty() ||
+			ImGui::GetMousePos().x < ImGui::GetItemRectMin().x ||
+			ImGui::GetMousePos().x > ImGui::GetItemRectMax().x ||
+			ImGui::GetMousePos().y < ImGui::GetItemRectMin().y ||
+			ImGui::GetMousePos().y > ImGui::GetItemRectMax().y)
+		{
+			m_imported_files.clear();
+			return;
+		}
+
+		std::string import_folder = g_runtime_context.fileSystem()->relative(m_selected_folder);
+		for (const std::string& import_file : m_imported_files)
+		{
+			LOG_INFO("import asset: {} to folder: {}", import_file, import_folder);
+			//g_runtime_context.assetManager()->importAsset(import_file, import_folder);
+		}
+		m_imported_files.clear();
 	}
 
+	void AssetUI::onDropFiles(int n, const char** filenames)
+	{
+		m_imported_files.clear();
+		for (int i = 0; i < n; ++i)
+		{
+			m_imported_files.push_back(filenames[i]);
+		}
+	}
 }

@@ -8,7 +8,6 @@
 #include "runtime/engine.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
-#include "runtime/function/render/window_system.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/render/render_system.h"
 
@@ -17,9 +16,6 @@ namespace Bamboo
     void Editor::init(Engine *engine)
     {
         m_engine = engine;
-
-        g_runtime_context.windowSystem()->registerOnDropFunc(std::bind(&Editor::onDrop, this, 
-            std::placeholders::_1, std::placeholders::_2));
 
         // create editor ui
         std::shared_ptr<EditorUI> menu_ui = std::make_shared<MenuUI>();
@@ -74,13 +70,5 @@ namespace Bamboo
             }
         }
     }
-
-	void Editor::onDrop(int n, const char** filenames)
-	{
-        for (int i = 0; i < n; ++i)
-        {
-            g_runtime_context.assetManager()->importAsset(filenames[i], "asset/temp");
-        }
-	}
 
 }

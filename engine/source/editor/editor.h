@@ -13,8 +13,6 @@ namespace Bamboo
             void run();
 
         private:
-            void onDrop(int n, const char** filenames);
-
             class Engine* m_engine;
             std::vector<std::shared_ptr<class EditorUI>> m_editor_uis;
     };
