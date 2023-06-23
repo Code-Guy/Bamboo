@@ -50,7 +50,7 @@ namespace Bamboo
 			{ EAssetType::TextureCube, "texc" }, 
 			{ EAssetType::Material, "mat" }, 
 			{ EAssetType::Skeleton, "skl" },
-			{ EAssetType::StaticMesh, "sm "}, 
+			{ EAssetType::StaticMesh, "sm"}, 
 			{ EAssetType::SkeletalMesh, "skm" }, 
 			{ EAssetType::Animation, "anim" },
 			{ EAssetType::Font, "ttf" }
