@@ -24,6 +24,7 @@ namespace Bamboo
 			showLogText(log);
 		}
 
+		ImGui::SetScrollHereY(1.0f);
 		ImGui::End();
 	}
 

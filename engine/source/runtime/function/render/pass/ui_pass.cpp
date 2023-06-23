@@ -30,14 +30,15 @@ namespace Bamboo
 		//ImGui::StyleColorsLight();
 
 		// create descriptor pool
+		const uint32_t k_max_image_count = 128;
 		VkDescriptorPoolSize pool_sizes[] =
 		{
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 8 }
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, k_max_image_count }
 		};
 		VkDescriptorPoolCreateInfo pool_info{};
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-		pool_info.maxSets = 8;
+		pool_info.maxSets = k_max_image_count;
 		pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
 		VkResult result = vkCreateDescriptorPool(VulkanRHI::get().getDevice(), &pool_info, nullptr, &m_descriptor_pool);

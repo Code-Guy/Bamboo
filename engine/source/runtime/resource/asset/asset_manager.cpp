@@ -52,7 +52,8 @@ namespace Bamboo
 			{ EAssetType::Skeleton, "skl" },
 			{ EAssetType::StaticMesh, "sm "}, 
 			{ EAssetType::SkeletalMesh, "skm" }, 
-			{ EAssetType::Animation, "anim" }
+			{ EAssetType::Animation, "anim" },
+			{ EAssetType::Font, "ttf" }
 		};
 
 		m_asset_archive_types = {
@@ -97,8 +98,11 @@ namespace Bamboo
 	EAssetType AssetManager::getAssetType(const URL& url)
 	{
 		std::string extension = g_runtime_context.fileSystem()->extension(url);
-		EAssetType asset_type = m_ext_asset_types[extension];
-		return asset_type;
+		if (m_ext_asset_types.find(extension) != m_ext_asset_types.end())
+		{
+			return m_ext_asset_types[extension];
+		}
+		return EAssetType::Invalid;
 	}
 
 	VkFilter getVkFilterFromGltf(int gltf_filter)

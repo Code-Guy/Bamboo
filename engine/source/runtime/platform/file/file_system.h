@@ -17,6 +17,7 @@ namespace Bamboo
 		void destroy();
 
 		std::string absolute(const std::string& path);
+		std::string relative(const std::string& path);
 
 		std::string extension(const std::string& path);
 		std::string basename(const std::string& path);
@@ -28,6 +29,10 @@ namespace Bamboo
 		std::string asset_dir();
 
 		bool exists(const std::string& path);
+		bool is_file(const std::string& path);
+		bool is_dir(const std::string& path);
+		bool is_empty_dir(const std::string& path);
+
 		bool create_file(const std::string& filename, std::ios_base::openmode mode = std::ios_base::out);
 		bool create_dir(const std::string& path, bool is_recursive = false);
 		bool remove_file(const std::string& filename);
@@ -59,4 +64,7 @@ namespace Bamboo
 	private:
 		std::filesystem::path m_header;
 	};
+
+	bool replace(std::string& str, const std::string& from, const std::string& to);
+	void replace_all(std::string& str, const std::string& from, const std::string& to);
 }

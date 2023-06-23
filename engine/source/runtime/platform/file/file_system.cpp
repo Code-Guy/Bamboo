@@ -35,6 +35,11 @@ namespace Bamboo
 		return header.append(path).string();
 	}
 
+	std::string FileSystem::relative(const std::string& path)
+	{
+		return std::filesystem::relative(path, m_header).string();
+	}
+
 	std::string FileSystem::extension(const std::string& path)
 	{
 		std::string extension = std::filesystem::path(path).extension().string();
@@ -113,6 +118,21 @@ namespace Bamboo
 		return std::filesystem::exists(path) || std::filesystem::exists(absolute(path));
 	}
 
+	bool FileSystem::is_file(const std::string& path)
+	{
+		return std::filesystem::is_regular_file(path);
+	}
+
+	bool FileSystem::is_dir(const std::string& path)
+	{
+		return std::filesystem::is_directory(path);
+	}
+
+	bool FileSystem::is_empty_dir(const std::string& path)
+	{
+		return std::filesystem::path(path).empty();
+	}
+
 	bool FileSystem::create_file(const std::string& filename, std::ios_base::openmode mode)
 	{
 		if (exists(filename))
@@ -161,6 +181,33 @@ namespace Bamboo
 			return std::filesystem::remove_all(path) > 0;
 		}
 		return std::filesystem::remove(path);
+	}
+
+	bool replace(std::string& str, const std::string& from, const std::string& to)
+	{
+		size_t start_pos = str.find(from);
+		if (start_pos == std::string::npos)
+		{
+			return false;
+		}
+
+		str.replace(start_pos, from.length(), to);
+		return true;
+	}
+
+	void replace_all(std::string& str, const std::string& from, const std::string& to)
+	{
+		if (from.empty())
+		{
+			return;
+		}
+
+		size_t start_pos = 0;
+		while ((start_pos = str.find(from, start_pos)) != std::string::npos) 
+		{
+			str.replace(start_pos, from.length(), to);
+			start_pos += to.length();
+		}
 	}
 
 }

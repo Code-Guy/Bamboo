@@ -1,4 +1,5 @@
 #include "runtime_context.h"
+#include "runtime/platform/timer/timer.h"
 #include "runtime/platform/file/file_system.h"
 #include "runtime/resource/config/config_manager.h"
 #include "runtime/core/log/log_system.h"
@@ -14,6 +15,9 @@ namespace Bamboo
 
     void RuntimeContext::init()
     {
+		m_timer_manager = std::make_shared<TimerManager>();
+        m_timer_manager->init();
+
 		m_file_system = std::make_shared<FileSystem>();
 		m_file_system->init();
 
@@ -53,5 +57,6 @@ namespace Bamboo
         m_config_manager->destroy();
         m_log_system->destroy();
 		m_file_system->destroy();
+        m_timer_manager->destroy();
 	}
 }

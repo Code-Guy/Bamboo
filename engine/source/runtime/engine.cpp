@@ -2,6 +2,7 @@
 #include "runtime/core/base/macro.h"
 #include "runtime/function/render/window_system.h"
 #include "runtime/function/render/render_system.h"
+#include "runtime/platform/timer/timer.h"
 
 namespace Bamboo
 {
@@ -30,6 +31,7 @@ namespace Bamboo
 		m_frame_count++;
 		calcFPS(delta_time);
 
+        g_runtime_context.setDeltaTime(delta_time);
         g_runtime_context.windowSystem()->pollEvents();
         g_runtime_context.windowSystem()->setTitle(std::string(APP_NAME) + " - " + std::to_string(getFPS()) + " FPS");
 
@@ -49,6 +51,7 @@ namespace Bamboo
 
     void Engine::logicTick(float delta_time)
     {
+        g_runtime_context.timerManager()->tick(delta_time);
     }
 
     void Engine::renderTick(float delta_time)
