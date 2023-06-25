@@ -25,14 +25,10 @@ namespace Bamboo
 		m_log_system->init();
 
         m_config_manager = std::make_shared<ConfigManager>();
-        m_config_manager->init(m_file_system->absolute("config/engine.yaml"));
+        m_config_manager->init();
 
         m_window_system = std::make_shared<WindowSystem>();
-        WindowCreateInfo window_ci;
-        window_ci.width = m_config_manager->getWindowWidth();
-        window_ci.height = m_config_manager->getWindowHeight();
-        window_ci.title = m_config_manager->getWindowTitle();
-        m_window_system->init(window_ci);
+        m_window_system->init();
 
         VulkanRHI::get().init();
 

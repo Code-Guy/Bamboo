@@ -1,6 +1,7 @@
 #include "base_pass.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/resource/asset/base/mesh.h"
 #include <array>
 
 namespace Bamboo
@@ -139,11 +140,13 @@ namespace Bamboo
 
 	void BasePass::createPipeline()
 	{
+		// input assembly
 		VkPipelineInputAssemblyStateCreateInfo input_assembly_state_ci{};
 		input_assembly_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		input_assembly_state_ci.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		input_assembly_state_ci.primitiveRestartEnable = VK_FALSE;
 
+		// rasterizer
 		VkPipelineRasterizationStateCreateInfo rasterize_state_ci{};
 		rasterize_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rasterize_state_ci.depthClampEnable = VK_FALSE;
@@ -156,6 +159,86 @@ namespace Bamboo
 		rasterize_state_ci.depthBiasConstantFactor = 0.0f;
 		rasterize_state_ci.depthBiasClamp = 0.0f;
 		rasterize_state_ci.depthBiasSlopeFactor = 0.0f;
+
+		// multisampling
+		VkPipelineMultisampleStateCreateInfo multisampling_ci{};
+		multisampling_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisampling_ci.sampleShadingEnable = VK_TRUE;
+		multisampling_ci.minSampleShading = 0.2f;
+		multisampling_ci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+		// depth and stencil testing
+		VkPipelineDepthStencilStateCreateInfo depth_stencil_ci{};
+		depth_stencil_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depth_stencil_ci.depthTestEnable = VK_TRUE;
+		depth_stencil_ci.depthWriteEnable = VK_TRUE;
+		depth_stencil_ci.depthCompareOp = VK_COMPARE_OP_LESS;
+		depth_stencil_ci.depthBoundsTestEnable = VK_FALSE;
+
+		// color blending
+		VkPipelineColorBlendAttachmentState color_blend_attachment{};
+		color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		color_blend_attachment.blendEnable = VK_FALSE;
+
+		VkPipelineColorBlendStateCreateInfo color_blend_ci{};
+		color_blend_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		color_blend_ci.attachmentCount = 1;
+		color_blend_ci.pAttachments = &color_blend_attachment;
+
+		// viewport
+		VkPipelineViewportStateCreateInfo viewport_ci{};
+		viewport_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewport_ci.viewportCount = 1;
+		viewport_ci.pViewports = nullptr;
+		viewport_ci.scissorCount = 1;
+		viewport_ci.pScissors = nullptr;
+
+		// Dynamic state
+		VkDynamicState dynamic_states[] =
+		{
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR
+		};
+
+		VkPipelineDynamicStateCreateInfo dynamic_state_ci{};
+		dynamic_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamic_state_ci.dynamicStateCount = 2;
+		dynamic_state_ci.pDynamicStates = dynamic_states;
+
+		// vertex input
+		// vertex bindings
+		std::vector<VkVertexInputBindingDescription> vertex_input_binding_descriptions;
+		vertex_input_binding_descriptions.resize(1, VkVertexInputBindingDescription{});
+		vertex_input_binding_descriptions[0].binding = 0;
+		vertex_input_binding_descriptions[0].stride = sizeof(StaticVertex);
+		vertex_input_binding_descriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		// vertex attributes
+		std::vector<VkVertexInputAttributeDescription> vertex_input_attribute_descriptions;
+		vertex_input_attribute_descriptions.resize(3, VkVertexInputAttributeDescription{});
+
+		vertex_input_attribute_descriptions[0].binding = 0;
+		vertex_input_attribute_descriptions[0].location = 0;
+		vertex_input_attribute_descriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertex_input_attribute_descriptions[0].offset = offsetof(StaticVertex, m_position);
+
+		vertex_input_attribute_descriptions[1].binding = 0;
+		vertex_input_attribute_descriptions[1].location = 1;
+		vertex_input_attribute_descriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
+		vertex_input_attribute_descriptions[1].offset = offsetof(StaticVertex, m_tex_coord);
+
+		vertex_input_attribute_descriptions[2].binding = 0;
+		vertex_input_attribute_descriptions[2].location = 2;
+		vertex_input_attribute_descriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertex_input_attribute_descriptions[2].offset = offsetof(StaticVertex, m_normal);
+
+		VkPipelineVertexInputStateCreateInfo vertex_input_ci{};
+		vertex_input_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertex_input_ci.vertexBindingDescriptionCount = static_cast<uint32_t>(vertex_input_binding_descriptions.size());
+		vertex_input_ci.pVertexBindingDescriptions = vertex_input_binding_descriptions.data();
+		vertex_input_ci.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attribute_descriptions.size());
+		vertex_input_ci.pVertexAttributeDescriptions = vertex_input_attribute_descriptions.data();
+
 	}
 
 	void BasePass::createFramebuffer()

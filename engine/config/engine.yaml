@@ -1,7 +1,6 @@
 window:
   width: 1280
   height: 720
-  title: "Bamboo Engine"
 
 default_world_url: "asset/world/default_world.json"
 editor_layout: "default.layout"

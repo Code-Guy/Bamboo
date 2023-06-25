@@ -9,17 +9,10 @@
 
 namespace Bamboo
 {
-	struct WindowCreateInfo
-	{
-		int width;
-		int height;
-		std::string title;
-	};
-
 	class WindowSystem
 	{
 	public:
-		void init(const WindowCreateInfo& window_ci);
+		void init();
 		void destroy();
 
 		void pollEvents();

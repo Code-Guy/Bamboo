@@ -1,9 +1,10 @@
 #include "window_system.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/resource/config/config_manager.h"
 
 namespace Bamboo
 {
-	void WindowSystem::init(const WindowCreateInfo& window_ci)
+	void WindowSystem::init()
 	{
 		// initialize glfw
 		if (!glfwInit())
@@ -12,12 +13,12 @@ namespace Bamboo
 			return;
 		}
 
-		m_width = window_ci.width;
-		m_height = window_ci.height;
+		m_width = g_runtime_context.configManager()->getWindowWidth();
+		m_height = g_runtime_context.configManager()->getWindowHeight();
 
 		// create glfw window
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		m_window = glfwCreateWindow(m_width, m_height, window_ci.title.c_str(), nullptr, nullptr);
+		m_window = glfwCreateWindow(m_width, m_height, APP_NAME, nullptr, nullptr);
 		if (!m_window)
 		{
 			LOG_FATAL("failed to create glfw window");

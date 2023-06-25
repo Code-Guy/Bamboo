@@ -1,11 +1,11 @@
 #include "config_manager.h"
+#include "runtime/core/base/macro.h"
 
 namespace Bamboo
 {
-	void ConfigManager::init(const std::string& config_file_name)
+	void ConfigManager::init()
 	{
-		m_config_node = YAML::LoadFile(config_file_name);
-
+		m_config_node = YAML::LoadFile(TO_ABSOLUTE("config/engine.yaml"));
 	}
 
 	int ConfigManager::getWindowWidth()
@@ -16,11 +16,6 @@ namespace Bamboo
 	int ConfigManager::getWindowHeight()
 	{
 		return m_config_node["window"]["height"].as<int>();
-	}
-
-	std::string ConfigManager::getWindowTitle()
-	{
-		return m_config_node["window"]["title"].as<std::string>();
 	}
 
 	std::string ConfigManager::getDefaultWorldUrl()

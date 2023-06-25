@@ -8,12 +8,11 @@ namespace Bamboo
 	class ConfigManager
 	{
 	public:
-		void init(const std::string& config_file_name);
+		void init();
 		void destroy() {}
 
 		int getWindowWidth();
 		int getWindowHeight();
-		std::string getWindowTitle();
 
 		std::string getDefaultWorldUrl();
 		std::string getEditorLayout();

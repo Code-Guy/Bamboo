@@ -29,6 +29,8 @@ namespace Bamboo
 	protected:
 		VkRenderPass m_render_pass;
 		VkDescriptorPool m_descriptor_pool;
+		VkDescriptorSetLayout m_descriptor_set_layout;
+		VkPipelineLayout m_pipeline_layout;
 		VkPipeline m_pipeline;
 
 		uint32_t m_width = 0, m_height = 0;
