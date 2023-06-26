@@ -322,14 +322,20 @@ namespace Bamboo
 				folder_node.is_root = folders[i] == fs->asset_dir();
 				for (auto& file : std::filesystem::directory_iterator(folders[i]))
 				{
+					std::string filename = file.path().string();
 					if (file.is_regular_file())
 					{
-						folder_node.child_files.push_back(fs->basename(file.path().string()));
+						folder_node.child_files.push_back(filename);
 					}
 					else if (file.is_directory())
 					{
-						folder_node.child_folders.push_back(child_offset++);
-						folder_queue.push(file.path().string());
+						// ignore internal engine folder
+						if (filename.find("asset/engine") == std::string::npos &&
+							filename.find("asset\\engine") == std::string::npos)
+						{
+							folder_node.child_folders.push_back(child_offset++);
+							folder_queue.push(filename);
+						}
 					}
 				}
 				folder_node.is_leaf = folder_node.child_folders.empty();
@@ -344,9 +350,6 @@ namespace Bamboo
 				m_folder_opened_map[folder_node.name] = false;
 			}
 		}
-
-		// update selected folder files
-		pollSelectedFolder();
 	}
 
 	void AssetUI::pollSelectedFolder(const std::string& selected_folder)
@@ -362,7 +365,16 @@ namespace Bamboo
 
 		if (!m_selected_folder.empty())
 		{
-			m_selected_files = g_runtime_context.fileSystem()->traverse(m_selected_folder);
+			m_selected_files.clear();
+			const auto& iter = std::find_if(m_folder_nodes.begin(), m_folder_nodes.end(), 
+				[this](const FolderNode& folder_node) {
+					return folder_node.dir == m_selected_folder;
+				});
+			for (uint32_t child_folder : iter->child_folders)
+			{
+				m_selected_files.push_back(m_folder_nodes[child_folder].dir);
+			}
+			m_selected_files.insert(m_selected_files.end(), iter->child_files.begin(), iter->child_files.end());
 			for (const std::string& selected_file : m_selected_files)
 			{
 				if (m_selected_file_hover_states.find(selected_file) == m_selected_file_hover_states.end())
