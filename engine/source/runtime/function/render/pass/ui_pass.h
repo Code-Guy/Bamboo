@@ -1,6 +1,6 @@
 #pragma once
 
-#include "runtime/core/vulkan/render_pass.h"
+#include "render_pass.h"
 #include <functional>
 
 namespace Bamboo

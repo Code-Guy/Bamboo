@@ -38,15 +38,6 @@ namespace Bamboo
 
 	void VulkanRHI::destroy()
 	{
-		// wait all gpu operations done
-		vkDeviceWaitIdle(m_device);
-
-		// destroy all render passes
-		for (auto& render_pass : m_render_passes)
-		{
-			render_pass.second->destroy();
-		}
-
 		vkDestroyPipelineCache(m_device, m_pipeline_cache, nullptr);
 		
 		for (VkSemaphore image_avaliable_semaphore : m_image_avaliable_semaphores)
@@ -268,10 +259,10 @@ namespace Bamboo
 			m_swapchain_image_views[i] = VulkanUtil::createImageView(swapchain_images[i], m_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		}
 
-		// 2.create ui passes' swapchain related objects
-		if (m_render_passes.find(ERenderPassType::UI) != m_render_passes.end())
+		// 2.create render passes' swapchain related objects
+		if (m_callbacks.on_create_swapchain_objects_func)
 		{
-			m_render_passes[ERenderPassType::UI]->createResizableObjects(m_extent.width, m_extent.height);
+			m_callbacks.on_create_swapchain_objects_func(m_extent.width, m_extent.height);
 		}
 	}
 
@@ -283,11 +274,8 @@ namespace Bamboo
 			vkDestroyImageView(m_device, swapchain_image_view, nullptr);
 		}
 
-		// 2.destroy ui passes' swapchain related objects
-		if (m_render_passes.find(ERenderPassType::UI) != m_render_passes.end())
-		{
-			m_render_passes[ERenderPassType::UI]->destroyResizableObjects();
-		}
+		// 2.destroy render passes' swapchain related objects
+		m_callbacks.on_destroy_swapchain_objects_func();
 	}
 
 	void VulkanRHI::recreateSwapchain()
@@ -395,10 +383,7 @@ namespace Bamboo
 	void VulkanRHI::prepareFrame()
 	{
 		// prepare all render passes
-		for (auto& render_pass : m_render_passes)
-		{
-			render_pass.second->prepare();
-		}
+		m_callbacks.on_prepare_frame_func();
 	}
 
 	void VulkanRHI::recordFrame()
@@ -411,13 +396,7 @@ namespace Bamboo
 		vkBeginCommandBuffer(command_buffer, &command_buffer_bi);
 
 		// record all render passes
-		for (auto& render_pass : m_render_passes)
-		{
-			if (!render_pass.second->isMinimize())
-			{
-				render_pass.second->record();
-			}
-		}
+		m_callbacks.on_record_frame_func();
 
 		vkEndCommandBuffer(command_buffer);
 	}

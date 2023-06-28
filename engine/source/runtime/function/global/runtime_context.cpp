@@ -48,6 +48,9 @@ namespace Bamboo
 
     void RuntimeContext::destroy()
     {
+		// wait all gpu operations done
+        VulkanRHI::get().waitDeviceIdle();
+
         // destroy with reverse initialize order
         m_render_system->destroy();
         m_world_manager->destroy();

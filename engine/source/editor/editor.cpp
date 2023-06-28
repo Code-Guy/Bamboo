@@ -5,6 +5,7 @@
 #include "editor/simulation/simulation_ui.h"
 #include "editor/asset/asset_ui.h"
 #include "editor/log/log_ui.h"
+
 #include "runtime/engine.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
@@ -44,7 +45,7 @@ namespace Bamboo
     void Editor::destroy()
     {
 		// wait all gpu operations done
-		vkDeviceWaitIdle(VulkanRHI::get().getDevice());
+		VulkanRHI::get().waitDeviceIdle();
 
 		// destroy all editor uis
 		for (auto& editor_ui : m_editor_uis)

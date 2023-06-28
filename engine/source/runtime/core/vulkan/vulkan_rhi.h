@@ -1,6 +1,8 @@
 #pragma once
 
-#include "render_pass.h"
+#include "vulkan_util.h"
+
+#include <functional>
 #include <string>
 #include <vector>
 #include <map>
@@ -9,12 +11,23 @@
 
 namespace Bamboo
 {
+	struct VulkanRHICallbacks
+	{
+		std::function<void(uint32_t width, uint32_t height)> on_create_swapchain_objects_func;
+		std::function<void()> on_destroy_swapchain_objects_func;
+		std::function<void()> on_prepare_frame_func;
+		std::function<void()> on_record_frame_func;
+	};
+
 	class VulkanRHI
 	{
 	public:
 		void init();
 		void render();
 		void destroy();
+
+		void setCallbacks(const VulkanRHICallbacks& callbacks) { m_callbacks = callbacks; }
+		void waitDeviceIdle() { vkDeviceWaitIdle(m_device); }
 
 		VkInstance getInstance() { return m_instance; }
 		VkPhysicalDevice getPhysicalDevice() { return m_physical_device; }
@@ -32,7 +45,6 @@ namespace Bamboo
 		uint32_t getImageIndex() { return m_image_index; }
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
 		VkCommandBuffer getCommandBuffer() { return m_command_buffers[m_flight_index]; }
-		auto& getRenderPasses() { return m_render_passes; }
 
 		static VulkanRHI& get()
 		{
@@ -145,7 +157,6 @@ namespace Bamboo
 		std::vector<VkFence> m_flight_fences;
 		std::vector<VkCommandBuffer> m_command_buffers;
 
-		// render passes
-		std::map<ERenderPassType, std::shared_ptr<RenderPass>> m_render_passes;
+		VulkanRHICallbacks m_callbacks;
 	};
 }

@@ -1,5 +1,6 @@
 #include "simulation_ui.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
+#include "runtime/function/render/render_system.h"
 #include "runtime/function/render/pass/base_pass.h"
 #include <imgui/backends/imgui_impl_vulkan.h>
 
@@ -52,7 +53,7 @@ namespace Bamboo
 
 	void SimulationUI::onWindowResize()
 	{
-		std::shared_ptr<RenderPass> render_pass = VulkanRHI::get().getRenderPasses()[ERenderPassType::Base];
+		std::shared_ptr<RenderPass> render_pass = g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Base);
 		std::shared_ptr<BasePass> base_pass = std::dynamic_pointer_cast<BasePass>(render_pass);
 		base_pass->onResize(m_width, m_height);
 
