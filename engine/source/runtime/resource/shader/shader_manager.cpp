@@ -20,7 +20,7 @@ namespace Bamboo
 			std::string spv_basename = fs->basename(spv_filename); 
 			std::vector<std::string> splits = StringUtil::split(spv_basename, "-");
 			spv_basename_modified_time_map[splits[0]] = splits[1];
-			m_shader_filenames[spv_basename] = spv_filename;
+			m_shader_filenames[splits[0]] = spv_filename;
 		}
 
 		// compile glsl shader if necessary

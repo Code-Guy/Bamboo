@@ -5,7 +5,6 @@
 #include <algorithm>
 
 #define ENABLE_VALIDATION_LAYER DEBUG
-#define MAX_FRAMES_IN_FLIGHT 2
 
 namespace Bamboo
 {
@@ -414,7 +413,7 @@ namespace Bamboo
 		// record all render passes
 		for (auto& render_pass : m_render_passes)
 		{
-			if (!render_pass.second->is_minimize())
+			if (!render_pass.second->isMinimize())
 			{
 				render_pass.second->record();
 			}

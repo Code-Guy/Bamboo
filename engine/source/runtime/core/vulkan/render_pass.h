@@ -18,13 +18,16 @@ namespace Bamboo
 		virtual void destroy();
 
 		virtual void createRenderPass() = 0;
+		virtual void createDescriptorPool() = 0;
+		virtual void createDescriptorSetLayout() = 0;
+		virtual void createPipelineLayout() = 0;
 		virtual void createPipeline() = 0;
 		virtual void createFramebuffer() = 0;
 		virtual void createResizableObjects(uint32_t width, uint32_t height);
 		virtual void destroyResizableObjects() {}
 
-		void on_resize(uint32_t width, uint32_t height);
-		bool is_minimize();
+		void onResize(uint32_t width, uint32_t height);
+		bool isMinimize();
 
 	protected:
 		VkRenderPass m_render_pass;

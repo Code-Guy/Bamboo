@@ -1,8 +1,12 @@
 #include "base_pass.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/base/mesh.h"
+#include "runtime/function/render/render_data.h"
 #include <array>
+
+#define MAX_PRIMITIVE_NUM 64
 
 namespace Bamboo
 {
@@ -10,7 +14,10 @@ namespace Bamboo
 	void BasePass::init()
 	{
 		createRenderPass();
-
+		createDescriptorPool();
+		createDescriptorSetLayout();
+		createPipelineLayout();
+		createPipeline();
 	}
 
 	void BasePass::prepare()
@@ -135,7 +142,76 @@ namespace Bamboo
 		render_pass_ci.dependencyCount = static_cast<uint32_t>(dependencies.size());
 		render_pass_ci.pDependencies = dependencies.data();
 
-		vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
+		VkResult result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
+		CHECK_VULKAN_RESULT(result, "create render pass");
+	}
+
+	void BasePass::createDescriptorPool()
+	{ 
+		uint32_t descriptor_count = MAX_FRAMES_IN_FLIGHT * MAX_PRIMITIVE_NUM;
+
+		std::vector<VkDescriptorPoolSize> pool_sizes =
+		{
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptor_count },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptor_count },
+		};
+
+		VkDescriptorPoolCreateInfo descriptor_pool_ci{};
+		descriptor_pool_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		descriptor_pool_ci.poolSizeCount = pool_sizes.size();
+		descriptor_pool_ci.pPoolSizes = pool_sizes.data();
+		descriptor_pool_ci.maxSets = descriptor_count;
+
+		VkResult result = vkCreateDescriptorPool(VulkanRHI::get().getDevice(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
+		CHECK_VULKAN_RESULT(result, "create descriptor pool");
+	}
+
+	void BasePass::createDescriptorSetLayout()
+	{
+		VkDescriptorSetLayoutBinding ubo_layout_binding{};
+		ubo_layout_binding.binding = 0;
+		ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		ubo_layout_binding.descriptorCount = 1;
+		ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		ubo_layout_binding.pImmutableSamplers = nullptr;
+
+		VkDescriptorSetLayoutBinding sampler_layout_binding{};
+		sampler_layout_binding.binding = 1;
+		sampler_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		sampler_layout_binding.descriptorCount = 1;
+		sampler_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		sampler_layout_binding.pImmutableSamplers = nullptr;
+
+		std::vector<VkDescriptorSetLayoutBinding> layout_bindings = { ubo_layout_binding, sampler_layout_binding };
+
+		VkDescriptorSetLayoutCreateInfo des_set_layout_ci{};
+		des_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		des_set_layout_ci.bindingCount = static_cast<uint32_t>(layout_bindings.size());
+		des_set_layout_ci.pBindings = layout_bindings.data();
+
+		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &des_set_layout_ci, nullptr, &m_descriptor_set_layout);
+		CHECK_VULKAN_RESULT(result, "create descriptor set layout");
+	}
+
+	void BasePass::createPipelineLayout()
+	{
+		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
+		pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipeline_layout_ci.setLayoutCount = 1;
+		pipeline_layout_ci.pSetLayouts = &m_descriptor_set_layout;
+
+		// set push constant range
+		std::vector<VkPushConstantRange> push_constant_ranges = 
+		{
+			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VertexPCO) },
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(VertexPCO), sizeof(FragmentPCO) }
+		};
+
+		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(push_constant_ranges.size());
+		pipeline_layout_ci.pPushConstantRanges = push_constant_ranges.data();
+
+		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
+		CHECK_VULKAN_RESULT(result, "create pipeline layout");
 	}
 
 	void BasePass::createPipeline()
@@ -239,6 +315,43 @@ namespace Bamboo
 		vertex_input_ci.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attribute_descriptions.size());
 		vertex_input_ci.pVertexAttributeDescriptions = vertex_input_attribute_descriptions.data();
 
+		// shader stages
+		const auto& shader_manager = g_runtime_context.shaderManager();
+		VkPipelineShaderStageCreateInfo vert_shader_stage_ci{};
+		vert_shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vert_shader_stage_ci.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vert_shader_stage_ci.module = shader_manager->getShaderModule("blinn_phong_static_mesh.vert");
+		vert_shader_stage_ci.pName = "main";
+		vert_shader_stage_ci.pSpecializationInfo = nullptr;
+
+		VkPipelineShaderStageCreateInfo frag_shader_stage_ci{};
+		frag_shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		frag_shader_stage_ci.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		frag_shader_stage_ci.module = shader_manager->getShaderModule("blinn_phong_static_mesh.frag");
+		frag_shader_stage_ci.pName = "main";
+		frag_shader_stage_ci.pSpecializationInfo = nullptr;
+
+		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = { vert_shader_stage_ci, frag_shader_stage_ci };
+
+		// create graphics pipeline
+		VkGraphicsPipelineCreateInfo graphics_pipeline_ci{};
+		graphics_pipeline_ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		graphics_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());
+		graphics_pipeline_ci.pStages = shader_stage_cis.data();
+		graphics_pipeline_ci.pVertexInputState = &vertex_input_ci;
+		graphics_pipeline_ci.pInputAssemblyState = &input_assembly_state_ci;
+		graphics_pipeline_ci.pViewportState = &viewport_ci;
+		graphics_pipeline_ci.pRasterizationState = &rasterize_state_ci;
+		graphics_pipeline_ci.pMultisampleState = &multisampling_ci;
+		graphics_pipeline_ci.pDepthStencilState = &depth_stencil_ci;
+		graphics_pipeline_ci.pColorBlendState = &color_blend_ci;
+		graphics_pipeline_ci.pDynamicState = &dynamic_state_ci;
+		graphics_pipeline_ci.layout = m_pipeline_layout;
+		graphics_pipeline_ci.renderPass = m_render_pass;
+		graphics_pipeline_ci.subpass = 0;
+
+		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), VK_NULL_HANDLE, 1, &graphics_pipeline_ci, nullptr, &m_pipeline);
+		CHECK_VULKAN_RESULT(result, "create graphics pipeline");
 	}
 
 	void BasePass::createFramebuffer()

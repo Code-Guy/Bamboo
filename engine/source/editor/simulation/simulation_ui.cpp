@@ -54,7 +54,7 @@ namespace Bamboo
 	{
 		std::shared_ptr<RenderPass> render_pass = VulkanRHI::get().getRenderPasses()[ERenderPassType::Base];
 		std::shared_ptr<BasePass> base_pass = std::dynamic_pointer_cast<BasePass>(render_pass);
-		base_pass->on_resize(m_width, m_height);
+		base_pass->onResize(m_width, m_height);
 
 		if (m_color_texture_desc_set != VK_NULL_HANDLE)
 		{
