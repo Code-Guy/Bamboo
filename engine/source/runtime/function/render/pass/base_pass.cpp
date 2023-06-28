@@ -244,12 +244,12 @@ namespace Bamboo
 	void BasePass::createFramebuffer()
 	{
 		// 1.create depth stencil image and view
-		createImageAndView(m_width, m_height, 1, VK_SAMPLE_COUNT_1_BIT, VulkanRHI::get().getDepthFormat(),
+		VulkanUtil::createImageAndView(m_width, m_height, 1, VK_SAMPLE_COUNT_1_BIT, VulkanRHI::get().getDepthFormat(),
 			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_ASPECT_DEPTH_BIT, m_depth_stencil_image_view);
 
 		// 2.create color images and view
-		createImageAndView(m_width, m_height, 1, VK_SAMPLE_COUNT_1_BIT, VulkanRHI::get().getColorFormat(),
+		VulkanUtil::createImageAndView(m_width, m_height, 1, VK_SAMPLE_COUNT_1_BIT, VulkanRHI::get().getColorFormat(),
 			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
 			VK_IMAGE_ASPECT_COLOR_BIT, m_color_image_view);
 

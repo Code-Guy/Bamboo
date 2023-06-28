@@ -17,5 +17,6 @@ namespace Bamboo
 		std::string execute(const char* cmd);
 
 		std::map<std::string, VkShaderModule> m_shader_modules;
+		std::map<std::string, std::string> m_shader_filenames;
 	};
 }

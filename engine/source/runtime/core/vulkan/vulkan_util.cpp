@@ -4,45 +4,6 @@
 
 namespace Bamboo
 {
-	void VmaBuffer::destroy()
-	{
-		if (buffer != VK_NULL_HANDLE)
-		{
-			vmaDestroyBuffer(VulkanRHI::get().getAllocator(), buffer, allocation);
-		}
-	}
-
-	void VmaImage::destroy()
-	{
-		if (image != VK_NULL_HANDLE)
-		{
-			vmaDestroyImage(VulkanRHI::get().getAllocator(), image, allocation);
-		}
-	}
-
-	void VmaImageView::destroy()
-	{
-		if (view != VK_NULL_HANDLE)
-		{
-			vkDestroyImageView(VulkanRHI::get().getDevice(), view, nullptr);
-		}
-		
-		vma_image.destroy();
-	}
-
-	void VmaImageViewSampler::destroy()
-	{
-		if (sampler != VK_NULL_HANDLE)
-		{
-			vkDestroySampler(VulkanRHI::get().getDevice(), sampler, nullptr);
-		}
-		if (view != VK_NULL_HANDLE)
-		{
-			vkDestroyImageView(VulkanRHI::get().getDevice(), view, nullptr);
-		}
-		vma_image.destroy();
-	}
-
 	const char* vkErrorString(VkResult result)
 	{
 		switch (result)
@@ -93,7 +54,46 @@ namespace Bamboo
 		}
 	}
 
-	VkCommandBuffer beginInstantCommands()
+	void VmaBuffer::destroy()
+	{
+		if (buffer != VK_NULL_HANDLE)
+		{
+			vmaDestroyBuffer(VulkanRHI::get().getAllocator(), buffer, allocation);
+		}
+	}
+
+	void VmaImage::destroy()
+	{
+		if (image != VK_NULL_HANDLE)
+		{
+			vmaDestroyImage(VulkanRHI::get().getAllocator(), image, allocation);
+		}
+	}
+
+	void VmaImageView::destroy()
+	{
+		if (view != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(VulkanRHI::get().getDevice(), view, nullptr);
+		}
+
+		vma_image.destroy();
+	}
+
+	void VmaImageViewSampler::destroy()
+	{
+		if (sampler != VK_NULL_HANDLE)
+		{
+			vkDestroySampler(VulkanRHI::get().getDevice(), sampler, nullptr);
+		}
+		if (view != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(VulkanRHI::get().getDevice(), view, nullptr);
+		}
+		vma_image.destroy();
+	}
+
+	VkCommandBuffer VulkanUtil::beginInstantCommands()
 	{
 		VkCommandBufferAllocateInfo command_buffer_ai{};
 		command_buffer_ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -113,7 +113,7 @@ namespace Bamboo
 		return command_buffer;
 	}
 
-	void endInstantCommands(VkCommandBuffer command_buffer)
+	void VulkanUtil::endInstantCommands(VkCommandBuffer command_buffer)
 	{
 		vkEndCommandBuffer(command_buffer);
 
@@ -129,7 +129,7 @@ namespace Bamboo
 		vkFreeCommandBuffers(VulkanRHI::get().getDevice(), VulkanRHI::get().getInstantCommandPool(), 1, &command_buffer);
 	}
 
-	void createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer)
+	void VulkanUtil::createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer)
 	{
 		VkBufferCreateInfo buffer_ci{};
 		buffer_ci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -148,7 +148,7 @@ namespace Bamboo
 		vmaCreateBuffer(VulkanRHI::get().getAllocator(), &buffer_ci, &alloc_ci, &buffer.buffer, &buffer.allocation, nullptr);
 	}
 
-	void copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
+	void VulkanUtil::copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
 	{
 		VkCommandBuffer command_buffer = beginInstantCommands();
 
@@ -159,7 +159,7 @@ namespace Bamboo
 		endInstantCommands(command_buffer);
 	}
 
-	void createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
+	void VulkanUtil::createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
 		uint32_t mip_levels, bool is_srgb, VkFilter min_filter, VkFilter mag_filter,
 		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler)
 	{
@@ -199,14 +199,14 @@ namespace Bamboo
 		vma_image_view_sampler.sampler = createSampler(min_filter, mag_filter, mip_levels, address_mode, address_mode, address_mode);
 	}
 
-	void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
+	void VulkanUtil::createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VkImageAspectFlags aspect_flags, VmaImageView& vma_image_view)
 	{
 		createImage(width, height, mip_levels, num_samples, format, tiling, image_usage, memory_usage, vma_image_view.vma_image);
 		vma_image_view.view = createImageView(vma_image_view.vma_image.image, format, aspect_flags, mip_levels);
 	}
 
-	void createImage(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
+	void VulkanUtil::createImage(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VmaImage& image)
 	{
 		VkImageCreateInfo image_ci{};
@@ -232,7 +232,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "vma create image");
 	}
 
-	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, uint32_t mip_levels)
+	VkImageView VulkanUtil::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, uint32_t mip_levels)
 	{
 		VkImageViewCreateInfo image_view_ci{};
 		image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -252,7 +252,7 @@ namespace Bamboo
 		return image_view;
 	}
 
-	VkSampler createSampler(VkFilter min_filter, VkFilter mag_filter, uint32_t mip_levels, 
+	VkSampler VulkanUtil::createSampler(VkFilter min_filter, VkFilter mag_filter, uint32_t mip_levels,
 		VkSamplerAddressMode address_mode_u, VkSamplerAddressMode address_mode_v, VkSamplerAddressMode address_mode_w)
 	{
 		VkSamplerCreateInfo sampler_ci{};
@@ -279,7 +279,7 @@ namespace Bamboo
 		return sampler;
 	}
 
-	void createVertexBuffer(uint32_t buffer_size, void* vertex_data, VmaBuffer& vertex_buffer)
+	void VulkanUtil::createVertexBuffer(uint32_t buffer_size, void* vertex_data, VmaBuffer& vertex_buffer)
 	{
 		VmaBuffer staging_buffer;
 		createBuffer(buffer_size, 
@@ -303,7 +303,7 @@ namespace Bamboo
 		vmaDestroyBuffer(VulkanRHI::get().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
 	}
 
-	void createIndexBuffer(const std::vector<uint32_t>& indices, VmaBuffer& index_buffer)
+	void VulkanUtil::createIndexBuffer(const std::vector<uint32_t>& indices, VmaBuffer& index_buffer)
 	{
 		VkDeviceSize buffer_size = sizeof(indices[0]) * indices.size();
 
@@ -372,7 +372,7 @@ namespace Bamboo
 		}
 	}
 
-	void transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkFormat format, uint32_t mip_levels)
+	void VulkanUtil::transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkFormat format, uint32_t mip_levels)
 	{
 		VkCommandBuffer command_buffer = beginInstantCommands();
 
@@ -423,7 +423,7 @@ namespace Bamboo
 		endInstantCommands(command_buffer);
 	}
 
-	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+	void VulkanUtil::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 	{
 		VkCommandBuffer command_buffer = beginInstantCommands();
 
@@ -445,7 +445,7 @@ namespace Bamboo
 		endInstantCommands(command_buffer);
 	}
 
-	void createImageMipmaps(VkImage image, VkFormat image_format, uint32_t width, uint32_t height, uint32_t mip_levels)
+	void VulkanUtil::createImageMipmaps(VkImage image, VkFormat image_format, uint32_t width, uint32_t height, uint32_t mip_levels)
 	{
 		VkCommandBuffer command_buffer = beginInstantCommands();
 
@@ -526,7 +526,7 @@ namespace Bamboo
 		endInstantCommands(command_buffer);
 	}
 
-	bool hasStencil(VkFormat format)
+	bool VulkanUtil::hasStencil(VkFormat format)
 	{
 		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}

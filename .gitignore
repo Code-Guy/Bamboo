@@ -1,7 +1,7 @@
 # custom
 build/
 engine/log/
-engine/asset/temp/
+engine/asset/engine/shader
 
 # mac
 cpm_modules/

@@ -76,7 +76,7 @@ namespace Bamboo
         std::string abs_logger_path = g_runtime_context.fileSystem()->absolute(LOGGER_PATH);
         if (!g_runtime_context.fileSystem()->exists(abs_logger_path))
         {
-            g_runtime_context.fileSystem()->create_dir(abs_logger_path);
+            g_runtime_context.fileSystem()->createDir(abs_logger_path);
         }
         else
         {
@@ -86,7 +86,7 @@ namespace Bamboo
                 size_t removed_num = log_filenames.size() - MAX_LOG_FILE_NUM / 2;
                 for (size_t i = 0; i < removed_num; ++i)
                 {
-                    g_runtime_context.fileSystem()->remove_file(log_filenames[i]);
+                    g_runtime_context.fileSystem()->removeFile(log_filenames[i]);
                 }
             }
         }

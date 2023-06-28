@@ -6,6 +6,7 @@
 #include "runtime/function/render/window_system.h"
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/function/render/render_system.h"
+#include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 
@@ -32,6 +33,9 @@ namespace Bamboo
 
         VulkanRHI::get().init();
 
+		m_shader_manager = std::make_shared<ShaderManager>();
+        m_shader_manager->init();
+
 		m_asset_manager = std::make_shared<AssetManager>();
 		m_asset_manager->init();
 
@@ -48,6 +52,7 @@ namespace Bamboo
         m_render_system->destroy();
         m_world_manager->destroy();
 		m_asset_manager->destroy();
+        m_shader_manager->destroy();
         VulkanRHI::get().destroy();
 		m_window_system->destroy();
         m_config_manager->destroy();

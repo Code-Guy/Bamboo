@@ -60,7 +60,7 @@ namespace Bamboo
 		uint8_t* image_data = stbi_load(filename.c_str(), (int*)&image->width, (int*)&image->height, 0, image->channels);
 		ASSERT(image_data != nullptr, "failed to load imgui image");
 
-		createImageViewSampler(image->width, image->height, image_data, 1, true,
+		VulkanUtil::createImageViewSampler(image->width, image->height, image_data, 1, true,
 			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, image->image_view_sampler);
 
 		image->desc_set = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

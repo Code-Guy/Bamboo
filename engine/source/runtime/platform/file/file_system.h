@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include "runtime/platform/string/string_util.h"
 #include <filesystem>
 
 namespace Bamboo
@@ -17,26 +17,31 @@ namespace Bamboo
 		void destroy();
 
 		std::string absolute(const std::string& path);
+		std::string global(const std::string& path);
 		std::string relative(const std::string& path);
 
 		std::string extension(const std::string& path);
 		std::string basename(const std::string& path);
 		std::string filename(const std::string& path);
 		std::string dir(const std::string& path);
+		std::string modifiedTime(const std::string& path);
 		std::vector<std::string> traverse(const std::string& path, bool is_recursive = false, 
 			EFileOrderType file_order_type = EFileOrderType::Name, bool is_reverse = false);
 
-		std::string asset_dir();
+		std::string getAssetDir();
+		std::string getShaderDir();
 
 		bool exists(const std::string& path);
-		bool is_file(const std::string& path);
-		bool is_dir(const std::string& path);
-		bool is_empty_dir(const std::string& path);
+		bool isFile(const std::string& path);
+		bool isDir(const std::string& path);
+		bool isEmptyDir(const std::string& path);
 
-		bool create_file(const std::string& filename, std::ios_base::openmode mode = std::ios_base::out);
-		bool create_dir(const std::string& path, bool is_recursive = false);
-		bool remove_file(const std::string& filename);
-		bool remove_dir(const std::string& path, bool is_recursive = false);
+		bool createFile(const std::string& filename, std::ios_base::openmode mode = std::ios_base::out);
+		bool createDir(const std::string& path, bool is_recursive = false);
+		bool removeFile(const std::string& filename);
+		bool removeDir(const std::string& path, bool is_recursive = false);
+
+		std::vector<char> loadBinary(const std::string& filename);
 
 		template<typename T, typename... Ts>
 		std::string combine(const T& first, const Ts&... rest)
@@ -64,7 +69,4 @@ namespace Bamboo
 	private:
 		std::filesystem::path m_header;
 	};
-
-	bool replace(std::string& str, const std::string& from, const std::string& to);
-	void replace_all(std::string& str, const std::string& from, const std::string& to);
 }

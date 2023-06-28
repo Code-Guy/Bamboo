@@ -35,6 +35,11 @@ namespace Bamboo
 		return header.append(path).string();
 	}
 
+	std::string FileSystem::global(const std::string& path)
+	{
+		return std::filesystem::absolute(path).string();
+	}
+
 	std::string FileSystem::relative(const std::string& path)
 	{
 		return std::filesystem::relative(path, m_header).string();
@@ -63,6 +68,11 @@ namespace Bamboo
 	std::string FileSystem::dir(const std::string& path)
 	{
 		return std::filesystem::path(path).parent_path().string();
+	}
+
+	std::string FileSystem::modifiedTime(const std::string& path)
+	{
+		return std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::filesystem::last_write_time(path).time_since_epoch()).count());
 	}
 
 	std::vector<std::string> FileSystem::traverse(const std::string& path, bool is_recursive, EFileOrderType file_order_type, bool is_reverse)
@@ -112,9 +122,14 @@ namespace Bamboo
 		return filenames;
 	}
 
-	std::string FileSystem::asset_dir()
+	std::string FileSystem::getAssetDir()
 	{
 		return absolute("asset");
+	}
+
+	std::string FileSystem::getShaderDir()
+	{
+		return absolute("shader");
 	}
 
 	bool FileSystem::exists(const std::string& path)
@@ -122,22 +137,22 @@ namespace Bamboo
 		return std::filesystem::exists(path) || std::filesystem::exists(absolute(path));
 	}
 
-	bool FileSystem::is_file(const std::string& path)
+	bool FileSystem::isFile(const std::string& path)
 	{
 		return std::filesystem::is_regular_file(path);
 	}
 
-	bool FileSystem::is_dir(const std::string& path)
+	bool FileSystem::isDir(const std::string& path)
 	{
 		return std::filesystem::is_directory(path);
 	}
 
-	bool FileSystem::is_empty_dir(const std::string& path)
+	bool FileSystem::isEmptyDir(const std::string& path)
 	{
 		return std::filesystem::path(path).empty();
 	}
 
-	bool FileSystem::create_file(const std::string& filename, std::ios_base::openmode mode)
+	bool FileSystem::createFile(const std::string& filename, std::ios_base::openmode mode)
 	{
 		if (exists(filename))
 		{
@@ -149,7 +164,7 @@ namespace Bamboo
 		return true;
 	}
 
-	bool FileSystem::create_dir(const std::string& path, bool is_recursive)
+	bool FileSystem::createDir(const std::string& path, bool is_recursive)
 	{
 		if (exists(path))
 		{
@@ -163,7 +178,7 @@ namespace Bamboo
 		return std::filesystem::create_directory(std::filesystem::path(path));
 	}
 
-	bool FileSystem::remove_file(const std::string& filename)
+	bool FileSystem::removeFile(const std::string& filename)
 	{
 		if (!exists(filename))
 		{
@@ -173,7 +188,7 @@ namespace Bamboo
 		return std::filesystem::remove(filename);
 	}
 
-	bool FileSystem::remove_dir(const std::string& path, bool is_recursive)
+	bool FileSystem::removeDir(const std::string& path, bool is_recursive)
 	{
 		if (!exists(path))
 		{
@@ -187,31 +202,24 @@ namespace Bamboo
 		return std::filesystem::remove(path);
 	}
 
-	bool replace(std::string& str, const std::string& from, const std::string& to)
+	std::vector<char> FileSystem::loadBinary(const std::string& filename)
 	{
-		size_t start_pos = str.find(from);
-		if (start_pos == std::string::npos)
+		std::ifstream file(filename, std::ios::ate | std::ios::binary);
+		if (!file.is_open())
 		{
-			return false;
+			LOG_FATAL("failed to load shader {}", filename);
+			return {};
 		}
 
-		str.replace(start_pos, from.length(), to);
-		return true;
-	}
+		std::vector<char> buffer;
+		size_t fileSize = (size_t)file.tellg();
+		buffer.resize(fileSize);
 
-	void replace_all(std::string& str, const std::string& from, const std::string& to)
-	{
-		if (from.empty())
-		{
-			return;
-		}
+		file.seekg(0);
+		file.read(buffer.data(), fileSize);
+		file.close();
 
-		size_t start_pos = 0;
-		while ((start_pos = str.find(from, start_pos)) != std::string::npos) 
-		{
-			str.replace(start_pos, from.length(), to);
-			start_pos += to.length();
-		}
+		return buffer;
 	}
 
 }

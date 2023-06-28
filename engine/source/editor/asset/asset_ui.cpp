@@ -14,7 +14,7 @@ namespace Bamboo
 		const float k_poll_folder_time = 1.0f;
 		m_poll_folder_timer_handle = g_runtime_context.timerManager()->addTimer(k_poll_folder_time, [this](){ pollFolders(); }, true);
 		pollFolders();
-		pollSelectedFolder(g_runtime_context.fileSystem()->asset_dir());
+		pollSelectedFolder(g_runtime_context.fileSystem()->getAssetDir());
 
 		// load icon images
 		const auto& fs = g_runtime_context.fileSystem();
@@ -207,14 +207,14 @@ namespace Bamboo
 		ImTextureID tex_id = nullptr;
 		std::string basename = g_runtime_context.fileSystem()->basename(filename);
 
-		if (g_runtime_context.fileSystem()->is_file(filename))
+		if (g_runtime_context.fileSystem()->isFile(filename))
 		{
 			EAssetType asset_type = g_runtime_context.assetManager()->getAssetType(filename);
 			tex_id = m_asset_images[asset_type]->desc_set;
 		}
-		else if (g_runtime_context.fileSystem()->is_dir(filename))
+		else if (g_runtime_context.fileSystem()->isDir(filename))
 		{
-			bool is_empty = g_runtime_context.fileSystem()->is_empty_dir(filename);
+			bool is_empty = g_runtime_context.fileSystem()->isEmptyDir(filename);
 			tex_id = is_empty ? m_empty_folder_image->desc_set : m_non_empty_folder_image->desc_set;
 		}
 		else
@@ -275,7 +275,7 @@ namespace Bamboo
 		}
 
 		// set drag source
-		if (g_runtime_context.fileSystem()->is_file(filename))
+		if (g_runtime_context.fileSystem()->isFile(filename))
 		{
 			if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 			{
@@ -285,7 +285,7 @@ namespace Bamboo
 				ImGui::EndDragDropSource();
 			}
 		}
-		else if (g_runtime_context.fileSystem()->is_dir(filename))
+		else if (g_runtime_context.fileSystem()->isDir(filename))
 		{
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 			{
@@ -301,7 +301,7 @@ namespace Bamboo
 
 		m_folder_nodes.clear();
 		std::queue<std::string> folder_queue;
-		folder_queue.push(fs->asset_dir());
+		folder_queue.push(fs->getAssetDir());
 		while (!folder_queue.empty())
 		{
 			size_t offset = m_folder_nodes.size();
@@ -319,7 +319,7 @@ namespace Bamboo
 				FolderNode& folder_node = m_folder_nodes[offset + i];
 				folder_node.dir = folders[i];
 				folder_node.name = fs->basename(folders[i]);
-				folder_node.is_root = folders[i] == fs->asset_dir();
+				folder_node.is_root = folders[i] == fs->getAssetDir();
 				for (auto& file : std::filesystem::directory_iterator(folders[i]))
 				{
 					std::string filename = file.path().string();
@@ -359,8 +359,8 @@ namespace Bamboo
 			m_selected_folder = selected_folder;
 
 			m_formatted_selected_folder = g_runtime_context.fileSystem()->relative(m_selected_folder);
-			replace_all(m_formatted_selected_folder, "/", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
-			replace_all(m_formatted_selected_folder, "\\", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
+			StringUtil::replace_all(m_formatted_selected_folder, "/", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
+			StringUtil::replace_all(m_formatted_selected_folder, "\\", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
 		}
 
 		if (!m_selected_folder.empty())

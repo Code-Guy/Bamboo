@@ -81,9 +81,9 @@ namespace Bamboo
 		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/fa-solid-900.ttf").c_str(), k_icon_font_size, &icons_config, icons_ranges);
 
 		// upload fonts
-		VkCommandBuffer command_buffer = beginInstantCommands();
+		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
 		ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-		endInstantCommands(command_buffer);
+		VulkanUtil::endInstantCommands(command_buffer);
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 
 		// create swapchain related objects
