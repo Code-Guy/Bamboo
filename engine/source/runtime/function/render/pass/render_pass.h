@@ -1,6 +1,7 @@
 #pragma once
 
 #include "runtime/core/vulkan/vulkan_util.h"
+#include "runtime/function/render/render_data.h"
 
 namespace Bamboo
 {
@@ -13,8 +14,7 @@ namespace Bamboo
 	{
 	public:
 		virtual void init() = 0;
-		virtual void prepare() = 0;
-		virtual void record() = 0;
+		virtual void record(VkCommandBuffer command_buffer, uint32_t flight_index) = 0;
 		virtual void destroy();
 
 		virtual void createRenderPass() = 0;
@@ -30,12 +30,18 @@ namespace Bamboo
 		bool isMinimize();
 
 	protected:
+		// vulkan objects
 		VkRenderPass m_render_pass;
 		VkDescriptorPool m_descriptor_pool;
 		VkDescriptorSetLayout m_descriptor_set_layout;
+		std::vector<VkPushConstantRange> m_push_constant_ranges;
 		VkPipelineLayout m_pipeline_layout;
 		VkPipeline m_pipeline;
 
+		// render dependent data
+		std::vector<std::shared_ptr<BatchRenderData>> m_batch_render_datas;
+
+		// render target size
 		uint32_t m_width = 0, m_height = 0;
 	};
 }

@@ -5,19 +5,19 @@
 
 namespace Bamboo
 {
-	struct VertexPCO
+	struct VertPCO
 	{
 		glm::mat4 m;
 		glm::mat4 mvp;
 	};
 
-	struct FragmentPCO
+	struct FragPCO
 	{
 		glm::vec3 camera_pos; float padding0;
 		glm::vec3 light_dir; float padding1;
 	};
 
-	struct RenderData
+	struct BatchRenderData
 	{
 		VmaBuffer vertex_buffer;
 		VmaBuffer index_buffer;
@@ -25,16 +25,13 @@ namespace Bamboo
 
 		std::vector<VmaBuffer> uniform_buffers;
 		std::vector<VkDescriptorSet> descriptor_sets;
-
-		virtual void destroy();
 	};
 
-	struct BasicRenderData : public RenderData
+	struct BlinnPhongBatchRenderData : public BatchRenderData
 	{
 		std::vector<VmaImageViewSampler> image_view_samplers;
-		VertexPCO vertex_pco;
-		FragmentPCO fragment_pco;
 
-		virtual void destroy();
+		VertPCO vert_pco;
+		FragPCO frag_pco;
 	};
 }

@@ -9,8 +9,7 @@ namespace Bamboo
 	{
 	public:
 		virtual void init() override;
-		virtual void prepare() override;
-		virtual void record() override;
+		virtual void record(VkCommandBuffer command_buffer, uint32_t flight_index) override;
 		virtual void destroy() override;
 
 		virtual void createRenderPass() override;

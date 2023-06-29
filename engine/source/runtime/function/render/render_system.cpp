@@ -19,8 +19,7 @@ namespace Bamboo
 		VulkanRHI::get().setCallbacks({
 			std::bind(&RenderSystem::onCreateSwapchainObjects, this, std::placeholders::_1, std::placeholders::_2),
 			std::bind(&RenderSystem::onDestroySwapchainObjects, this),
-			std::bind(&RenderSystem::onPrepareFrame, this),
-			std::bind(&RenderSystem::onRecordFrame, this),
+			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1, std::placeholders::_2),
 			});
 	}
 
@@ -63,21 +62,13 @@ namespace Bamboo
 		}
 	}
 
-	void RenderSystem::onPrepareFrame()
-	{
-		for (auto& render_pass : m_render_passes)
-		{
-			render_pass.second->prepare();
-		}
-	}
-
-	void RenderSystem::onRecordFrame()
+	void RenderSystem::onRecordFrame(VkCommandBuffer command_buffer, uint32_t flight_index)
 	{
 		for (auto& render_pass : m_render_passes)
 		{
 			if (!render_pass.second->isMinimize())
 			{
-				render_pass.second->record();
+				render_pass.second->record(command_buffer, flight_index);
 			}
 		}
 	}

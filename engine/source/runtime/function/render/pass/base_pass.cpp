@@ -20,12 +20,7 @@ namespace Bamboo
 		createPipeline();
 	}
 
-	void BasePass::prepare()
-	{
-		
-	}
-
-	void BasePass::record()
+	void BasePass::record(VkCommandBuffer command_buffer, uint32_t flight_index)
 	{
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -40,13 +35,9 @@ namespace Bamboo
 		render_pass_bi.clearValueCount = static_cast<uint32_t>(clear_values.size());
 		render_pass_bi.pClearValues = clear_values.data();
 
-		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
 		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
-		// 1.bind pipeline
-		// TODO
-
-		// 2.set viewport
+		// 1.set viewport
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
@@ -56,11 +47,48 @@ namespace Bamboo
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 
-		// 3.set scissor
+		// 2.set scissor
 		VkRect2D scissor{};
 		scissor.offset = { 0, 0 };
 		scissor.extent = { m_width, m_height };
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+		// 3.bind pipeline
+		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+		for (auto& batch_render_data : m_batch_render_datas)
+		{
+			std::shared_ptr<BlinnPhongBatchRenderData> render_data = std::static_pointer_cast<BlinnPhongBatchRenderData>(batch_render_data);
+
+			// bind vertex and index buffer
+			VkBuffer vertexBuffers[] = { render_data->vertex_buffer.buffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(command_buffer, render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+			// push constants
+			const void* pcos[] = { &render_data->vert_pco, &render_data->frag_pco };
+			for (size_t i = 0; i < m_push_constant_ranges.size(); ++i)
+			{
+				const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[i];
+				vkCmdPushConstants(command_buffer, m_pipeline_layout, pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[i]);
+			}
+
+			// render all subs
+			std::vector<uint32_t>& index_counts = render_data->index_counts;
+			size_t sub_count = index_counts.size();
+			uint32_t index_offset = 0;
+			for (size_t i = 0; i < sub_count; ++i)
+			{
+				// bind sub descriptor set
+				vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout,
+					0, 1, &render_data->descriptor_sets[flight_index * sub_count + i], 0, nullptr);
+
+				// render sub
+				uint32_t index_count = index_counts[i] - index_offset;
+				vkCmdDrawIndexed(command_buffer, index_count, 1, index_offset, 0, 0);
+				index_offset = index_counts[i];
+			}
+		}
 
 		vkCmdEndRenderPass(command_buffer);
 	}
@@ -201,14 +229,14 @@ namespace Bamboo
 		pipeline_layout_ci.pSetLayouts = &m_descriptor_set_layout;
 
 		// set push constant range
-		std::vector<VkPushConstantRange> push_constant_ranges = 
+		m_push_constant_ranges =
 		{
-			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VertexPCO) },
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(VertexPCO), sizeof(FragmentPCO) }
+			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VertPCO) },
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(VertPCO), sizeof(FragPCO) }
 		};
 
-		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(push_constant_ranges.size());
-		pipeline_layout_ci.pPushConstantRanges = push_constant_ranges.data();
+		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
+		pipeline_layout_ci.pPushConstantRanges = m_push_constant_ranges.data();
 
 		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
 		CHECK_VULKAN_RESULT(result, "create pipeline layout");

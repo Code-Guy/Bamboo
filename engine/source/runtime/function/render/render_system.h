@@ -21,8 +21,7 @@ namespace Bamboo
 	private:
 		void onCreateSwapchainObjects(uint32_t width, uint32_t height);
 		void onDestroySwapchainObjects();
-		void onPrepareFrame();
-		void onRecordFrame();
+		void onRecordFrame(VkCommandBuffer command_buffer, uint32_t flight_index);
 
 		// render passes
 		std::map<ERenderPassType, std::shared_ptr<RenderPass>> m_render_passes;

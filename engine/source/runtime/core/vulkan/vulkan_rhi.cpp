@@ -30,7 +30,6 @@ namespace Bamboo
 	void VulkanRHI::render()
 	{
 		waitFrame();
-		prepareFrame();
 		recordFrame();
 		submitFrame();
 		presentFrame();
@@ -380,12 +379,6 @@ namespace Bamboo
 		ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "failed to acquire swapchain image!");
 	}
 
-	void VulkanRHI::prepareFrame()
-	{
-		// prepare all render passes
-		m_callbacks.on_prepare_frame_func();
-	}
-
 	void VulkanRHI::recordFrame()
 	{
 		VkCommandBuffer command_buffer = m_command_buffers[m_flight_index];
@@ -396,7 +389,7 @@ namespace Bamboo
 		vkBeginCommandBuffer(command_buffer, &command_buffer_bi);
 
 		// record all render passes
-		m_callbacks.on_record_frame_func();
+		m_callbacks.on_record_frame_func(command_buffer, m_flight_index);
 
 		vkEndCommandBuffer(command_buffer);
 	}

@@ -15,8 +15,7 @@ namespace Bamboo
 	{
 		std::function<void(uint32_t width, uint32_t height)> on_create_swapchain_objects_func;
 		std::function<void()> on_destroy_swapchain_objects_func;
-		std::function<void()> on_prepare_frame_func;
-		std::function<void()> on_record_frame_func;
+		std::function<void(VkCommandBuffer command_buffer, uint32_t flight_index)> on_record_frame_func;
 	};
 
 	class VulkanRHI
@@ -43,6 +42,7 @@ namespace Bamboo
 		const std::vector<VkImageView>& getSwapchainImageViews() { return m_swapchain_image_views; }
 		const VkExtent2D& getSwapchainImageSize() { return m_extent; }
 		uint32_t getImageIndex() { return m_image_index; }
+		uint32_t getFlightIndex() { return m_flight_index; }
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
 		VkCommandBuffer getCommandBuffer() { return m_command_buffers[m_flight_index]; }
 
@@ -85,7 +85,6 @@ namespace Bamboo
 		void createPipelineCache();
 
 		void waitFrame();
-		void prepareFrame();
 		void recordFrame();
 		void submitFrame();
 		void presentFrame();
