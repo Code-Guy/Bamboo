@@ -30,17 +30,4 @@ namespace Bamboo
 		}
 	}
 
-	bool Entity::hasComponent(const std::string& name) const
-	{
-		for (const auto& component : m_components)
-		{
-			if (component->getName() == name)
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 }

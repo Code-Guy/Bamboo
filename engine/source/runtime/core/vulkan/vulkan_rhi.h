@@ -7,8 +7,6 @@
 #include <vector>
 #include <map>
 
-#define MAX_FRAMES_IN_FLIGHT 2
-
 namespace Bamboo
 {
 	struct VulkanRHICallbacks

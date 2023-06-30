@@ -460,7 +460,7 @@ namespace Bamboo
 
 			// set submesh
 			SubMesh* sub_mesh = &mesh->m_sub_meshes[p];
-			sub_mesh->m_first_index = index_start;
+			sub_mesh->m_index_offset = index_start;
 			sub_mesh->m_index_count = primitive_index_count;
 			sub_mesh->m_vertex_count = primitive_vertex_count;
 			sub_mesh->m_bounding_box = BoundingBox{ min_position, max_position };

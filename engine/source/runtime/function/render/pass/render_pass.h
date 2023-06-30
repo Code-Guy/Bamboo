@@ -20,12 +20,14 @@ namespace Bamboo
 		virtual void createRenderPass() = 0;
 		virtual void createDescriptorPool() = 0;
 		virtual void createDescriptorSetLayout() = 0;
+		virtual void createDescriptorSets(std::shared_ptr<RenderData> render_data) = 0;
 		virtual void createPipelineLayout() = 0;
 		virtual void createPipeline() = 0;
 		virtual void createFramebuffer() = 0;
 		virtual void createResizableObjects(uint32_t width, uint32_t height);
 		virtual void destroyResizableObjects() {}
 
+		void setRenderDatas(const std::vector<std::shared_ptr<RenderData>>& render_datas) { m_render_datas = render_datas; }
 		void onResize(uint32_t width, uint32_t height);
 		bool isMinimize();
 
@@ -33,13 +35,13 @@ namespace Bamboo
 		// vulkan objects
 		VkRenderPass m_render_pass;
 		VkDescriptorPool m_descriptor_pool;
-		VkDescriptorSetLayout m_descriptor_set_layout;
+		std::vector<VkDescriptorSetLayout> m_desc_set_layouts;
 		std::vector<VkPushConstantRange> m_push_constant_ranges;
 		VkPipelineLayout m_pipeline_layout;
 		VkPipeline m_pipeline;
 
 		// render dependent data
-		std::vector<std::shared_ptr<BatchRenderData>> m_batch_render_datas;
+		std::vector<std::shared_ptr<RenderData>> m_render_datas;
 
 		// render target size
 		uint32_t m_width = 0, m_height = 0;

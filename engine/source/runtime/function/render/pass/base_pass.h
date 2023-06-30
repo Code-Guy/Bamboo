@@ -14,6 +14,7 @@ namespace Bamboo
 		virtual void createRenderPass() override;
 		virtual void createDescriptorPool() override;
 		virtual void createDescriptorSetLayout() override;
+		virtual void createDescriptorSets(std::shared_ptr<RenderData> render_data) override;
 		virtual void createPipelineLayout() override;
 		virtual void createPipeline() override;
 		virtual void createFramebuffer() override;

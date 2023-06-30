@@ -26,18 +26,30 @@ namespace Bamboo
 		const std::string& getName() const { return m_name; }
 		std::shared_ptr<Entity>& getParent() { return m_parent; }
 
-		bool hasComponent(const std::string& name) const;
 		const auto& getComponents() const { return m_components; }
 
-	private:
 		template<typename TComponent>
-		TComponent* tryGetComponent(const std::string& name)
+		bool hasComponent() const
 		{
 			for (auto& component : m_components)
 			{
-				if (component->getName() == name)
+				if (dynamic_cast<TComponent*>(component.get()))
 				{
-					return static_cast<TComponent*>(component.get());
+					return true;
+				}
+			}
+			return false;
+		}
+
+		template<typename TComponent>
+		TComponent* getComponent()
+		{
+			for (auto& component : m_components)
+			{
+				TComponent* find_component = dynamic_cast<TComponent*>(component.get());
+				if (find_component)
+				{
+					return find_component;
 				}
 			}
 
@@ -45,21 +57,20 @@ namespace Bamboo
 		}
 
 		template<typename TComponent>
-		const TComponent* tryGetComponentConst(const std::string& name) const
+		const TComponent* getComponent() const
 		{
 			for (const auto& component : m_components)
 			{
-				if (component.getName() == name)
+				TComponent* find_component = dynamic_cast<TComponent*>(component.get());
+				if (find_component)
 				{
-					return static_cast<TComponent*>(component.get());
+					return find_component;
 				}
 			}
 			return nullptr;
 		}
 
-#define tryGetComponent(COMPONENT_CLASS) tryGetComponent<COMPONENT_CLASS>(#COMPONENT_CLASS)
-#define tryGetComponentConst(COMPONENT_CLASS) tryGetComponentConst<const COMPONENT_CLASS>(#COMPONENT_CLASS)
-
+	private:
 		EntityID m_id;
 		std::string m_name;
 		std::shared_ptr<Entity> m_parent;

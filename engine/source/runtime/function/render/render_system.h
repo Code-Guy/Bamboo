@@ -23,7 +23,9 @@ namespace Bamboo
 		void onDestroySwapchainObjects();
 		void onRecordFrame(VkCommandBuffer command_buffer, uint32_t flight_index);
 
-		// render passes
+		void collectRenderDatas();
+
+		std::map<RenderDataID, std::shared_ptr<RenderData>> m_cached_render_datas;
 		std::map<ERenderPassType, std::shared_ptr<RenderPass>> m_render_passes;
 	};
 }

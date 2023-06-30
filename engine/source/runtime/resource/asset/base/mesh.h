@@ -32,6 +32,17 @@ private:
 	}
 };
 
+struct StaticMeshUBO
+{
+	glm::mat4 padding;
+};
+
+#define MAX_BONE_NUM 128
+struct SkeletalMeshUBO
+{
+	glm::mat4 gBones[MAX_BONE_NUM];
+};
+
 namespace Bamboo
 {
 	class Mesh
@@ -42,10 +53,10 @@ namespace Bamboo
 		std::vector<SubMesh> m_sub_meshes;
 		std::vector<uint32_t> m_indices;
 
-	protected:
 		VmaBuffer m_vertex_buffer;
 		VmaBuffer m_index_buffer;
-
+		std::vector<VmaBuffer> m_uniform_buffers;
+		
 	private:
 		friend class cereal::access;
 		template<class Archive>

@@ -17,21 +17,39 @@ namespace Bamboo
 		glm::vec3 light_dir; float padding1;
 	};
 
-	struct BatchRenderData
+	struct RenderData
 	{
 		VmaBuffer vertex_buffer;
 		VmaBuffer index_buffer;
 		std::vector<uint32_t> index_counts;
-
-		std::vector<VmaBuffer> uniform_buffers;
-		std::vector<VkDescriptorSet> descriptor_sets;
+		std::vector<uint32_t> index_offsets;
 	};
 
-	struct BlinnPhongBatchRenderData : public BatchRenderData
+	struct MeshRenderData : public RenderData
 	{
-		std::vector<VmaImageViewSampler> image_view_samplers;
+		std::vector<VkDescriptorSet> ubo_desc_sets;
+		std::vector<VkDescriptorSet> texture_desc_sets;
 
 		VertPCO vert_pco;
 		FragPCO frag_pco;
 	};
+
+	struct RenderDataID
+	{
+		VmaBuffer vertex_buffer;
+		VmaBuffer index_buffer;
+		size_t sub_index = 0;
+
+		bool operator<(const RenderDataID& other) const
+		{
+			return vertex_buffer.buffer < other.vertex_buffer.buffer ||
+				(vertex_buffer.buffer == other.vertex_buffer.buffer &&
+					index_buffer.buffer < other.index_buffer.buffer) ||
+				(vertex_buffer.buffer == other.vertex_buffer.buffer &&
+					index_buffer.buffer == other.index_buffer.buffer &&
+					sub_index < other.sub_index);
+		}
+	};
+
+
 }

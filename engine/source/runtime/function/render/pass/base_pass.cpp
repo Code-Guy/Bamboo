@@ -55,18 +55,18 @@ namespace Bamboo
 
 		// 3.bind pipeline
 		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-		for (auto& batch_render_data : m_batch_render_datas)
+		for (auto& render_data : m_render_datas)
 		{
-			std::shared_ptr<BlinnPhongBatchRenderData> render_data = std::static_pointer_cast<BlinnPhongBatchRenderData>(batch_render_data);
+			std::shared_ptr<MeshRenderData> mesh_render_data = std::static_pointer_cast<MeshRenderData>(render_data);
 
 			// bind vertex and index buffer
-			VkBuffer vertexBuffers[] = { render_data->vertex_buffer.buffer };
+			VkBuffer vertexBuffers[] = { mesh_render_data->vertex_buffer.buffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(command_buffer, render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindIndexBuffer(command_buffer, mesh_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 			// push constants
-			const void* pcos[] = { &render_data->vert_pco, &render_data->frag_pco };
+			const void* pcos[] = { &mesh_render_data->vert_pco, &mesh_render_data->frag_pco };
 			for (size_t i = 0; i < m_push_constant_ranges.size(); ++i)
 			{
 				const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[i];
@@ -74,19 +74,21 @@ namespace Bamboo
 			}
 
 			// render all subs
-			std::vector<uint32_t>& index_counts = render_data->index_counts;
-			size_t sub_count = index_counts.size();
-			uint32_t index_offset = 0;
-			for (size_t i = 0; i < sub_count; ++i)
+			std::vector<uint32_t>& index_counts = mesh_render_data->index_counts;
+			std::vector<uint32_t>& index_offsets = mesh_render_data->index_offsets;
+			size_t sub_mesh_count = index_counts.size();
+			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
-				// bind sub descriptor set
-				vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout,
-					0, 1, &render_data->descriptor_sets[flight_index * sub_count + i], 0, nullptr);
+				// bind sub mesh descriptor sets
+				std::vector<VkDescriptorSet> desc_sets = { 
+					mesh_render_data->ubo_desc_sets[flight_index * sub_mesh_count + i], 
+					mesh_render_data->texture_desc_sets[i] 
+				};
+				vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout, 0, 
+					static_cast<uint32_t>(desc_sets.size()), desc_sets.data(), 0, nullptr);
 
-				// render sub
-				uint32_t index_count = index_counts[i] - index_offset;
-				vkCmdDrawIndexed(command_buffer, index_count, 1, index_offset, 0, 0);
-				index_offset = index_counts[i];
+				// render sub mesh
+				vkCmdDrawIndexed(command_buffer, index_counts[i], 1, index_offsets[i], 0, 0);
 			}
 		}
 
@@ -203,30 +205,53 @@ namespace Bamboo
 		ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		ubo_layout_binding.pImmutableSamplers = nullptr;
 
-		VkDescriptorSetLayoutBinding sampler_layout_binding{};
-		sampler_layout_binding.binding = 1;
-		sampler_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		sampler_layout_binding.descriptorCount = 1;
-		sampler_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		sampler_layout_binding.pImmutableSamplers = nullptr;
+		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
+		desc_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		desc_set_layout_ci.bindingCount = 1;
+		desc_set_layout_ci.pBindings = &ubo_layout_binding;
+		vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 
-		std::vector<VkDescriptorSetLayoutBinding> layout_bindings = { ubo_layout_binding, sampler_layout_binding };
+		VkDescriptorSetLayoutBinding texture_layout_binding{};
+		texture_layout_binding.binding = 1;
+		texture_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		texture_layout_binding.descriptorCount = 1;
+		texture_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		texture_layout_binding.pImmutableSamplers = nullptr;
 
-		VkDescriptorSetLayoutCreateInfo des_set_layout_ci{};
-		des_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		des_set_layout_ci.bindingCount = static_cast<uint32_t>(layout_bindings.size());
-		des_set_layout_ci.pBindings = layout_bindings.data();
+		desc_set_layout_ci.pBindings = &texture_layout_binding;
+		vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);
+	}
 
-		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &des_set_layout_ci, nullptr, &m_descriptor_set_layout);
-		CHECK_VULKAN_RESULT(result, "create descriptor set layout");
+	void BasePass::createDescriptorSets(std::shared_ptr<MeshRenderData>& render_data)
+	{
+		std::shared_ptr<MeshRenderData> mesh_render_data = std::dynamic_pointer_cast<MeshRenderData>(render_data);
+
+		// create ubo descriptor sets
+		std::vector<VkDescriptorSetLayout> ubo_layouts(MAX_FRAMES_IN_FLIGHT, m_desc_set_layouts[0]);
+		VkDescriptorSetAllocateInfo desc_set_ai{};
+		desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		desc_set_ai.descriptorPool = m_descriptor_pool;
+		desc_set_ai.descriptorSetCount = static_cast<uint32_t>(ubo_layouts.size());
+		desc_set_ai.pSetLayouts = ubo_layouts.data();
+
+		mesh_render_data->ubo_desc_sets.resize(ubo_layouts.size());
+		vkAllocateDescriptorSets(VulkanRHI::get().getDevice(), &desc_set_ai, mesh_render_data->ubo_desc_sets.data());
+
+		// create texture descriptor sets
+		std::vector<VkDescriptorSetLayout> texture_layouts(render_data->index_counts.size(), m_desc_set_layouts[1]);
+		desc_set_ai.descriptorSetCount = static_cast<uint32_t>(texture_layouts.size());
+		desc_set_ai.pSetLayouts = texture_layouts.data();
+
+		mesh_render_data->texture_desc_sets.resize(texture_layouts.size());
+		vkAllocateDescriptorSets(VulkanRHI::get().getDevice(), &desc_set_ai, mesh_render_data->texture_desc_sets.data());
 	}
 
 	void BasePass::createPipelineLayout()
 	{
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
 		pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipeline_layout_ci.setLayoutCount = 1;
-		pipeline_layout_ci.pSetLayouts = &m_descriptor_set_layout;
+		pipeline_layout_ci.setLayoutCount = static_cast<uint32_t>(m_desc_set_layouts.size());
+		pipeline_layout_ci.pSetLayouts = m_desc_set_layouts.data();
 
 		// set push constant range
 		m_push_constant_ranges =
