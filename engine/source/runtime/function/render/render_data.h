@@ -27,29 +27,10 @@ namespace Bamboo
 
 	struct MeshRenderData : public RenderData
 	{
-		std::vector<VkDescriptorSet> ubo_desc_sets;
-		std::vector<VkDescriptorSet> texture_desc_sets;
+		std::vector<VmaBuffer> uniform_buffers;
+		std::vector<VmaImageViewSampler> textures;
 
 		VertPCO vert_pco;
 		FragPCO frag_pco;
 	};
-
-	struct RenderDataID
-	{
-		VmaBuffer vertex_buffer;
-		VmaBuffer index_buffer;
-		size_t sub_index = 0;
-
-		bool operator<(const RenderDataID& other) const
-		{
-			return vertex_buffer.buffer < other.vertex_buffer.buffer ||
-				(vertex_buffer.buffer == other.vertex_buffer.buffer &&
-					index_buffer.buffer < other.index_buffer.buffer) ||
-				(vertex_buffer.buffer == other.vertex_buffer.buffer &&
-					index_buffer.buffer == other.index_buffer.buffer &&
-					sub_index < other.sub_index);
-		}
-	};
-
-
 }

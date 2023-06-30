@@ -18,9 +18,7 @@ namespace Bamboo
 		virtual void destroy();
 
 		virtual void createRenderPass() = 0;
-		virtual void createDescriptorPool() = 0;
 		virtual void createDescriptorSetLayout() = 0;
-		virtual void createDescriptorSets(std::shared_ptr<RenderData> render_data) = 0;
 		virtual void createPipelineLayout() = 0;
 		virtual void createPipeline() = 0;
 		virtual void createFramebuffer() = 0;

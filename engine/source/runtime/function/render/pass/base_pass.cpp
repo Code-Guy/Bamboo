@@ -14,7 +14,6 @@ namespace Bamboo
 	void BasePass::init()
 	{
 		createRenderPass();
-		createDescriptorPool();
 		createDescriptorSetLayout();
 		createPipelineLayout();
 		createPipeline();
@@ -176,26 +175,6 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create render pass");
 	}
 
-	void BasePass::createDescriptorPool()
-	{ 
-		uint32_t descriptor_count = MAX_FRAMES_IN_FLIGHT * MAX_PRIMITIVE_NUM;
-
-		std::vector<VkDescriptorPoolSize> pool_sizes =
-		{
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptor_count },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptor_count },
-		};
-
-		VkDescriptorPoolCreateInfo descriptor_pool_ci{};
-		descriptor_pool_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptor_pool_ci.poolSizeCount = pool_sizes.size();
-		descriptor_pool_ci.pPoolSizes = pool_sizes.data();
-		descriptor_pool_ci.maxSets = descriptor_count;
-
-		VkResult result = vkCreateDescriptorPool(VulkanRHI::get().getDevice(), &descriptor_pool_ci, nullptr, &m_descriptor_pool);
-		CHECK_VULKAN_RESULT(result, "create descriptor pool");
-	}
-
 	void BasePass::createDescriptorSetLayout()
 	{
 		VkDescriptorSetLayoutBinding ubo_layout_binding{};
@@ -220,30 +199,6 @@ namespace Bamboo
 
 		desc_set_layout_ci.pBindings = &texture_layout_binding;
 		vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);
-	}
-
-	void BasePass::createDescriptorSets(std::shared_ptr<MeshRenderData>& render_data)
-	{
-		std::shared_ptr<MeshRenderData> mesh_render_data = std::dynamic_pointer_cast<MeshRenderData>(render_data);
-
-		// create ubo descriptor sets
-		std::vector<VkDescriptorSetLayout> ubo_layouts(MAX_FRAMES_IN_FLIGHT, m_desc_set_layouts[0]);
-		VkDescriptorSetAllocateInfo desc_set_ai{};
-		desc_set_ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		desc_set_ai.descriptorPool = m_descriptor_pool;
-		desc_set_ai.descriptorSetCount = static_cast<uint32_t>(ubo_layouts.size());
-		desc_set_ai.pSetLayouts = ubo_layouts.data();
-
-		mesh_render_data->ubo_desc_sets.resize(ubo_layouts.size());
-		vkAllocateDescriptorSets(VulkanRHI::get().getDevice(), &desc_set_ai, mesh_render_data->ubo_desc_sets.data());
-
-		// create texture descriptor sets
-		std::vector<VkDescriptorSetLayout> texture_layouts(render_data->index_counts.size(), m_desc_set_layouts[1]);
-		desc_set_ai.descriptorSetCount = static_cast<uint32_t>(texture_layouts.size());
-		desc_set_ai.pSetLayouts = texture_layouts.data();
-
-		mesh_render_data->texture_desc_sets.resize(texture_layouts.size());
-		vkAllocateDescriptorSets(VulkanRHI::get().getDevice(), &desc_set_ai, mesh_render_data->texture_desc_sets.data());
 	}
 
 	void BasePass::createPipelineLayout()
