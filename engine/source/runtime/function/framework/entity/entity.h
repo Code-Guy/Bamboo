@@ -9,15 +9,12 @@
 namespace Bamboo
 {
 	using EntityID = std::size_t;
-	constexpr EntityID k_invalid_entity_id = std::numeric_limits<std::size_t>::max();
 
 	class Entity
 	{
 	public:
 		Entity();
 		virtual ~Entity();
-
-		static EntityID allocID();
 
 		virtual void tick(float delta_time);
 
@@ -75,7 +72,14 @@ namespace Bamboo
 		std::string m_name;
 		std::shared_ptr<Entity> m_parent;
 		std::vector<std::shared_ptr<Component>> m_components;
+	};
 
+	class EntityIDAllocator
+	{
+	public:
+		static EntityID alloc();
+
+	private:
 		static std::atomic<EntityID> m_next_id;
 	};
 }

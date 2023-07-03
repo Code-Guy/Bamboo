@@ -2,7 +2,7 @@
 
 #include "runtime/function/framework/entity/entity.h"
 #include "runtime/resource/asset/base/asset.h"
-#include <unordered_map>
+#include <map>
 
 namespace Bamboo
 {
@@ -18,6 +18,6 @@ namespace Bamboo
 
 	private:
 		std::shared_ptr<Entity> m_camera_entity;
-		std::unordered_map<EntityID, std::shared_ptr<Entity>> m_entites;
+		std::map<EntityID, std::shared_ptr<Entity>> m_entites;
 	};
 }

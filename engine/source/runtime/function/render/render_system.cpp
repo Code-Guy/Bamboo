@@ -50,7 +50,7 @@ namespace Bamboo
 		std::dynamic_pointer_cast<UIPass>(m_render_passes[ERenderPassType::UI])->setConstructFunc(construct_ui_func);
 	}
 
-	std::shared_ptr<Bamboo::RenderPass> RenderSystem::getRenderPass(ERenderPassType render_pass_type)
+	std::shared_ptr<RenderPass> RenderSystem::getRenderPass(ERenderPassType render_pass_type)
 	{
 		return m_render_passes[render_pass_type];
 	}

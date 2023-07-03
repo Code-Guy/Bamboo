@@ -8,10 +8,7 @@ namespace Bamboo
 	{
 		vkDestroyRenderPass(VulkanRHI::get().getDevice(), m_render_pass, nullptr);
 		vkDestroyDescriptorPool(VulkanRHI::get().getDevice(), m_descriptor_pool, nullptr);
-		for (VkDescriptorSetLayout desc_set_layout : m_desc_set_layouts)
-		{
-			vkDestroyDescriptorSetLayout(VulkanRHI::get().getDevice(), desc_set_layout, nullptr);
-		}
+		vkDestroyDescriptorSetLayout(VulkanRHI::get().getDevice(), m_desc_set_layout, nullptr);
 		vkDestroyPipelineLayout(VulkanRHI::get().getDevice(), m_pipeline_layout, nullptr);
 		vkDestroyPipeline(VulkanRHI::get().getDevice(), m_pipeline, nullptr);
 

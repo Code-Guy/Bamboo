@@ -3,11 +3,9 @@
 
 namespace Bamboo
 {
-	std::atomic<EntityID> Entity::m_next_id = 0;
-
 	Entity::Entity()
 	{
-		m_id = allocID();
+		m_id = EntityIDAllocator::alloc();
 	}
 
 	Entity::~Entity()
@@ -15,7 +13,18 @@ namespace Bamboo
 
 	}
 
-	EntityID Entity::allocID()
+	void Entity::tick(float delta_time)
+	{
+		for (auto& component : m_components)
+		{
+			component->tick(delta_time);
+		}
+	}
+
+	std::atomic<EntityID> EntityIDAllocator::m_next_id = 0;
+	constexpr EntityID k_invalid_entity_id = std::numeric_limits<std::size_t>::max();
+
+	EntityID EntityIDAllocator::alloc()
 	{
 		std::atomic<EntityID> new_entity_id = m_next_id.load();
 		m_next_id++;
@@ -25,14 +34,6 @@ namespace Bamboo
 		}
 
 		return new_entity_id;
-	}
-
-	void Entity::tick(float delta_time)
-	{
-		for (auto& component : m_components)
-		{
-			component->tick(delta_time);
-		}
 	}
 
 }
