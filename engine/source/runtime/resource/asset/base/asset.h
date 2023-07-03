@@ -7,8 +7,6 @@
 #include <cereal/types/base_class.hpp>
 #include <rttr/registration>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 

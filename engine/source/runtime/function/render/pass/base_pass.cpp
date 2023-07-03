@@ -78,13 +78,37 @@ namespace Bamboo
 			size_t sub_mesh_count = index_counts.size();
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
-				// bind sub mesh descriptor sets
-				std::vector<VkDescriptorSet> desc_sets = { 
-					mesh_render_data->ubo_desc_sets[flight_index * sub_mesh_count + i], 
-					mesh_render_data->texture_desc_sets[i] 
-				};
-				vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline_layout, 0, 
-					static_cast<uint32_t>(desc_sets.size()), desc_sets.data(), 0, nullptr);
+				// update(push) sub mesh descriptors
+				std::vector<VkWriteDescriptorSet> desc_writes(2, VkWriteDescriptorSet{});
+
+				VkDescriptorBufferInfo desc_buffer_info{};
+				desc_buffer_info.buffer = mesh_render_data->uniform_buffers[flight_index].buffer;
+				desc_buffer_info.offset = 0;
+				desc_buffer_info.range = sizeof(StaticMeshUBO);
+
+				desc_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				desc_writes[0].dstSet = 0;
+				desc_writes[0].dstBinding = 0;
+				desc_writes[0].dstArrayElement = 0;
+				desc_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				desc_writes[0].descriptorCount = 1;
+				desc_writes[0].pBufferInfo = &desc_buffer_info;
+
+				VkDescriptorImageInfo desc_image_info{};
+				desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				desc_image_info.imageView = mesh_render_data->textures[i].view;
+				desc_image_info.sampler = mesh_render_data->textures[i].sampler;
+
+				desc_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				desc_writes[1].dstSet = 0;
+				desc_writes[1].dstBinding = 1;
+				desc_writes[1].dstArrayElement = 0;
+				desc_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				desc_writes[1].descriptorCount = 1;
+				desc_writes[1].pImageInfo = &desc_image_info;
+
+				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+					m_pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 
 				// render sub mesh
 				vkCmdDrawIndexed(command_buffer, index_counts[i], 1, index_offsets[i], 0, 0);
@@ -177,36 +201,25 @@ namespace Bamboo
 
 	void BasePass::createDescriptorSetLayout()
 	{
-		VkDescriptorSetLayoutBinding ubo_layout_binding{};
-		ubo_layout_binding.binding = 0;
-		ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		ubo_layout_binding.descriptorCount = 1;
-		ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		ubo_layout_binding.pImmutableSamplers = nullptr;
+		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}
+		};
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
 		desc_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		desc_set_layout_ci.bindingCount = 1;
-		desc_set_layout_ci.pBindings = &ubo_layout_binding;
-		vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
-
-		VkDescriptorSetLayoutBinding texture_layout_binding{};
-		texture_layout_binding.binding = 1;
-		texture_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		texture_layout_binding.descriptorCount = 1;
-		texture_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		texture_layout_binding.pImmutableSamplers = nullptr;
-
-		desc_set_layout_ci.pBindings = &texture_layout_binding;
-		vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);
+		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
+		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
+		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layout);
+		CHECK_VULKAN_RESULT(result, "create descriptor set layout");
 	}
 
 	void BasePass::createPipelineLayout()
 	{
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
 		pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipeline_layout_ci.setLayoutCount = static_cast<uint32_t>(m_desc_set_layouts.size());
-		pipeline_layout_ci.pSetLayouts = m_desc_set_layouts.data();
+		pipeline_layout_ci.setLayoutCount = 1;
+		pipeline_layout_ci.pSetLayouts = &m_desc_set_layout;
 
 		// set push constant range
 		m_push_constant_ranges =

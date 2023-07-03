@@ -3,7 +3,7 @@
 
 layout(binding = 0) uniform UBO
 {
-	mat4 mvp;
+	mat4 padding;
 } ubo;
 
 layout(push_constant) uniform VPCO

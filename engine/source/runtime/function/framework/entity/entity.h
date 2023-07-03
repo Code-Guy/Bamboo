@@ -14,7 +14,7 @@ namespace Bamboo
 	class Entity
 	{
 	public:
-		Entity(EntityID id) : m_id(id) {}
+		Entity();
 		virtual ~Entity();
 
 		static EntityID allocID();

@@ -5,6 +5,11 @@ namespace Bamboo
 {
 	std::atomic<EntityID> Entity::m_next_id = 0;
 
+	Entity::Entity()
+	{
+		m_id = allocID();
+	}
+
 	Entity::~Entity()
 	{
 

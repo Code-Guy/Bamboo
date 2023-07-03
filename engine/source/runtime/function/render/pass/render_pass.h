@@ -33,7 +33,7 @@ namespace Bamboo
 		// vulkan objects
 		VkRenderPass m_render_pass;
 		VkDescriptorPool m_descriptor_pool;
-		std::vector<VkDescriptorSetLayout> m_desc_set_layouts;
+		VkDescriptorSetLayout m_desc_set_layout;
 		std::vector<VkPushConstantRange> m_push_constant_ranges;
 		VkPipelineLayout m_pipeline_layout;
 		VkPipeline m_pipeline;

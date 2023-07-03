@@ -16,7 +16,9 @@ namespace Bamboo
 #endif
 		createSurface();
 		pickPhysicalDevice();
+		validatePhysicalDevice();
 		createLogicDevice();
+		loadExtensionFuncs();
 		getDeviceQueues();
 		createVmaAllocator();
 
@@ -168,6 +170,13 @@ namespace Bamboo
 			m_physical_device_properties.apiVersion & 0xfff);
 	}
 
+	void VulkanRHI::validatePhysicalDevice()
+	{
+		const uint32_t k_max_push_constant_size = 256;
+		ASSERT(m_physical_device_properties.limits.maxPushConstantsSize >= k_max_push_constant_size, 
+			"push constants size must be greater than {}", k_max_push_constant_size);
+	}
+
 	void VulkanRHI::createLogicDevice()
 	{
 		m_required_device_extensions = getRequiredDeviceExtensions();
@@ -185,6 +194,11 @@ namespace Bamboo
 
 		VkResult result = vkCreateDevice(m_physical_device, &device_ci, nullptr, &m_device);
 		CHECK_VULKAN_RESULT(result, "create device");
+	}
+
+	void VulkanRHI::loadExtensionFuncs()
+	{
+		m_vk_cmd_push_desc_set_func = (PFN_vkCmdPushDescriptorSetKHR)vkGetDeviceProcAddr(m_device, "vkCmdPushDescriptorSetKHR");
 	}
 
 	void VulkanRHI::getDeviceQueues()
@@ -520,7 +534,7 @@ namespace Bamboo
 
 		// set required device extensions
 		std::vector<const char*> required_device_extensions = {
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
 		};
 
 		// check if each required device extension is supported

@@ -9,9 +9,10 @@ namespace Bamboo
 	class Component
 	{
 	public:
-		Component(std::shared_ptr<Entity> parent) : m_parent(parent) {}
+		Component() = default;
 		virtual ~Component() = default;
 
+		void attachTo(std::shared_ptr<Entity>& parent) { m_parent = parent; }
 		virtual void tick(float delta_time) {}
 
 		std::shared_ptr<Entity>& getParent() { return m_parent; }

@@ -43,7 +43,7 @@ namespace Bamboo
 		uint32_t getFlightIndex() { return m_flight_index; }
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
 		VkCommandBuffer getCommandBuffer() { return m_command_buffers[m_flight_index]; }
-
+		PFN_vkCmdPushDescriptorSetKHR getVkCmdPushDescriptorSetKHR() { return m_vk_cmd_push_desc_set_func; }
 		static VulkanRHI& get()
 		{
 			static VulkanRHI vulkan_rhi;
@@ -70,7 +70,9 @@ namespace Bamboo
 		void destroyDebugging();
 		void createSurface();
 		void pickPhysicalDevice();
+		void validatePhysicalDevice();
 		void createLogicDevice();
+		void loadExtensionFuncs();
 		void getDeviceQueues();
 		void createVmaAllocator();
 		void createSwapchain();
@@ -154,6 +156,10 @@ namespace Bamboo
 		std::vector<VkFence> m_flight_fences;
 		std::vector<VkCommandBuffer> m_command_buffers;
 
+		// additional device extension functions
+		PFN_vkCmdPushDescriptorSetKHR m_vk_cmd_push_desc_set_func;
+
+		// vulkan callbacks to call functions outside
 		VulkanRHICallbacks m_callbacks;
 	};
 }

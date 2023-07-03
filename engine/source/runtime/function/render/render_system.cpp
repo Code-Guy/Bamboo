@@ -4,6 +4,8 @@
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/pass/ui_pass.h"
 #include "runtime/function/render/pass/base_pass.h"
+#include "runtime/function/framework/component/camera_component.h"
+#include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/static_mesh_component.h"
 
 namespace Bamboo
@@ -28,6 +30,10 @@ namespace Bamboo
 
 	void RenderSystem::tick(float delta_time)
 	{
+		// collect render data from entities of current world
+		collectRenderDatas();
+
+		// vulkan rendering
 		VulkanRHI::get().render();
 	}
 
@@ -80,6 +86,18 @@ namespace Bamboo
 	{
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
+		if (!current_world)
+		{
+			return;
+		}
+
+		// get camera entity
+		const auto& camera_entity = current_world->getCameraEntity();
+		CameraComponent* camera_component = nullptr;
+		if (camera_entity)
+		{
+			camera_component = camera_entity->getComponent<CameraComponent>();
+		}
 
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
@@ -91,20 +109,32 @@ namespace Bamboo
 			StaticMeshComponent* static_mesh_component = entity->getComponent<StaticMeshComponent>();
 			if (static_mesh_component)
 			{
+				// get transform component
+				TransformComponent* transform_component = entity->getComponent<TransformComponent>();
+
 				const auto& static_mesh = static_mesh_component->getStaticMesh();
 				if (static_mesh)
 				{
+					// create mesh render data
+					std::shared_ptr<MeshRenderData> render_data = std::make_shared<MeshRenderData>();
+					render_data->vertex_buffer = static_mesh->m_vertex_buffer;
+					render_data->index_buffer = static_mesh->m_index_buffer;
+					render_data->uniform_buffers = static_mesh->m_uniform_buffers;
+
+					// set push constants
+					render_data->vert_pco.m = transform_component->world_matrix;
+					render_data->vert_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->world_matrix;
+					render_data->frag_pco.camera_pos = camera_component->getPosition();
+					render_data->frag_pco.light_dir = glm::vec3(-1.0f, 1.0f, -1.0f);
+
 					// traverse all sub meshes
 					for (size_t i = 0; i < static_mesh->m_sub_meshes.size(); ++i)
 					{
 						const auto& sub_mesh = static_mesh->m_sub_meshes[i];
 
-						std::shared_ptr<MeshRenderData> render_data = std::make_shared<MeshRenderData>();
-						render_data->vertex_buffer = static_mesh->m_vertex_buffer;
-						render_data->index_buffer = static_mesh->m_index_buffer;
 						render_data->index_counts.push_back(sub_mesh.m_index_count);
 						render_data->index_offsets.push_back(sub_mesh.m_index_offset);
-
+						render_data->textures.push_back(sub_mesh.m_material->m_base_color_texure->m_image_view_sampler);
 					}
 				}
 			}
