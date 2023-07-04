@@ -6,31 +6,37 @@
 #include <atomic>
 #include <limits>
 
+#include <cereal/types/vector.hpp>
+
 namespace Bamboo
 {
-	using EntityID = std::size_t;
-
-	class Entity
+	class World;
+	class Entity : public std::enable_shared_from_this<Entity>
 	{
 	public:
-		Entity();
-		virtual ~Entity();
+		virtual ~Entity() = default;
 
 		virtual void tick(float delta_time);
+		void inflate();
 
-		EntityID getID() { return m_id; }
-		void setName(const std::string& name) { m_name = name; }
+		void attach(std::shared_ptr<Entity>& parent);
+		void detach();
+
+		uint32_t getID() { return m_id; }
+		World* getWorld() { return m_world; }
 		const std::string& getName() const { return m_name; }
 		std::shared_ptr<Entity>& getParent() { return m_parent; }
-
 		const auto& getComponents() const { return m_components; }
+
+		void addComponent(std::shared_ptr<Component> component);
+		void removeComponent(std::shared_ptr<Component> component);
 
 		template<typename TComponent>
 		bool hasComponent() const
 		{
 			for (auto& component : m_components)
 			{
-				if (dynamic_cast<TComponent*>(component.get()))
+				if (std::dynamic_pointer_cast<TComponent>(component))
 				{
 					return true;
 				}
@@ -39,47 +45,43 @@ namespace Bamboo
 		}
 
 		template<typename TComponent>
-		TComponent* getComponent()
+		std::shared_ptr<TComponent> getComponent()
 		{
 			for (auto& component : m_components)
 			{
-				TComponent* find_component = dynamic_cast<TComponent*>(component.get());
+				std::shared_ptr<TComponent> find_component = std::dynamic_pointer_cast<TComponent>(component);
 				if (find_component)
 				{
 					return find_component;
 				}
 			}
 
-			return nullptr;
-		}
-
-		template<typename TComponent>
-		const TComponent* getComponent() const
-		{
-			for (const auto& component : m_components)
-			{
-				TComponent* find_component = dynamic_cast<TComponent*>(component.get());
-				if (find_component)
-				{
-					return find_component;
-				}
-			}
 			return nullptr;
 		}
 
 	private:
-		EntityID m_id;
+		friend class cereal::access;
+		template<class Archive>
+		void serialize(Archive& ar)
+		{
+			ar(cereal::make_nvp("id", m_id));
+			ar(cereal::make_nvp("parent_id", m_pid));
+			ar(cereal::make_nvp("child_ids", m_cids));
+			ar(cereal::make_nvp("components", m_components));
+		}
+
+		friend World;
+		Entity() = default;
+
+		World* m_world = nullptr;
+
+		uint32_t m_id;
+		uint32_t m_pid = UINT_MAX;
+		std::vector<uint32_t> m_cids;
+
 		std::string m_name;
 		std::shared_ptr<Entity> m_parent;
+		std::vector<std::shared_ptr<Entity>> m_children;
 		std::vector<std::shared_ptr<Component>> m_components;
-	};
-
-	class EntityIDAllocator
-	{
-	public:
-		static EntityID alloc();
-
-	private:
-		static std::atomic<EntityID> m_next_id;
 	};
 }

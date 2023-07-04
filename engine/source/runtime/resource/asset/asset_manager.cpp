@@ -5,6 +5,7 @@
 #include "runtime/resource/asset/skeletal_mesh.h"
 #include "runtime/resource/asset/skeleton.h"
 #include "runtime/resource/asset/animation.h"
+#include "runtime/function/framework/world/world.h"
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/json.hpp>
@@ -16,7 +17,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #include <tinygltf/tiny_gltf.h>
-#include <ktx/ktx.h>
 
 #define SERIALIZE_ASSET(type, asset) \
 	case EAssetType:: ##type: \
@@ -53,6 +53,7 @@ namespace Bamboo
 			{ EAssetType::StaticMesh, "sm"}, 
 			{ EAssetType::SkeletalMesh, "skm" }, 
 			{ EAssetType::Animation, "anim" },
+			{ EAssetType::World, "world" },
 			{ EAssetType::Font, "ttf" }
 		};
 
@@ -63,7 +64,8 @@ namespace Bamboo
 			{ EAssetType::Skeleton, EArchiveType::Binary },
 			{ EAssetType::StaticMesh, EArchiveType::Binary },
 			{ EAssetType::SkeletalMesh, EArchiveType::Binary },
-			{ EAssetType::Animation, EArchiveType::Binary }
+			{ EAssetType::Animation, EArchiveType::Binary },
+			{ EAssetType::World, EArchiveType::Json }
 		};
 
 		for (const auto& iter : m_asset_type_exts)
@@ -830,6 +832,7 @@ namespace Bamboo
 				SERIALIZE_ASSET(SkeletalMesh, asset);
 				SERIALIZE_ASSET(Skeleton, asset);
 				SERIALIZE_ASSET(Animation, asset);
+				SERIALIZE_ASSET(World, asset);
 			}
 		}
 		break;
@@ -845,6 +848,7 @@ namespace Bamboo
 				SERIALIZE_ASSET(SkeletalMesh, asset);
 				SERIALIZE_ASSET(Skeleton, asset);
 				SERIALIZE_ASSET(Animation, asset);
+				SERIALIZE_ASSET(World, asset);
 			}
 		}
 		break;

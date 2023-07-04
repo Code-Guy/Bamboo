@@ -1,0 +1,57 @@
+{
+    "value0": {
+        "polymorphic_id": 1073741824,
+        "ptr_wrapper": {
+            "id": 2147483649,
+            "data": {
+                "entity_counter": 1,
+                "camera_entity": {
+                    "polymorphic_id": 1073741824,
+                    "ptr_wrapper": {
+                        "id": 2147483650,
+                        "data": {
+                            "id": 0,
+                            "parent_id": 4294967295,
+                            "child_ids": [],
+                            "components": [
+                                {
+                                    "polymorphic_id": 2147483649,
+                                    "polymorphic_name": "Bamboo::CameraComponent",
+                                    "ptr_wrapper": {
+                                        "id": 2147483651,
+                                        "data": {
+                                            "position": {
+                                                "value0": 8.5,
+                                                "value1": -1.899999976158142,
+                                                "value2": 3.9000000953674318
+                                            },
+                                            "yaw": -194.39999389648438,
+                                            "pitch": -18.700000762939454,
+                                            "fovy": 60.0,
+                                            "aspect_ratio": 1.777999997138977,
+                                            "near": 0.10000000149011612,
+                                            "far": 1000.0,
+                                            "speed": 2.0,
+                                            "sensitivity": 0.10000000149011612
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "entites": [
+                    {
+                        "key": 0,
+                        "value": {
+                            "polymorphic_id": 1073741824,
+                            "ptr_wrapper": {
+                                "id": 2
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

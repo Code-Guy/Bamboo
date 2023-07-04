@@ -12,6 +12,7 @@ namespace Bamboo
 		void tick(float delta_time);
 
 		bool loadWorld(const URL& url);
+		std::shared_ptr<World> createWorld(const URL& url);
 		std::shared_ptr<World> getCurrentWorld() { return m_current_world; }
 
 	private:

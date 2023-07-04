@@ -86,18 +86,10 @@ namespace Bamboo
 	{
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
-		if (!current_world)
-		{
-			return;
-		}
 
 		// get camera entity
 		const auto& camera_entity = current_world->getCameraEntity();
-		CameraComponent* camera_component = nullptr;
-		if (camera_entity)
-		{
-			camera_component = camera_entity->getComponent<CameraComponent>();
-		}
+		auto camera_component = camera_entity->getComponent<CameraComponent>();
 
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
@@ -106,11 +98,11 @@ namespace Bamboo
 			const auto& entity = iter.second;
 
 			// get static mesh component render data
-			StaticMeshComponent* static_mesh_component = entity->getComponent<StaticMeshComponent>();
+			auto static_mesh_component = entity->getComponent<StaticMeshComponent>();
 			if (static_mesh_component)
 			{
 				// get transform component
-				TransformComponent* transform_component = entity->getComponent<TransformComponent>();
+				auto transform_component = entity->getComponent<TransformComponent>();
 
 				const auto& static_mesh = static_mesh_component->getStaticMesh();
 				if (static_mesh)
@@ -124,7 +116,7 @@ namespace Bamboo
 					// set push constants
 					render_data->vert_pco.m = transform_component->world_matrix;
 					render_data->vert_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->world_matrix;
-					render_data->frag_pco.camera_pos = camera_component->getPosition();
+					render_data->frag_pco.camera_pos = camera_component->m_position;
 					render_data->frag_pco.light_dir = glm::vec3(-1.0f, 1.0f, -1.0f);
 
 					// traverse all sub meshes

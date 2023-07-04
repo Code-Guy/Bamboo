@@ -2,5 +2,5 @@ window:
   width: 1280
   height: 720
 
-default_world_url: "asset/world/default_world.json"
+default_world_url: "asset/world/default.world"
 editor_layout: "default.layout"

@@ -2,19 +2,19 @@
 #include "runtime/function/global/runtime_context.h"
 #include "runtime/resource/asset/asset_manager.h"
 
+RTTR_REGISTRATION
+{
+rttr::registration::class_<Bamboo::Material>("Material")
+	 .constructor<>()
+	 .property("m_base_color_texure", &Bamboo::Material::m_base_color_texure)
+	 .property("m_metallic_roughness_texure", &Bamboo::Material::m_metallic_roughness_texure)
+	 .property("m_normal_texure", &Bamboo::Material::m_normal_texure)
+	 .property("m_occlusion_texure", &Bamboo::Material::m_occlusion_texure)
+	 .property("m_emissive_texure", &Bamboo::Material::m_emissive_texure);
+}
+
 namespace Bamboo
 {
-	RTTR_REGISTRATION
-	{
-	rttr::registration::class_<Material>("Material")
-		 .constructor<>()
-		 .property("m_base_color_texure", &Material::m_base_color_texure)
-		 .property("m_metallic_roughness_texure", &Material::m_metallic_roughness_texure)
-		 .property("m_normal_texure", &Material::m_normal_texure)
-		 .property("m_occlusion_texure", &Material::m_occlusion_texure)
-		 .property("m_emissive_texure", &Material::m_emissive_texure);
-	}
-
 	void Material::bindRefs()
 	{
 		if (m_base_color_texure)

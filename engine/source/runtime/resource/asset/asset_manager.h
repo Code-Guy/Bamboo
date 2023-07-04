@@ -26,9 +26,10 @@ namespace Bamboo
 			return std::dynamic_pointer_cast<AssetClass>(asset);
 		}
 
+		void serializeAsset(std::shared_ptr<Asset> asset);
+
 	private:
 		bool importGltf(const std::string& filename, const URL& folder, bool is_combined = false);
-		void serializeAsset(std::shared_ptr<Asset> asset);
 		std::shared_ptr<Asset> deserializeAsset(const URL& url);
 
 		std::string getAssetName(const std::string& basename, const std::string& asset_name, EAssetType asset_type, int asset_index);

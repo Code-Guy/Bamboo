@@ -6,18 +6,22 @@
 #include "runtime/resource/asset/skeletal_mesh.h"
 #include "runtime/resource/asset/texture_2d.h"
 #include "runtime/resource/asset/animation.h"
+#include "runtime/function/framework/component/camera_component.h"
 
 namespace Bamboo
 {
 
 	void WorldManager::init()
 	{
-		m_current_world_url = g_runtime_context.configManager()->getDefaultWorldUrl();
-		loadWorld(m_current_world_url);
+		URL default_world_url = g_runtime_context.configManager()->getDefaultWorldUrl();
+
+		m_current_world = createWorld(default_world_url);
+		//loadWorld(default_world_url);
 	}
 
 	void WorldManager::destroy()
 	{
+		g_runtime_context.assetManager()->serializeAsset(m_current_world);
 		m_current_world.reset();
 	}
 
@@ -36,14 +40,35 @@ namespace Bamboo
 			m_current_world.reset();
 		}
 
-		//m_current_world = g_runtime_context.assetManager()->loadAsset<World>(url);
+		m_current_world = g_runtime_context.assetManager()->loadAsset<World>(url);
 		m_current_world_url = url;
 
-		std::shared_ptr<SkeletalMesh> skeletal_mesh = g_runtime_context.assetManager()->loadAsset<SkeletalMesh>("asset/temp/skm_Cesium_Man.skm");
-		//std::shared_ptr<Texture2D> texture = g_runtime_context.assetManager()->loadAsset<Texture2D>("asset/temp/tex_cesium_man_0.tex");
-		//std::shared_ptr<Animation> animation = g_runtime_context.assetManager()->loadAsset<Animation>("asset/temp/anim_cesium_man_0.anim");
-
 		return true;
+	}
+
+	std::shared_ptr<World> WorldManager::createWorld(const URL& url)
+	{
+		std::shared_ptr<World> world = std::shared_ptr<World>(new World);
+		world->setURL(url);
+
+		std::shared_ptr<CameraComponent> camera_component = std::make_shared<CameraComponent>();
+		camera_component->m_position = glm::vec3(8.5f, -1.9f, 3.9f);
+		camera_component->m_yaw = -194.4f;
+		camera_component->m_pitch = -18.7f;
+		camera_component->m_fovy = 60.0f;
+		camera_component->m_aspect_ratio = 1.778f;
+		camera_component->m_near = 0.1f;
+		camera_component->m_far = 1000.0f;
+		camera_component->m_speed = 2.0f;
+		camera_component->m_sensitivity = 0.1f;
+
+		std::shared_ptr<Entity> camera_entity = world->createEntity("camera");
+		camera_entity->addComponent(camera_component);
+
+		world->m_camera_entity = camera_entity;
+		world->inflate();
+
+		return world;
 	}
 
 }

@@ -6,44 +6,31 @@
 
 namespace Bamboo
 {
-	CameraComponent::CameraComponent(glm::vec3 position, 
-		float yaw, float pitch, 
-		float speed, float sensitivity) :
-		m_position(position),
-		m_yaw(yaw), m_pitch(pitch),
-		m_speed(speed), m_sensitivity(sensitivity)
+	CameraComponent::CameraComponent()
 	{
 		m_move_forward = false;
 		m_move_back = false;
 		m_move_left = false;
 		m_move_right = false;
 		m_mouse_right_button_pressed = false;
-
-		// bind camera input callbacks
-		g_runtime_context.windowSystem()->registerOnKeyFunc(std::bind(&CameraComponent::onKey, this,
-			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		g_runtime_context.windowSystem()->registerOnKeyFunc(std::bind(&CameraComponent::onCursorPos, this,
-			std::placeholders::_1, std::placeholders::_2));
-		g_runtime_context.windowSystem()->registerOnKeyFunc(std::bind(&CameraComponent::onMouseButton, this,
-			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-
-		updatePose();
 	}
 
-	void CameraComponent::setFovy(float fovy)
+	glm::mat4 CameraComponent::getViewMatrix()
 	{
-		m_fovy = fovy;
+		return glm::lookAt(m_position, m_position + m_forward, m_up);
 	}
 
-	void CameraComponent::setAspectRatio(float aspect_ratio)
+	glm::mat4 CameraComponent::getPerspectiveMatrix()
 	{
-		m_aspect_ratio = aspect_ratio;
+		glm::mat4 projMat = glm::perspective(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
+		projMat[1][1] *= -1.0f;
+
+		return projMat;
 	}
 
-	void CameraComponent::setClipping(float zNear, float zFar)
+	glm::mat4 CameraComponent::getViewPerspectiveMatrix()
 	{
-		m_zNear = zNear;
-		m_zFar = zFar;
+		return getPerspectiveMatrix() * getViewMatrix();
 	}
 
 	void CameraComponent::tick(float delta_time)
@@ -68,27 +55,18 @@ namespace Bamboo
 		}
 	}
 
-	glm::vec3 CameraComponent::getPosition()
+	void CameraComponent::inflate()
 	{
-		return m_position;
-	}
+		// bind camera input callbacks
+		g_runtime_context.windowSystem()->registerOnKeyFunc(std::bind(&CameraComponent::onKey, this,
+			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+		g_runtime_context.windowSystem()->registerOnKeyFunc(std::bind(&CameraComponent::onCursorPos, this,
+			std::placeholders::_1, std::placeholders::_2));
+		g_runtime_context.windowSystem()->registerOnKeyFunc(std::bind(&CameraComponent::onMouseButton, this,
+			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
-	glm::mat4 CameraComponent::getViewMatrix()
-	{
-		return glm::lookAt(m_position, m_position + m_forward, m_up);
-	}
-
-	glm::mat4 CameraComponent::getPerspectiveMatrix()
-	{
-		glm::mat4 projMat = glm::perspective(glm::radians(m_fovy), m_aspect_ratio, m_zNear, m_zFar);
-		projMat[1][1] *= -1.0f;
-
-		return projMat;
-	}
-
-	glm::mat4 CameraComponent::getViewPerspectiveMatrix()
-	{
-		return getPerspectiveMatrix() * getViewMatrix();
+		// update camera pose
+		updatePose();
 	}
 
 	void CameraComponent::onKey(int key, int scancode, int action, int mods)

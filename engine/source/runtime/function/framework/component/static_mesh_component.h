@@ -5,12 +5,27 @@
 
 namespace Bamboo
 {
-	class StaticMeshComponent : public Component
+	class StaticMeshComponent : public Component, public IAssetRef
 	{
 	public:
+		void setStaticMesh(std::shared_ptr<StaticMesh>& static_mesh);
 		std::shared_ptr<StaticMesh> getStaticMesh() { return m_static_mesh; }
 
 	private:
+		RTTR_REGISTRATION_FRIEND
+		friend class cereal::access;
+		template<class Archive>
+		void serialize(Archive& ar)
+		{
+			ar(cereal::base_class<IAssetRef>(this));
+			bindRefs();
+		}
+
+		virtual void bindRefs() override;
+
 		std::shared_ptr<StaticMesh> m_static_mesh;
 	};
 }
+
+CEREAL_REGISTER_TYPE(Bamboo::StaticMeshComponent);
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::StaticMeshComponent)

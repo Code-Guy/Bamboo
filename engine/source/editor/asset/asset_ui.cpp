@@ -26,6 +26,7 @@ namespace Bamboo
 		m_asset_images[EAssetType::StaticMesh] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/static_mesh.png"));
 		m_asset_images[EAssetType::SkeletalMesh] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/skeletal_mesh.png"));
 		m_asset_images[EAssetType::Animation] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/animation.png"));
+		m_asset_images[EAssetType::World] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/world.png"));
 		m_asset_images[EAssetType::Font] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/font.png"));
 		m_empty_folder_image = loadImGuiImage(fs->absolute("asset/engine/texture/asset/empty_folder.png"));
 		m_non_empty_folder_image = loadImGuiImage(fs->absolute("asset/engine/texture/asset/non_empty_folder.png"));

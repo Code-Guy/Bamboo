@@ -1,18 +1,9 @@
 #include "entity.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/function/framework/world/world.h"
 
 namespace Bamboo
 {
-	Entity::Entity()
-	{
-		m_id = EntityIDAllocator::alloc();
-	}
-
-	Entity::~Entity()
-	{
-
-	}
-
 	void Entity::tick(float delta_time)
 	{
 		for (auto& component : m_components)
@@ -21,19 +12,44 @@ namespace Bamboo
 		}
 	}
 
-	std::atomic<EntityID> EntityIDAllocator::m_next_id = 0;
-	constexpr EntityID k_invalid_entity_id = std::numeric_limits<std::size_t>::max();
-
-	EntityID EntityIDAllocator::alloc()
+	void Entity::inflate()
 	{
-		std::atomic<EntityID> new_entity_id = m_next_id.load();
-		m_next_id++;
-		if (m_next_id >= k_invalid_entity_id)
+		for (auto& component : m_components)
 		{
-			LOG_FATAL("entity id overflow");
+			component->attach(shared_from_this());
+			component->inflate();
 		}
 
-		return new_entity_id;
+		m_parent = m_world->getEntity(m_pid);
+		for (uint32_t cid : m_cids)
+		{
+			m_children.push_back(m_world->getEntity(cid));
+		}
+	}
+
+	void Entity::attach(std::shared_ptr<Entity>& parent)
+	{
+		m_parent = parent;
+		m_parent->m_children.push_back(shared_from_this());
+	}
+
+	void Entity::detach()
+	{
+		m_parent->m_children.erase(std::remove(m_parent->m_children.begin(), 
+			m_parent->m_children.end(), shared_from_this()), m_parent->m_children.end());
+		m_parent = nullptr;
+	}
+
+	void Entity::addComponent(std::shared_ptr<Component> component)
+	{
+		component->attach(shared_from_this());
+		m_components.push_back(component);
+	}
+
+	void Entity::removeComponent(std::shared_ptr<Component> component)
+	{
+		component->dettach();
+		m_components.erase(std::remove(m_components.begin(), m_components.end(), component), m_components.end());
 	}
 
 }
