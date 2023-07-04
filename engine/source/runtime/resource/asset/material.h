@@ -26,8 +26,11 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			ar(cereal::base_class<IAssetRef>(this));
-			ar(m_base_color_factor, m_emissive_factor, m_metallic_factor, m_roughness_factor);
+			ar(cereal::make_nvp("asset_ref", cereal::base_class<IAssetRef>(this)));
+			ar(cereal::make_nvp("base_color_factor", m_base_color_factor));
+			ar(cereal::make_nvp("emissive_factor", m_emissive_factor));
+			ar(cereal::make_nvp("metallic_factor", m_metallic_factor));
+			ar(cereal::make_nvp("roughness_factor", m_roughness_factor));
 		}
 	};
 }

@@ -23,9 +23,11 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			ar(cereal::base_class<IAssetRef>(this));
-			ar(m_index_offset, m_index_count, m_vertex_count);
-			ar(m_bounding_box);
+			ar(cereal::make_nvp("asset_ref", cereal::base_class<IAssetRef>(this)));
+			ar(cereal::make_nvp("index_offset", m_index_offset));
+			ar(cereal::make_nvp("index_count", m_index_count));
+			ar(cereal::make_nvp("vertex_count", m_vertex_count));
+			ar(cereal::make_nvp("bounding_box", m_bounding_box));
 		}
 	};
 }

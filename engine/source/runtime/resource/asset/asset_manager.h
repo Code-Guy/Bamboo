@@ -1,7 +1,6 @@
 #pragma once
 
 #include "runtime/resource/asset/base/asset.h"
-#include <map>
 
 namespace Bamboo
 {

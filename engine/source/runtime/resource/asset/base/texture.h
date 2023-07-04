@@ -32,9 +32,15 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			ar(m_width, m_height, m_min_filter, m_mag_filter,
-				m_address_mode_u, m_address_mode_v, m_address_mode_w,
-				m_mip_levels, m_texture_type);
+			ar(cereal::make_nvp("width", m_width));
+			ar(cereal::make_nvp("height", m_height));
+			ar(cereal::make_nvp("min_filter", m_min_filter));
+			ar(cereal::make_nvp("mag_filter", m_mag_filter));
+			ar(cereal::make_nvp("address_mode_u", m_address_mode_u));
+			ar(cereal::make_nvp("address_mode_v", m_address_mode_v));
+			ar(cereal::make_nvp("address_mode_w", m_address_mode_w));
+			ar(cereal::make_nvp("mip_levels", m_mip_levels));
+			ar(cereal::make_nvp("texture_type", m_texture_type));
 		}
 	};
 }

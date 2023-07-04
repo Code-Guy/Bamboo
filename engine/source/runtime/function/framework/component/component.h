@@ -3,7 +3,6 @@
 #include <memory>
 #include <string>
 
-#include <cereal/access.hpp>
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/json.hpp>
 

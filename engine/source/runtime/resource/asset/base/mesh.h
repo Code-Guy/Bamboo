@@ -13,7 +13,9 @@ private:
 	template<class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(m_position, m_tex_coord, m_normal);
+		ar(cereal::make_nvp("position", m_position));
+		ar(cereal::make_nvp("tex_coord", m_tex_coord));
+		ar(cereal::make_nvp("normal", m_normal));
 	}
 };
 
@@ -27,8 +29,9 @@ private:
 	template<class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(cereal::base_class<StaticVertex>(this));
-		ar(m_bones, m_weights);
+		ar(cereal::make_nvp("static_vertex", cereal::base_class<StaticVertex>(this)));
+		ar(cereal::make_nvp("bones", m_bones));
+		ar(cereal::make_nvp("weights", m_weights));
 	}
 };
 
@@ -62,8 +65,8 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			ar(m_sub_meshes);
-			ar(m_indices);
+			ar(cereal::make_nvp("sub_meshes", m_sub_meshes));
+			ar(cereal::make_nvp("indices", m_indices));
 		}
 	};
 }

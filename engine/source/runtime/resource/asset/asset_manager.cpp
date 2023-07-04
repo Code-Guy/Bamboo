@@ -7,8 +7,6 @@
 #include "runtime/resource/asset/animation.h"
 #include "runtime/function/framework/world/world.h"
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
 #include <fstream>
 #include <queue>
 #include <algorithm>
