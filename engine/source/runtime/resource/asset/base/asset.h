@@ -3,6 +3,7 @@
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/map.hpp>
+#include <cereal/archives/json.hpp>
 #include <cereal/archives/binary.hpp>
 
 #include <rttr/registration>
@@ -57,6 +58,11 @@ namespace Bamboo
         EAssetType m_asset_type;
 
     private:
+		friend class cereal::access;
+		template<class Archive>
+		void serialize(Archive& ar)
+		{
 
+		}
     };
 }

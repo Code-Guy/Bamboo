@@ -22,3 +22,6 @@ namespace Bamboo
 		}
 	};
 }
+
+CEREAL_REGISTER_TYPE(Bamboo::SkeletalMesh)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::SkeletalMesh)

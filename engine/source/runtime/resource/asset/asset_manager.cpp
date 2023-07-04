@@ -16,22 +16,6 @@
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #include <tinygltf/tiny_gltf.h>
 
-#define SERIALIZE_ASSET(type, asset) \
-	case EAssetType:: ##type: \
-		archive(std::dynamic_pointer_cast<##type>(asset)); \
-	break
-
-#define DESERIALIZE_ASSET(type, url) \
-	case EAssetType:: ##type: \
-	{ \
-		std::shared_ptr<##type> asset = std::make_shared<##type>(); \
-		archive(asset); \
-		asset->setURL(url); \
-		asset->inflate(); \
-		m_assets[url] = asset; \
-		return asset; \
-	} \
-
 #define REFERENCE_ASSET(object, prop_name, ref_asset) \
 	object-> ##prop_name = ref_asset; \
 	object->m_ref_urls[#prop_name] = ref_asset->getURL()
@@ -813,6 +797,7 @@ namespace Bamboo
 	void AssetManager::serializeAsset(std::shared_ptr<Asset> asset)
 	{
 		EAssetType asset_type = asset->getAssetType();
+		const std::string& asset_ext = m_asset_type_exts[asset_type];
 		EArchiveType archive_type = m_asset_archive_types[asset_type];
 		std::string filename = TO_ABSOLUTE(asset->getURL());
 
@@ -822,32 +807,14 @@ namespace Bamboo
 		{
 			std::ofstream ofs(filename);
 			cereal::JSONOutputArchive archive(ofs);
-			switch (asset_type)
-			{
-				SERIALIZE_ASSET(Texture2D, asset);
-				SERIALIZE_ASSET(Material, asset);
-				SERIALIZE_ASSET(StaticMesh, asset);
-				SERIALIZE_ASSET(SkeletalMesh, asset);
-				SERIALIZE_ASSET(Skeleton, asset);
-				SERIALIZE_ASSET(Animation, asset);
-				SERIALIZE_ASSET(World, asset);
-			}
+			archive(cereal::make_nvp(asset_ext.c_str(), asset));
 		}
 		break;
 		case EArchiveType::Binary:
 		{
 			std::ofstream ofs(filename, std::ios::binary);
 			cereal::BinaryOutputArchive archive(ofs);
-			switch (asset_type)
-			{
-				SERIALIZE_ASSET(Texture2D, asset);
-				SERIALIZE_ASSET(Material, asset);
-				SERIALIZE_ASSET(StaticMesh, asset);
-				SERIALIZE_ASSET(SkeletalMesh, asset);
-				SERIALIZE_ASSET(Skeleton, asset);
-				SERIALIZE_ASSET(Animation, asset);
-				SERIALIZE_ASSET(World, asset);
-			}
+			archive(cereal::make_nvp(asset_ext.c_str(), asset));
 		}
 		break;
 		default:
@@ -871,46 +838,35 @@ namespace Bamboo
 
 		EAssetType asset_type = getAssetType(url);
 		EArchiveType archive_type = m_asset_archive_types[asset_type];
+		const std::string& asset_ext = m_asset_type_exts[asset_type];
 		std::string filename = TO_ABSOLUTE(url);
-		
+		std::shared_ptr<Asset> asset = nullptr;
+
 		switch (archive_type)
 		{
 		case EArchiveType::Json:
 		{
 			std::ifstream ifs(filename);
 			cereal::JSONInputArchive archive(ifs);
-			switch (asset_type)
-			{
-				DESERIALIZE_ASSET(Texture2D, url);
-				DESERIALIZE_ASSET(Material, url);
-				DESERIALIZE_ASSET(StaticMesh, url);
-				DESERIALIZE_ASSET(SkeletalMesh, url);
-				DESERIALIZE_ASSET(Skeleton, url);
-				DESERIALIZE_ASSET(Animation, url);
-			}
+			archive(cereal::make_nvp(asset_ext.c_str(), asset));
 		}
 		break;
 		case EArchiveType::Binary:
 		{
 			std::ifstream ifs(filename, std::ios::binary);
 			cereal::BinaryInputArchive archive(ifs);
-			switch (asset_type)
-			{
-				DESERIALIZE_ASSET(Texture2D, url);
-				DESERIALIZE_ASSET(Material, url);
-				DESERIALIZE_ASSET(StaticMesh, url);
-				DESERIALIZE_ASSET(SkeletalMesh, url);
-				DESERIALIZE_ASSET(Skeleton, url);
-				DESERIALIZE_ASSET(Animation, url);
-			}
+			archive(cereal::make_nvp(asset_ext.c_str(), asset));
 		}
 		break;
 		default:
 			break;
 		}
 
-		LOG_FATAL("unknown asset type to deserialize");
-		return nullptr;
+		asset->setURL(url);
+		asset->inflate();
+		m_assets[url] = asset;
+
+		return asset;
 	}
 
 	std::string AssetManager::getAssetName(const std::string& basename, const std::string& asset_name, EAssetType asset_type, int asset_index)

@@ -30,3 +30,6 @@ namespace Bamboo
 		}
 	};
 }
+
+CEREAL_REGISTER_TYPE(Bamboo::Skeleton)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Skeleton)

@@ -1,6 +1,7 @@
 {
-    "value0": {
-        "polymorphic_id": 1073741824,
+    "world": {
+        "polymorphic_id": 2147483649,
+        "polymorphic_name": "Bamboo::World",
         "ptr_wrapper": {
             "id": 2147483649,
             "data": {
@@ -15,7 +16,7 @@
                             "child_ids": [],
                             "components": [
                                 {
-                                    "polymorphic_id": 2147483649,
+                                    "polymorphic_id": 2147483650,
                                     "polymorphic_name": "Bamboo::CameraComponent",
                                     "ptr_wrapper": {
                                         "id": 2147483651,
@@ -40,7 +41,7 @@
                         }
                     }
                 },
-                "entites": [
+                "entities": [
                     {
                         "key": 0,
                         "value": {

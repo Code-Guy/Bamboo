@@ -2,7 +2,6 @@
 
 #include "runtime/function/framework/entity/entity.h"
 #include "runtime/resource/asset/base/asset.h"
-#include <map>
 
 namespace Bamboo
 {
@@ -13,7 +12,7 @@ namespace Bamboo
 		void inflate();
 
 		const auto& getCameraEntity() { return m_camera_entity; }
-		const auto& getEntities() const { return m_entites; }
+		const auto& getEntities() const { return m_entities; }
 		std::shared_ptr<Entity> getEntity(uint32_t id);
 
 		std::shared_ptr<Entity> createEntity(const std::string& name);
@@ -26,7 +25,7 @@ namespace Bamboo
 		{
 			ar(cereal::make_nvp("entity_counter", m_entity_counter));
 			ar(cereal::make_nvp("camera_entity", m_camera_entity));
-			ar(cereal::make_nvp("entites", m_entites));
+			ar(cereal::make_nvp("entities", m_entities));
 		}
 
 		friend class WorldManager;
@@ -34,6 +33,9 @@ namespace Bamboo
 
 		uint32_t m_entity_counter = 0;
 		std::shared_ptr<Entity> m_camera_entity;
-		std::map<uint32_t, std::shared_ptr<Entity>> m_entites;
+		std::map<uint32_t, std::shared_ptr<Entity>> m_entities;
 	};
 }
+
+CEREAL_REGISTER_TYPE(Bamboo::World)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::World)

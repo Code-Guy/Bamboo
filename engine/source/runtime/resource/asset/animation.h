@@ -72,3 +72,6 @@ namespace Bamboo
 		}
 	};
 }
+
+CEREAL_REGISTER_TYPE(Bamboo::Animation)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Animation)

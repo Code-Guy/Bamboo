@@ -6,7 +6,7 @@ namespace Bamboo
 {
 	void World::tick(float delta_time)
 	{
-		for (const auto& iter : m_entites)
+		for (const auto& iter : m_entities)
 		{
 			iter.second->tick(delta_time);
 		}
@@ -14,7 +14,7 @@ namespace Bamboo
 
 	void World::inflate()
 	{
-		for (const auto& iter : m_entites)
+		for (const auto& iter : m_entities)
 		{
 			iter.second->inflate();
 		}
@@ -22,8 +22,8 @@ namespace Bamboo
 
 	std::shared_ptr<Entity> World::getEntity(uint32_t id)
 	{
-		auto iter = m_entites.find(id);
-		if (iter != m_entites.end())
+		auto iter = m_entities.find(id);
+		if (iter != m_entities.end())
 		{
 			return iter->second;
 		}
@@ -38,13 +38,13 @@ namespace Bamboo
 		entity->m_name = name;
 		entity->m_world = this;
 
-		m_entites[entity->m_id] = entity;
+		m_entities[entity->m_id] = entity;
 		return entity;
 	}
 
 	bool World::removeEntity(uint32_t id)
 	{
-		return m_entites.erase(id) > 0;
+		return m_entities.erase(id) > 0;
 	}
 
 }
