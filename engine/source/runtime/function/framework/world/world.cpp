@@ -1,9 +1,21 @@
 #include "world.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/function/framework/component/camera_component.h"
 #include <fstream>
 
 namespace Bamboo
 {
+
+	World::~World()
+	{
+		m_camera_entity.reset();
+		for (auto iter : m_entities)
+		{
+			iter.second.reset();
+		}
+		m_entities.clear();
+	}
+
 	void World::tick(float delta_time)
 	{
 		for (const auto& iter : m_entities)
@@ -16,7 +28,14 @@ namespace Bamboo
 	{
 		for (const auto& iter : m_entities)
 		{
-			iter.second->inflate();
+			const auto& entity = iter.second;
+			entity->m_world = weak_from_this();
+			entity->inflate();
+
+			if (!m_camera_entity && entity->hasComponent<CameraComponent>())
+			{
+				m_camera_entity = entity;
+			}
 		}
 	}
 
@@ -36,7 +55,7 @@ namespace Bamboo
 		std::shared_ptr<Entity> entity = std::shared_ptr<Entity>(new Entity);
 		entity->m_id = m_entity_counter++;
 		entity->m_name = name;
-		entity->m_world = this;
+		entity->m_world = weak_from_this();
 
 		m_entities[entity->m_id] = entity;
 		return entity;

@@ -17,15 +17,15 @@ namespace Bamboo
 		Component() = default;
 		virtual ~Component() = default;
 
-		void attach(std::shared_ptr<Entity>& parent);
+		void attach(std::weak_ptr<Entity>& parent);
 		void dettach();
-		std::shared_ptr<Entity>& getParent() { return m_parent; }
+		std::weak_ptr<Entity>& getParent() { return m_parent; }
 
 		virtual void tick(float delta_time) {}
 		virtual void inflate() {}
 
 	protected:
-		std::shared_ptr<Entity> m_parent;
+		std::weak_ptr<Entity> m_parent;
 
 	private:
 		friend class cereal::access;

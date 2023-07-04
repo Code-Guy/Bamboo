@@ -848,14 +848,14 @@ namespace Bamboo
 		{
 			std::ifstream ifs(filename);
 			cereal::JSONInputArchive archive(ifs);
-			archive(cereal::make_nvp(asset_ext.c_str(), asset));
+			archive(asset);
 		}
 		break;
 		case EArchiveType::Binary:
 		{
 			std::ifstream ifs(filename, std::ios::binary);
 			cereal::BinaryInputArchive archive(ifs);
-			archive(cereal::make_nvp(asset_ext.c_str(), asset));
+			archive(asset);
 		}
 		break;
 		default:

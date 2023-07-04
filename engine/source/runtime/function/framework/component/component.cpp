@@ -4,14 +4,14 @@
 namespace Bamboo
 {
 	
-	void Component::attach(std::shared_ptr<Entity>& parent)
+	void Component::attach(std::weak_ptr<Entity>& parent)
 	{
 		m_parent = parent;
 	}
 
 	void Component::dettach()
 	{
-		m_parent = nullptr;
+		m_parent.reset();
 	}
 
 }

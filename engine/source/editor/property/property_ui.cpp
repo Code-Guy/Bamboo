@@ -10,8 +10,6 @@ namespace Bamboo
 
 	void PropertyUI::construct()
 	{
-		EditorUI::construct();
-
 		if (!ImGui::Begin(combine(ICON_FA_STREAM, m_title).c_str()))
 		{
 			ImGui::End();

@@ -5,11 +5,13 @@
 
 namespace Bamboo
 {
-	class World : public Asset
+	class World : public Asset, public std::enable_shared_from_this<World>
 	{
 	public:
+		~World();
+
 		void tick(float delta_time);
-		void inflate();
+		virtual void inflate() override;
 
 		const auto& getCameraEntity() { return m_camera_entity; }
 		const auto& getEntities() const { return m_entities; }
@@ -24,7 +26,6 @@ namespace Bamboo
 		void serialize(Archive& ar)
 		{
 			ar(cereal::make_nvp("entity_counter", m_entity_counter));
-			ar(cereal::make_nvp("camera_entity", m_camera_entity));
 			ar(cereal::make_nvp("entities", m_entities));
 		}
 

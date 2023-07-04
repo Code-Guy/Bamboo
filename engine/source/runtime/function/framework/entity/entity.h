@@ -14,18 +14,18 @@ namespace Bamboo
 	class Entity : public std::enable_shared_from_this<Entity>
 	{
 	public:
-		virtual ~Entity() = default;
+		~Entity();
 
 		virtual void tick(float delta_time);
 		void inflate();
 
-		void attach(std::shared_ptr<Entity>& parent);
+		void attach(std::weak_ptr<Entity>& parent);
 		void detach();
 
 		uint32_t getID() { return m_id; }
-		World* getWorld() { return m_world; }
+		std::weak_ptr<World> getWorld() { return m_world; }
 		const std::string& getName() const { return m_name; }
-		std::shared_ptr<Entity>& getParent() { return m_parent; }
+		std::weak_ptr<Entity>& getParent() { return m_parent; }
 		const auto& getComponents() const { return m_components; }
 
 		void addComponent(std::shared_ptr<Component> component);
@@ -73,15 +73,14 @@ namespace Bamboo
 		friend World;
 		Entity() = default;
 
-		World* m_world = nullptr;
-
 		uint32_t m_id;
 		uint32_t m_pid = UINT_MAX;
 		std::vector<uint32_t> m_cids;
 
 		std::string m_name;
-		std::shared_ptr<Entity> m_parent;
-		std::vector<std::shared_ptr<Entity>> m_children;
+		std::weak_ptr<World> m_world;
+		std::weak_ptr<Entity> m_parent;
+		std::vector<std::weak_ptr<Entity>> m_children;
 		std::vector<std::shared_ptr<Component>> m_components;
 	};
 }

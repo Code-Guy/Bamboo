@@ -14,7 +14,8 @@ namespace Bamboo
 	{
 	public:
 		virtual void init() = 0;
-		virtual void record(VkCommandBuffer command_buffer, uint32_t flight_index) = 0;
+		virtual void prepare() {}
+		virtual void render(VkCommandBuffer command_buffer, uint32_t flight_index) = 0;
 		virtual void destroy();
 
 		virtual void createRenderPass() = 0;

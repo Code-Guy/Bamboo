@@ -15,13 +15,13 @@ namespace Bamboo
 	{
 		URL default_world_url = g_runtime_context.configManager()->getDefaultWorldUrl();
 
-		m_current_world = createWorld(default_world_url);
-		//loadWorld(default_world_url);
+		//m_current_world = createWorld(default_world_url);
+		loadWorld(default_world_url);
 	}
 
 	void WorldManager::destroy()
 	{
-		g_runtime_context.assetManager()->serializeAsset(m_current_world);
+		//g_runtime_context.assetManager()->serializeAsset(m_current_world);
 		m_current_world.reset();
 	}
 

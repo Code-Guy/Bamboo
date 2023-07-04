@@ -14,6 +14,8 @@ namespace Bamboo
 		virtual void onWindowResize() override;
 
 	private:
+		void loadAsset(const std::string& url);
+
 		VkSampler m_color_texture_sampler;
 		VkDescriptorSet m_color_texture_desc_set = VK_NULL_HANDLE;
 	};

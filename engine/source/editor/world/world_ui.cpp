@@ -10,8 +10,6 @@ namespace Bamboo
 
 	void WorldUI::construct()
 	{
-		EditorUI::construct();
-
 		if (!ImGui::Begin(combine(ICON_FA_GLOBE, m_title).c_str()))
 		{
 			ImGui::End();

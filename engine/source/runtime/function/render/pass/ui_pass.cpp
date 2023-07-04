@@ -79,7 +79,7 @@ namespace Bamboo
 		createResizableObjects(extent.width, extent.height);
 	}
 
-	void UIPass::record(VkCommandBuffer command_buffer, uint32_t flight_index)
+	void UIPass::prepare()
 	{
 		// process imgui frame and get draw data
 		ImGui_ImplVulkan_NewFrame();
@@ -98,7 +98,10 @@ namespace Bamboo
 
 		// calculate imgui draw data
 		ImGui::Render();
+	}
 
+	void UIPass::render(VkCommandBuffer command_buffer, uint32_t flight_index)
+	{
 		// record render pass
 		VkRenderPassBeginInfo renderpass_bi{};
 		renderpass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

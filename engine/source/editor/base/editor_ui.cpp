@@ -10,11 +10,6 @@ namespace Bamboo
 		ImGui_ImplVulkan_RemoveTexture(desc_set);
 	}
 
-	void EditorUI::construct()
-	{
-		handleWindowResize();
-	}
-
 	void EditorUI::destroy()
 	{
 		for (auto& iter : m_imgui_images)
@@ -24,7 +19,7 @@ namespace Bamboo
 		m_imgui_images.clear();
 	}
 
-	bool EditorUI::handleWindowResize()
+	bool EditorUI::checkWindowResize()
 	{
 		ImVec2 m_new_size = ImGui::GetContentRegionAvail();
 		uint32_t new_width = static_cast<uint32_t>(m_new_size.x);

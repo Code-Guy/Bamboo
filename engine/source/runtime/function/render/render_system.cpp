@@ -73,17 +73,30 @@ namespace Bamboo
 
 	void RenderSystem::onRecordFrame(VkCommandBuffer command_buffer, uint32_t flight_index)
 	{
+		// render pass preparation
 		for (auto& render_pass : m_render_passes)
 		{
 			if (!render_pass.second->isMinimize())
 			{
-				render_pass.second->record(command_buffer, flight_index);
+				render_pass.second->prepare();
+			}
+		}
+
+		// render pass rendering
+		for (auto& render_pass : m_render_passes)
+		{
+			if (!render_pass.second->isMinimize())
+			{
+				render_pass.second->render(command_buffer, flight_index);
 			}
 		}
 	}
 
 	void RenderSystem::collectRenderDatas()
 	{
+		// mesh render datas
+		std::vector<std::shared_ptr<RenderData>> mesh_render_datas;
+
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
 
@@ -128,9 +141,14 @@ namespace Bamboo
 						render_data->index_offsets.push_back(sub_mesh.m_index_offset);
 						render_data->textures.push_back(sub_mesh.m_material->m_base_color_texure->m_image_view_sampler);
 					}
+
+					mesh_render_datas.push_back(render_data);
 				}
 			}
 		}
+
+		// set render datas
+		m_render_passes[ERenderPassType::Base]->setRenderDatas(mesh_render_datas);
 	}
 
 }

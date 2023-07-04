@@ -23,6 +23,9 @@ namespace Bamboo
 
 	void RenderPass::onResize(uint32_t width, uint32_t height)
 	{
+		// ensure all device operations have done
+		VulkanRHI::get().waitDeviceIdle();
+
 		destroyResizableObjects();
 		createResizableObjects(width, height);
 	}

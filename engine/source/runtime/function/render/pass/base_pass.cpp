@@ -19,7 +19,7 @@ namespace Bamboo
 		createPipeline();
 	}
 
-	void BasePass::record(VkCommandBuffer command_buffer, uint32_t flight_index)
+	void BasePass::render(VkCommandBuffer command_buffer, uint32_t flight_index)
 	{
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -208,6 +208,7 @@ namespace Bamboo
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
 		desc_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		desc_set_layout_ci.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layout);

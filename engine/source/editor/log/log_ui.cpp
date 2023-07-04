@@ -11,8 +11,6 @@ namespace Bamboo
 
 	void LogUI::construct()
 	{
-		EditorUI::construct();
-
 		std::vector<std::string> lastest_logs = g_runtime_context.logSystem()->getLastestLogs();
 
 		ImGuiWindowFlags window_flags = 0;

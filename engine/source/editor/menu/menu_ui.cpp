@@ -18,8 +18,6 @@ namespace Bamboo
 
 	void MenuUI::construct()
 	{
-		EditorUI::construct();
-
 		// poll shortcuts states
 		pollShortcuts();
 

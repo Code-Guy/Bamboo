@@ -23,12 +23,12 @@ namespace Bamboo
 	{
 	public:
 		virtual void init() = 0;
-		virtual void construct();
+		virtual void construct() = 0;
 		virtual void destroy();
 		virtual void onWindowResize() {}
 
 	protected:
-		bool handleWindowResize();
+		bool checkWindowResize();
 		std::string combine(const char* c, const std::string& s);
 		std::shared_ptr<ImGuiImage> loadImGuiImage(const std::string& filename);
 

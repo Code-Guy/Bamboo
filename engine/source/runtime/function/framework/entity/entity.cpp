@@ -4,6 +4,16 @@
 
 namespace Bamboo
 {
+
+	Entity::~Entity()
+	{
+		for (auto& component : m_components)
+		{
+			component.reset();
+		}
+		m_components.clear();
+	}
+
 	void Entity::tick(float delta_time)
 	{
 		for (auto& component : m_components)
@@ -16,33 +26,35 @@ namespace Bamboo
 	{
 		for (auto& component : m_components)
 		{
-			component->attach(shared_from_this());
+			component->attach(weak_from_this());
 			component->inflate();
 		}
 
-		m_parent = m_world->getEntity(m_pid);
+		m_parent = m_world.lock()->getEntity(m_pid);
 		for (uint32_t cid : m_cids)
 		{
-			m_children.push_back(m_world->getEntity(cid));
+			m_children.push_back(m_world.lock()->getEntity(cid));
 		}
 	}
 
-	void Entity::attach(std::shared_ptr<Entity>& parent)
+	void Entity::attach(std::weak_ptr<Entity>& parent)
 	{
 		m_parent = parent;
-		m_parent->m_children.push_back(shared_from_this());
+		m_parent.lock()->m_children.push_back(weak_from_this());
 	}
 
 	void Entity::detach()
 	{
-		m_parent->m_children.erase(std::remove(m_parent->m_children.begin(), 
-			m_parent->m_children.end(), shared_from_this()), m_parent->m_children.end());
-		m_parent = nullptr;
+		auto& children = m_parent.lock()->m_children;
+		children.erase(std::remove_if(children.begin(), children.end(), [this](const auto& child) {
+			return child.lock()->m_id == m_id;
+			}), children.end());
+		m_parent.reset();
 	}
 
 	void Entity::addComponent(std::shared_ptr<Component> component)
 	{
-		component->attach(shared_from_this());
+		component->attach(weak_from_this());
 		m_components.push_back(component);
 	}
 

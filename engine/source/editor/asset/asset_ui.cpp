@@ -37,8 +37,6 @@ namespace Bamboo
 
 	void AssetUI::construct()
 	{
-		EditorUI::construct();
-
 		// draw asset widget
 		if (!ImGui::Begin(combine(ICON_FA_FAN, m_title).c_str()))
 		{
@@ -278,7 +276,9 @@ namespace Bamboo
 		// set drag source
 		if (g_runtime_context.fileSystem()->isFile(filename))
 		{
-			if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+			EAssetType asset_type = g_runtime_context.assetManager()->getAssetType(filename);
+			if ((asset_type == EAssetType::StaticMesh || asset_type == EAssetType::SkeletalMesh) &&
+				ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 			{
 				std::string ref_filename = g_runtime_context.fileSystem()->relative(filename);
 				ImGui::SetDragDropPayload("load_asset", ref_filename.data(), ref_filename.size());
@@ -286,11 +286,16 @@ namespace Bamboo
 				ImGui::EndDragDropSource();
 			}
 		}
-		else if (g_runtime_context.fileSystem()->isDir(filename))
+
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
 		{
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+			if (g_runtime_context.fileSystem()->isDir(filename))
 			{
 				pollSelectedFolder(filename);
+			}
+			else
+			{
+				LOG_INFO("open {}", basename);
 			}
 		}
 	}
@@ -326,7 +331,10 @@ namespace Bamboo
 					std::string filename = file.path().string();
 					if (file.is_regular_file())
 					{
-						folder_node.child_files.push_back(filename);
+						if (g_runtime_context.assetManager()->getAssetType(filename) != EAssetType::Invalid)
+						{
+							folder_node.child_files.push_back(filename);
+						}
 					}
 					else if (file.is_directory())
 					{
