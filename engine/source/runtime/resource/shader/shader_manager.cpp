@@ -2,16 +2,21 @@
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include <array>
 
-#define SPV_DIR "asset/engine/shader"
-
 namespace Bamboo
 {
 	void ShaderManager::init()
 	{
-		// compile all shaders that have been modified
+		// create spv dir if doesn't exist
 		const auto& fs = g_runtime_context.fileSystem();
+		std::string spv_dir = fs->getSpvDir();
+		if (!fs->exists(spv_dir))
+		{
+			fs->createDir(spv_dir);
+		}
+
+		// compile all shaders that have been modified
 		std::vector<std::string> glsl_filenames = fs->traverse(fs->getShaderDir());
-		std::vector<std::string> spv_filenames = fs->traverse(fs->absolute(SPV_DIR));
+		std::vector<std::string> spv_filenames = fs->traverse(spv_dir);
 
 		// get compiled spv filename and modified time
 		std::map<std::string, std::string> spv_basename_modified_time_map;
@@ -33,8 +38,11 @@ namespace Bamboo
 				modified_time != spv_basename_modified_time_map[glsl_basename];
 			if (need_compile)
 			{
+				// remove old spv file
+				fs->removeFile(m_shader_filenames[glsl_basename]);
+
 				std::string global_glsl_filename = fs->global(glsl_filename);
-				std::string spv_filename = fs->absolute(StringUtil::format("%s/%s-%s.spv", SPV_DIR, glsl_basename.c_str(), modified_time.c_str()));
+				std::string spv_filename = StringUtil::format("%s/%s-%s.spv", spv_dir.c_str(), glsl_basename.c_str(), modified_time.c_str());
 				std::string global_spv_filename = fs->global(spv_filename);
 				std::string shader_compile_cmd = StringUtil::format("%s --target-env vulkan1.3 -g -o \"%s\" \"%s\"", 
 					VULKAN_SHADER_COMPILER, global_spv_filename.c_str(), global_glsl_filename.c_str());

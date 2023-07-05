@@ -132,6 +132,11 @@ namespace Bamboo
 		return absolute("shader");
 	}
 
+	std::string FileSystem::getSpvDir()
+	{
+		return absolute("asset/engine/spv");
+	}
+
 	bool FileSystem::exists(const std::string& path)
 	{
 		return std::filesystem::exists(path) || std::filesystem::exists(absolute(path));
