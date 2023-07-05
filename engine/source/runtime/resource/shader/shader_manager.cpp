@@ -14,12 +14,9 @@ namespace Bamboo
 			fs->createDir(spv_dir);
 		}
 
-		// compile all shaders that have been modified
-		std::vector<std::string> glsl_filenames = fs->traverse(fs->getShaderDir());
-		std::vector<std::string> spv_filenames = fs->traverse(spv_dir);
-
 		// get compiled spv filename and modified time
 		std::map<std::string, std::string> spv_basename_modified_time_map;
+		std::vector<std::string> spv_filenames = fs->traverse(spv_dir);
 		for (const std::string& spv_filename : spv_filenames)
 		{
 			std::string spv_basename = fs->basename(spv_filename); 
@@ -28,7 +25,14 @@ namespace Bamboo
 			m_shader_filenames[splits[0]] = spv_filename;
 		}
 
+		// if shader dir doesn't exist, means in game mode, skip compiling stage
+		if (!fs->exists(fs->getShaderDir()))
+		{
+			return;
+		}
+
 		// compile glsl shader if necessary
+		std::vector<std::string> glsl_filenames = fs->traverse(fs->getShaderDir());
 		for (const std::string& glsl_filename : glsl_filenames)
 		{
 			std::string glsl_basename = fs->filename(glsl_filename);
