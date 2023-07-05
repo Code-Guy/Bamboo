@@ -15,7 +15,8 @@ namespace Bamboo
 
 		ImGuiWindowFlags window_flags = 0;
 		window_flags |= ImGuiWindowFlags_AlwaysHorizontalScrollbar;
-		if (!ImGui::Begin(combine(ICON_FA_RECEIPT, m_title).c_str(), nullptr, window_flags))
+		sprintf(m_title_buf, "%s %s###%s", ICON_FA_RECEIPT, m_title.c_str(), m_title.c_str());
+		if (!ImGui::Begin(m_title_buf, nullptr, window_flags))
 		{
 			ImGui::End();
 			return;

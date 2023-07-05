@@ -19,27 +19,28 @@ namespace Bamboo
 		m_imgui_images.clear();
 	}
 
-	bool EditorUI::checkWindowResize()
+	void EditorUI::updateWindowRegion()
 	{
+		uint32_t new_pos_x = ImGui::GetCursorPosX();
+		uint32_t new_pos_y = ImGui::GetCursorPosY();
+		if (m_content_region.x != new_pos_x || m_content_region.y != new_pos_y)
+		{
+			m_content_region.x = new_pos_x;
+			m_content_region.y = new_pos_y;
+
+			onWindowRepos();
+		}
+
 		ImVec2 m_new_size = ImGui::GetContentRegionAvail();
 		uint32_t new_width = static_cast<uint32_t>(m_new_size.x);
 		uint32_t new_height = static_cast<uint32_t>(m_new_size.y);
-
-		if (m_width != new_width || m_height != new_height)
+		if (m_content_region.z != new_width || m_content_region.w != new_height)
 		{
-			m_width = new_width;
-			m_height = new_height;
+			m_content_region.z = new_width;
+			m_content_region.w = new_height;
 
 			onWindowResize();
-			return true;
 		}
-
-		return false;
-	}
-
-	std::string EditorUI::combine(const char* c, const std::string& s)
-	{
-		return std::string(c) + " " + s;
 	}
 
 	std::shared_ptr<ImGuiImage> EditorUI::loadImGuiImage(const std::string& filename)

@@ -27,10 +27,7 @@ namespace Bamboo
 
 	void WorldManager::tick(float delta_time)
 	{
-		if (m_current_world)
-		{
-			m_current_world->tick(delta_time);
-		}
+		m_current_world->tick(delta_time);
 	}
 
 	bool WorldManager::loadWorld(const URL& url)
@@ -42,6 +39,7 @@ namespace Bamboo
 
 		m_current_world = g_runtime_context.assetManager()->loadAsset<World>(url);
 		m_current_world_url = url;
+		m_current_world_name = g_runtime_context.fileSystem()->basename(url);
 
 		return true;
 	}
@@ -52,15 +50,16 @@ namespace Bamboo
 		world->setURL(url);
 
 		std::shared_ptr<CameraComponent> camera_component = std::make_shared<CameraComponent>();
-		camera_component->m_position = glm::vec3(8.5f, -1.9f, 3.9f);
-		camera_component->m_yaw = -194.4f;
-		camera_component->m_pitch = -18.7f;
+		camera_component->m_position = glm::vec3(3.0f, -3.0f, 3.0f);
+		camera_component->m_yaw = -225.0f;
+		camera_component->m_pitch = -35.2f;
 		camera_component->m_fovy = 60.0f;
 		camera_component->m_aspect_ratio = 1.778f;
 		camera_component->m_near = 0.1f;
 		camera_component->m_far = 1000.0f;
-		camera_component->m_speed = 2.0f;
-		camera_component->m_sensitivity = 0.1f;
+		camera_component->m_move_speed = 4.0f;
+		camera_component->m_turn_speed = 0.1f;
+		camera_component->m_zoom_speed = 2.0f;
 
 		std::shared_ptr<Entity> camera_entity = world->createEntity("camera");
 		camera_entity->addComponent(camera_component);
@@ -69,6 +68,11 @@ namespace Bamboo
 		world->inflate();
 
 		return world;
+	}
+
+	std::shared_ptr<CameraComponent> WorldManager::getCameraComponent()
+	{
+		return m_current_world->getCameraEntity()->getComponent<CameraComponent>();
 	}
 
 }

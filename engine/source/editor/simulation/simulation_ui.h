@@ -12,6 +12,7 @@ namespace Bamboo
 		virtual void construct() override;
 		virtual void destroy() override;
 		virtual void onWindowResize() override;
+		virtual void onWindowRepos() override;
 
 	private:
 		void loadAsset(const std::string& url);

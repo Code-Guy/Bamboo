@@ -12,6 +12,8 @@ namespace Bamboo
 	public:
 		CameraComponent();
 
+		void setContentRegion(const glm::uvec4& content_region);
+
 		glm::mat4 getViewMatrix();
 		glm::mat4 getPerspectiveMatrix();
 		glm::mat4 getViewPerspectiveMatrix();
@@ -31,8 +33,9 @@ namespace Bamboo
 		float m_far;
 
 		// movement
-		float m_speed;
-		float m_sensitivity;
+		float m_move_speed;
+		float m_turn_speed;
+		float m_zoom_speed;
 
 	private:
 		friend class cereal::access;
@@ -51,15 +54,18 @@ namespace Bamboo
 			ar(cereal::make_nvp("far", m_far));
 
 			// movement
-			ar(cereal::make_nvp("speed", m_speed));
-			ar(cereal::make_nvp("sensitivity", m_sensitivity));
+			ar(cereal::make_nvp("move_speed", m_move_speed));
+			ar(cereal::make_nvp("turn_speed", m_turn_speed));
+			ar(cereal::make_nvp("zoom_speed", m_zoom_speed));
 		}
 
 		void onKey(int key, int scancode, int action, int mods);
 		void onCursorPos(double xpos, double ypos);
 		void onMouseButton(int button, int action, int mods);
+		void onScroll(double xoffset, double yoffset);
 
 		void updatePose();
+		bool isInContentRegion(double xpos, double ypos);
 
 		glm::vec3 m_forward;
 		glm::vec3 m_right;
@@ -70,7 +76,11 @@ namespace Bamboo
 		bool m_move_left;
 		bool m_move_right;
 
+		bool m_mouse_in_content;
 		bool m_mouse_right_button_pressed;
+
+		glm::uvec4 m_content_region;
+		double m_last_xpos, m_last_ypos;
 	};
 }
 

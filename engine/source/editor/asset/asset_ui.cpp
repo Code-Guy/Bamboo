@@ -38,7 +38,8 @@ namespace Bamboo
 	void AssetUI::construct()
 	{
 		// draw asset widget
-		if (!ImGui::Begin(combine(ICON_FA_FAN, m_title).c_str()))
+		sprintf(m_title_buf, "%s %s###%s", ICON_FA_FAN, m_title.c_str(), m_title.c_str());
+		if (!ImGui::Begin(m_title_buf))
 		{
 			ImGui::End();
 			return;
@@ -148,7 +149,7 @@ namespace Bamboo
 		ImGui::SameLine();
 		static char str1[128] = "";
 		ImGui::PushItemWidth(200.0f);
-		ImGui::InputTextWithHint("##search_asset", combine(ICON_FA_SEARCH, "Search...").c_str(), str1, IM_ARRAYSIZE(str1));
+		ImGui::InputTextWithHint("##search_asset", (std::string(ICON_FA_SEARCH) + " Search...").c_str(), str1, IM_ARRAYSIZE(str1));
 		ImGui::PopItemWidth();
 
 		ImGui::SameLine();
@@ -295,7 +296,7 @@ namespace Bamboo
 			}
 			else
 			{
-				LOG_INFO("open {}", basename);
+				LOG_INFO("open asset {}", basename);
 			}
 		}
 	}
@@ -359,6 +360,9 @@ namespace Bamboo
 				m_folder_opened_map[folder_node.name] = false;
 			}
 		}
+
+		// update selected folder's files
+		pollSelectedFolder();
 	}
 
 	void AssetUI::pollSelectedFolder(const std::string& selected_folder)
@@ -412,7 +416,7 @@ namespace Bamboo
 			StopWatch stop_watch;
 			stop_watch.start();
 			g_runtime_context.assetManager()->importAsset(import_file, import_folder);
-			LOG_INFO("import asset {} to {}, elapsed time {} ms", import_file, import_folder, stop_watch.stop());
+			LOG_INFO("import asset {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stop());
 		}
 		m_imported_files.clear();
 	}

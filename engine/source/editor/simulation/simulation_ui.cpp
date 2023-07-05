@@ -3,8 +3,10 @@
 #include "runtime/function/render/render_system.h"
 #include "runtime/function/render/pass/base_pass.h"
 
+#include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/framework/world/world_manager.h"
+#include "runtime/function/framework/component/camera_component.h"
 #include "runtime/function/framework/component/static_mesh_component.h"
 #include "runtime/function/framework/component/transform_component.h"
 
@@ -22,13 +24,16 @@ namespace Bamboo
 
 	void SimulationUI::construct()
 	{
+		const std::string& world_name = g_runtime_context.worldManager()->getCurrentWorldName();
+		sprintf(m_title_buf, "%s %s###%s", ICON_FA_GAMEPAD, world_name.c_str(), m_title.c_str());
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		if (!ImGui::Begin(combine(ICON_FA_GAMEPAD, m_title).c_str()))
+		if (!ImGui::Begin(m_title_buf))
 		{
 			ImGui::End();
+			ImGui::PopStyleVar();
 			return;
 		}
-		checkWindowResize();
+		updateWindowRegion();
 
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		ImGui::Image(m_color_texture_desc_set, ImVec2{content_size.x, content_size.y});
@@ -39,8 +44,10 @@ namespace Bamboo
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("load_asset"))
 			{
 				std::string url((const char*)payload->Data, payload->DataSize);
-				LOG_INFO("loading asset: {}", url);
+				StopWatch stop_watch;
+				stop_watch.start();
 				loadAsset(url);
+				LOG_INFO("load asset {}, elapsed time: {}ms", url, stop_watch.stop());
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -59,15 +66,25 @@ namespace Bamboo
 
 	void SimulationUI::onWindowResize()
 	{
+		// reset camera aspect ratio
+		g_runtime_context.worldManager()->getCameraComponent()->setContentRegion(m_content_region);
+
+		// resize render pass
 		std::shared_ptr<RenderPass> render_pass = g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Base);
 		std::shared_ptr<BasePass> base_pass = std::dynamic_pointer_cast<BasePass>(render_pass);
-		base_pass->onResize(m_width, m_height);
+		base_pass->onResize(m_content_region.z, m_content_region.w);
 
+		// recreate color image and view
 		if (m_color_texture_desc_set != VK_NULL_HANDLE)
 		{
 			ImGui_ImplVulkan_RemoveTexture(m_color_texture_desc_set);
 		}
 		m_color_texture_desc_set = ImGui_ImplVulkan_AddTexture(m_color_texture_sampler, base_pass->getColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
+
+	void SimulationUI::onWindowRepos()
+	{
+		g_runtime_context.worldManager()->getCameraComponent()->setContentRegion(m_content_region);
 	}
 
 	void SimulationUI::loadAsset(const std::string& url)

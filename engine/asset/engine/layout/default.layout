@@ -3,36 +3,31 @@ Pos=0,20
 Size=1280,700
 Collapsed=0
 
-[Window][Debug##Default]
-Pos=60,60
-Size=400,400
-Collapsed=0
-
-[Window][ World]
+[Window][###World]
 Pos=0,20
 Size=195,700
 Collapsed=0
 DockId=0x00000003,0
 
-[Window][ Property]
+[Window][###Property]
 Pos=1079,20
 Size=201,700
 Collapsed=0
 DockId=0x00000002,0
 
-[Window][ Simulation]
+[Window][###Simulation]
 Pos=197,20
 Size=880,509
 Collapsed=0
 DockId=0x00000005,0
 
-[Window][ Asset]
+[Window][###Asset]
 Pos=197,531
 Size=880,189
 Collapsed=0
 DockId=0x00000006,0
 
-[Window][ Log]
+[Window][###Log]
 Pos=197,531
 Size=880,189
 Collapsed=0

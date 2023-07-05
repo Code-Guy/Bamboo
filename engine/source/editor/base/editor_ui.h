@@ -3,6 +3,8 @@
 #include <map>
 #include <imgui/imgui.h>
 #include <imgui/font/IconsFontAwesome5.h>
+#include <glm/glm.hpp>
+
 #include "runtime/core/vulkan/vulkan_util.h"
 
 namespace Bamboo
@@ -26,14 +28,15 @@ namespace Bamboo
 		virtual void construct() = 0;
 		virtual void destroy();
 		virtual void onWindowResize() {}
+		virtual void onWindowRepos() {}
 
 	protected:
-		bool checkWindowResize();
-		std::string combine(const char* c, const std::string& s);
+		void updateWindowRegion();
 		std::shared_ptr<ImGuiImage> loadImGuiImage(const std::string& filename);
 
 		std::string m_title;
-		uint32_t m_width = 0, m_height = 0;
+		char m_title_buf[128];
+		glm::uvec4 m_content_region;
 
 	private:
 		std::map<std::string, std::shared_ptr<ImGuiImage>> m_imgui_images;

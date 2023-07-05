@@ -37,7 +37,7 @@ namespace Bamboo
 		void registerOnKeyFunc(OnKeyFunc func) { m_onKeyFuncs.push_back(func); }
 		void registerOnCharFunc(OnCharFunc func) { m_onCharFuncs.push_back(func); }
 		void registerOnCharModsFunc(OnCharModsFunc func) { m_onCharModsFuncs.push_back(func); }
-		void registerOnMouseButtOnFunc(OnMouseButtonFunc func) { m_onMouseButtonFuncs.push_back(func); }
+		void registerOnMouseButtonFunc(OnMouseButtonFunc func) { m_onMouseButtonFuncs.push_back(func); }
 		void registerOnCursorPosFunc(OnCursorPosFunc func) { m_onCursorPosFuncs.push_back(func); }
 		void registerOnCursorEnterFunc(OnCursorEnterFunc func) { m_onCursorEnterFuncs.push_back(func); }
 		void registerOnScrollFunc(OnScrollFunc func) { m_onScrollFuncs.push_back(func); }

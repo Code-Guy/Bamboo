@@ -10,7 +10,8 @@ namespace Bamboo
 
 	void WorldUI::construct()
 	{
-		if (!ImGui::Begin(combine(ICON_FA_GLOBE, m_title).c_str()))
+		sprintf(m_title_buf, "%s %s###%s", ICON_FA_GLOBE, m_title.c_str(), m_title.c_str());
+		if (!ImGui::Begin(m_title_buf))
 		{
 			ImGui::End();
 			return;
