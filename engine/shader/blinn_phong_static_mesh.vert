@@ -1,5 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "shader_structure.h"
 
 layout(binding = 0) uniform UBO
 {
@@ -13,19 +16,19 @@ layout(push_constant) uniform VPCO
 } vpco;
 
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec2 inTexCoord;
-layout(location = 2) in vec3 inNormal;
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 tex_coord;
+layout(location = 2) in vec3 normal;
 
-layout(location = 0) out vec2 outTexCoord;
-layout(location = 1) out vec3 outNormal;
-layout(location = 2) out vec3 outPosition;
+layout(location = 0) out vec2 f_tex_coord;
+layout(location = 1) out vec3 f_normal;
+layout(location = 2) out vec3 f_position;
 
 void main()
-{
-	gl_Position = vpco.mvp * vec4(inPosition, 1.0);
-	
-	outTexCoord = inTexCoord;
-	outNormal = (vpco.m * vec4(inNormal, 0.0)).xyz;
-	outPosition = (vpco.m * vec4(inPosition, 1.0)).xyz;
+{	
+	f_tex_coord = tex_coord;
+	f_normal = (vpco.m * vec4(normal, 0.0)).xyz;
+	f_position = (vpco.m * vec4(position, 1.0)).xyz;
+
+	gl_Position = vpco.mvp * vec4(position, 1.0);
 }
