@@ -1,6 +1,7 @@
 #pragma once
 
 #include "runtime/resource/asset/base/sub_mesh.h"
+#include "shader_constants.h"
 
 struct StaticVertex
 {
@@ -40,7 +41,6 @@ struct StaticMeshUBO
 	glm::mat4 padding;
 };
 
-#define MAX_BONE_NUM 128
 struct SkeletalMeshUBO
 {
 	glm::mat4 gBones[MAX_BONE_NUM];

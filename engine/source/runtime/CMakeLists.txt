@@ -17,6 +17,7 @@ target_link_libraries(${TARGET_NAME} PUBLIC rttr_core_lib)
 
 target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/source)
 target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/external)
+target_include_directories(${TARGET_NAME} PUBLIC ${ENGINE_ROOT_DIR}/shader/include)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE VULKAN_SHADER_COMPILER=\"${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}\")
 target_compile_options(${TARGET_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<CXX_COMPILER_ID:GNU>:-Wa,-mbig-obj>)

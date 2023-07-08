@@ -1,0 +1,8 @@
+#ifndef SHADER_CONSTANTS
+#define SHADER_CONSTANTS
+
+#define INVALID_BONE -1
+#define MAX_BONE_NUM 128
+#define BONE_NUM_PER_VERTEX 4
+
+#endif

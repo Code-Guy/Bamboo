@@ -2,24 +2,15 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
 
-#include "shader_structure.h"
+#include "host_device.h"
 
-layout(push_constant) uniform FragPCO
-{
-	layout(offset = 128)
-	vec3 camera_pos; float padding0;
-	vec3 light_dir; float padding1;
-	vec3 base_color_factor; int has_base_color_texture;
-	vec3 emissive_factor; int has_emissive_texture;
-	float m_metallic_factor;
-	float m_roughness_factor;
-} f_pco;
+layout(push_constant) uniform _FragPCO { layout(offset = 128) FragPCO f_pco; };
 
 layout(binding = 1) uniform sampler2D base_color_texture_sampler;
 
-layout(location = 0) in vec2 f_tex_coord;
-layout(location = 1) in vec3 f_normal;
-layout(location = 2) in vec3 f_position;
+layout(location = 0) in vec3 f_position;
+layout(location = 1) in vec2 f_tex_coord;
+layout(location = 2) in vec3 f_normal;
 
 layout(location = 0) out vec4 f_color;
 

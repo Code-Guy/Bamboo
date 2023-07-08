@@ -349,7 +349,7 @@ namespace Bamboo
 		VkPipelineShaderStageCreateInfo frag_shader_stage_ci{};
 		frag_shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		frag_shader_stage_ci.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		frag_shader_stage_ci.module = shader_manager->getShaderModule("blinn_phong_static_mesh.frag");
+		frag_shader_stage_ci.module = shader_manager->getShaderModule("blinn_phong_mesh.frag");
 		frag_shader_stage_ci.pName = "main";
 		frag_shader_stage_ci.pSpecializationInfo = nullptr;
 
