@@ -3,7 +3,7 @@
 #include "component.h"
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/gtc/matrix_transform.hpp>
+#include "runtime/core/math/transform.h"
 
 namespace Bamboo
 {
@@ -75,6 +75,8 @@ namespace Bamboo
 		bool m_move_back;
 		bool m_move_left;
 		bool m_move_right;
+		bool m_move_up;
+		bool m_move_down;
 
 		bool m_mouse_in_content;
 		bool m_mouse_right_button_pressed;

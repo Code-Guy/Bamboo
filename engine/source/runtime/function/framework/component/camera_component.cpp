@@ -12,6 +12,8 @@ namespace Bamboo
 		m_move_back = false;
 		m_move_left = false;
 		m_move_right = false;
+		m_move_up = false;
+		m_move_down = false;
 
 		m_mouse_in_content = false;
 		m_mouse_right_button_pressed = false;
@@ -63,6 +65,14 @@ namespace Bamboo
 		{
 			m_position += m_right * offset;
 		}
+		if (m_move_up)
+		{
+			m_position += k_up_vector * offset;
+		}
+		if (m_move_down)
+		{
+			m_position -= k_up_vector * offset;
+		}
 	}
 
 	void CameraComponent::inflate()
@@ -104,6 +114,14 @@ namespace Bamboo
 		if (key == GLFW_KEY_D)
 		{
 			m_move_right = is_pressed;
+		}
+		if (key == GLFW_KEY_Q)
+		{
+			m_move_up = is_pressed;
+		}
+		if (key == GLFW_KEY_E)
+		{
+			m_move_down = is_pressed;
 		}
 	}
 
@@ -171,11 +189,11 @@ namespace Bamboo
 	void CameraComponent::updatePose()
 	{
 		m_forward.x = std::cos(glm::radians(m_yaw)) * std::cos(glm::radians(m_pitch));
-		m_forward.y = std::sin(glm::radians(m_yaw)) * std::cos(glm::radians(m_pitch));
-		m_forward.z = std::sin(glm::radians(m_pitch));
+		m_forward.y = std::sin(glm::radians(m_pitch));
+		m_forward.z = -std::sin(glm::radians(m_yaw)) * std::cos(glm::radians(m_pitch));
 		m_forward = glm::normalize(m_forward);
 
-		m_right = glm::normalize(glm::cross(m_forward, glm::vec3(0.0f, 0.0f, 1.0f)));
+		m_right = glm::normalize(glm::cross(m_forward, k_up_vector));
 		m_up = glm::normalize(glm::cross(m_right, m_forward));
 	}
 

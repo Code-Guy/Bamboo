@@ -130,7 +130,7 @@ namespace Bamboo
 					render_data->vert_pco.m = transform_component->world_matrix;
 					render_data->vert_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->world_matrix;
 					render_data->frag_pco.camera_pos = camera_component->m_position;
-					render_data->frag_pco.light_dir = glm::vec3(-1.0f, 1.0f, -1.0f);
+					render_data->frag_pco.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
 
 					// traverse all sub meshes
 					for (size_t i = 0; i < static_mesh->m_sub_meshes.size(); ++i)

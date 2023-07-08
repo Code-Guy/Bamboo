@@ -8,8 +8,8 @@
 namespace Bamboo
 {
 	const glm::vec3 k_forward_vector = glm::vec3(1.0f, 0.0f, 0.0f);
-	const glm::vec3 k_right_vector = glm::vec3(0.0f, 1.0f, 0.0f);
-	const glm::vec3 k_up_vector = glm::vec3(0.0f, 0.0f, 1.0f);
+	const glm::vec3 k_right_vector = glm::vec3(0.0f, 0.0f, 1.0f);
+	const glm::vec3 k_up_vector = glm::vec3(0.0f, 1.0f, 0.0f);
 	const glm::vec3 k_zero_vector = glm::vec3(0.0f);
 	const glm::vec3 k_one_vector = glm::vec3(1.0f);
 	const glm::quat k_zero_quat = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
