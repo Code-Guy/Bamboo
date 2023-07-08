@@ -15,6 +15,10 @@ namespace Bamboo
 	{
 		glm::vec3 camera_pos; float padding0;
 		glm::vec3 light_dir; float padding1;
+		glm::vec3 base_color_factor; int has_base_color_texture;
+		glm::vec3 emissive_factor; int has_emissive_texture;
+		float m_metallic_factor;
+		float m_roughness_factor;
 	};
 
 	struct RenderData

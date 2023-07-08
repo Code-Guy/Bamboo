@@ -19,9 +19,9 @@ namespace Bamboo
 		uint32_t m_width, m_height;
 		VkFilter m_min_filter, m_mag_filter;
 		VkSamplerAddressMode m_address_mode_u, m_address_mode_v, m_address_mode_w;
-		uint32_t m_mip_levels;
 		TextureType m_texture_type;
 
+		uint32_t m_mip_levels;
 		VmaImageViewSampler m_image_view_sampler;
 
 	protected:
@@ -39,7 +39,6 @@ namespace Bamboo
 			ar(cereal::make_nvp("address_mode_u", m_address_mode_u));
 			ar(cereal::make_nvp("address_mode_v", m_address_mode_v));
 			ar(cereal::make_nvp("address_mode_w", m_address_mode_w));
-			ar(cereal::make_nvp("mip_levels", m_mip_levels));
 			ar(cereal::make_nvp("texture_type", m_texture_type));
 		}
 	};

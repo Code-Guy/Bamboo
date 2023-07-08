@@ -51,7 +51,6 @@ namespace Bamboo
 	class Animation : public Asset
 	{
 	public:
-		std::string m_name;
 		std::vector<AnimationSampler> m_samplers;
 		std::vector<AnimationChannel> m_channels;
 

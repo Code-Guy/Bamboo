@@ -46,9 +46,14 @@ namespace Bamboo
     {
     public:
 		void setURL(const URL& url);
+		void setName(const std::string& name) { m_name = name; }
+
 		const URL& getURL() { return m_url; }
 		const std::string& getName() { return m_name; }
-		EAssetType getAssetType() { return m_asset_type; }
+		std::string getBareName();
+		std::string getFolder();
+
+		EAssetType getAssetType() { return m_asset_type; }		
 
 		virtual void inflate() {}
 

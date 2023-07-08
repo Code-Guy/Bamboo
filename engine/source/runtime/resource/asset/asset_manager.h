@@ -28,10 +28,13 @@ namespace Bamboo
 		void serializeAsset(std::shared_ptr<Asset> asset);
 
 	private:
-		bool importGltf(const std::string& filename, const URL& folder, bool is_combined = false);
+		friend class GltfImporter;
+
+		bool importTexture2D(const std::string& filename, const URL& folder);
+
 		std::shared_ptr<Asset> deserializeAsset(const URL& url);
 
-		std::string getAssetName(const std::string& basename, const std::string& asset_name, EAssetType asset_type, int asset_index);
+		std::string getAssetName(const std::string& asset_name, EAssetType asset_type, int asset_index = 0, const std::string& basename = "");
 
 		std::map<URL, std::shared_ptr<Asset>> m_assets;
 		std::map<EAssetType, std::string> m_asset_type_exts;

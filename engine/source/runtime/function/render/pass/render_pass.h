@@ -1,6 +1,5 @@
 #pragma once
 
-#include "runtime/core/vulkan/vulkan_util.h"
 #include "runtime/function/render/render_data.h"
 
 namespace Bamboo

@@ -1,6 +1,8 @@
 #include "render_system.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/function/framework/world/world_manager.h"
+#include "runtime/resource/asset/asset_manager.h"
+
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/pass/ui_pass.h"
 #include "runtime/function/render/pass/base_pass.h"
@@ -26,6 +28,9 @@ namespace Bamboo
 			std::bind(&RenderSystem::onDestroySwapchainObjects, this),
 			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1, std::placeholders::_2),
 			});
+
+		// get dummy texture2d
+		m_dummy_texture = g_runtime_context.assetManager()->loadAsset<Texture2D>("asset/engine/texture/material/tex_dummy.tex");
 	}
 
 	void RenderSystem::tick(float delta_time)
@@ -43,6 +48,7 @@ namespace Bamboo
 		{
 			render_pass.second->destroy();
 		}
+		m_dummy_texture.reset();
 	}
 
 	void RenderSystem::setConstructUIFunc(const std::function<void()>& construct_ui_func)
@@ -131,7 +137,7 @@ namespace Bamboo
 					render_data->vert_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->world_matrix;
 					render_data->frag_pco.camera_pos = camera_component->m_position;
 					render_data->frag_pco.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
-
+					
 					// traverse all sub meshes
 					for (size_t i = 0; i < static_mesh->m_sub_meshes.size(); ++i)
 					{
@@ -139,7 +145,17 @@ namespace Bamboo
 
 						render_data->index_counts.push_back(sub_mesh.m_index_count);
 						render_data->index_offsets.push_back(sub_mesh.m_index_offset);
-						render_data->textures.push_back(sub_mesh.m_material->m_base_color_texure->m_image_view_sampler);
+
+						render_data->frag_pco.base_color_factor = sub_mesh.m_material->m_base_color_factor;
+						render_data->frag_pco.has_base_color_texture = sub_mesh.m_material->m_base_color_texure != nullptr;
+						render_data->frag_pco.emissive_factor = sub_mesh.m_material->m_emissive_factor;
+						render_data->frag_pco.has_emissive_texture = sub_mesh.m_material->m_emissive_texure != nullptr;
+						render_data->frag_pco.m_metallic_factor = sub_mesh.m_material->m_metallic_factor;
+						render_data->frag_pco.m_roughness_factor = sub_mesh.m_material->m_roughness_factor;
+
+						std::shared_ptr<Texture2D> base_color_texture = sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure : m_dummy_texture;
+						std::shared_ptr<Texture2D> emissive_texture = sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure : m_dummy_texture;
+						render_data->textures.push_back(base_color_texture->m_image_view_sampler);
 					}
 
 					mesh_render_datas.push_back(render_data);

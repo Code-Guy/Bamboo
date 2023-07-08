@@ -9,11 +9,11 @@ layout(binding = 0) uniform UBO
 	mat4 padding;
 } ubo;
 
-layout(push_constant) uniform VPCO
+layout(push_constant) uniform VertPCO
 {
 	mat4 m;
 	mat4 mvp;
-} vpco;
+} v_pco;
 
 
 layout(location = 0) in vec3 position;
@@ -27,8 +27,8 @@ layout(location = 2) out vec3 f_position;
 void main()
 {	
 	f_tex_coord = tex_coord;
-	f_normal = (vpco.m * vec4(normal, 0.0)).xyz;
-	f_position = (vpco.m * vec4(position, 1.0)).xyz;
+	f_normal = (v_pco.m * vec4(normal, 0.0)).xyz;
+	f_position = (v_pco.m * vec4(position, 1.0)).xyz;
 
-	gl_Position = vpco.mvp * vec4(position, 1.0);
+	gl_Position = v_pco.mvp * vec4(position, 1.0);
 }

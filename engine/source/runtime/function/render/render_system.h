@@ -25,6 +25,7 @@ namespace Bamboo
 
 		void collectRenderDatas();
 
+		std::shared_ptr<class Texture2D> m_dummy_texture;
 		std::map<ERenderPassType, std::shared_ptr<RenderPass>> m_render_passes;
 	};
 }
