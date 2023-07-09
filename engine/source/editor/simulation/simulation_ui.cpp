@@ -6,9 +6,12 @@
 #include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/framework/world/world_manager.h"
+#include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/camera_component.h"
 #include "runtime/function/framework/component/static_mesh_component.h"
-#include "runtime/function/framework/component/transform_component.h"
+#include "runtime/function/framework/component/skeletal_mesh_component.h"
+#include "runtime/function/framework/component/animation_component.h"
+#include "runtime/function/framework/component/animator_component.h"
 
 #include <imgui/backends/imgui_impl_vulkan.h>
 
@@ -92,18 +95,26 @@ namespace Bamboo
 		EAssetType asset_type = g_runtime_context.assetManager()->getAssetType(url);
 		std::string basename = g_runtime_context.fileSystem()->basename(url);
 
+		std::shared_ptr<World> world = g_runtime_context.worldManager()->getCurrentWorld();
+		std::shared_ptr<Entity> entity = world->createEntity(basename);
+
+		// add transform component
+		std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
+		entity->addComponent(transform_component);
+
 		if (asset_type == EAssetType::StaticMesh)
 		{
-			std::shared_ptr<World> world = g_runtime_context.worldManager()->getCurrentWorld();
-			std::shared_ptr<Entity> static_mesh_entity = world->createEntity(basename);
-
 			std::shared_ptr<StaticMeshComponent> static_mesh_component = std::make_shared<StaticMeshComponent>();
 			std::shared_ptr<StaticMesh> static_mesh = g_runtime_context.assetManager()->loadAsset<StaticMesh>(url);
 			static_mesh_component->setStaticMesh(static_mesh);
-			static_mesh_entity->addComponent(static_mesh_component);
-
-			std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
-			static_mesh_entity->addComponent(transform_component);
+			entity->addComponent(static_mesh_component);
+		}
+		else if (asset_type == EAssetType::SkeletalMesh)
+		{
+			std::shared_ptr<SkeletalMeshComponent> skeletal_mesh_component = std::make_shared<SkeletalMeshComponent>();
+			std::shared_ptr<SkeletalMesh> skeletal_mesh = g_runtime_context.assetManager()->loadAsset<SkeletalMesh>(url);
+			skeletal_mesh_component->setSkeletalMesh(skeletal_mesh);
+			entity->addComponent(skeletal_mesh_component);
 		}
 	}
 

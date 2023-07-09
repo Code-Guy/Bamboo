@@ -1,5 +1,8 @@
 #include "texture_2d.h"
 
+CEREAL_REGISTER_TYPE(Bamboo::Texture2D)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Texture2D)
+
 namespace Bamboo
 {
 	void Texture2D::inflate()

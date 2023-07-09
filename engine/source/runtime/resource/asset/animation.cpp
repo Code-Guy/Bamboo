@@ -1,9 +1,11 @@
 #include "animation.h"
 #include <limits>
 
+CEREAL_REGISTER_TYPE(Bamboo::Animation)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Animation)
+
 namespace Bamboo
 {
-
 	void Animation::inflate()
 	{
 		m_start_time = std::numeric_limits<float>::max();

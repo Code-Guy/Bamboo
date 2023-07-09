@@ -34,6 +34,3 @@ namespace Bamboo
 		}
 	};
 }
-
-CEREAL_REGISTER_TYPE(Bamboo::Material)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Material)

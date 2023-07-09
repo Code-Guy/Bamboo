@@ -6,7 +6,7 @@
 
 layout(binding = 0) uniform UBO
 {
-	mat4 gBones[MAX_BONE_NUM];
+	mat4 bone_matrices[MAX_BONE_NUM];
 } ubo;
 
 layout(push_constant) uniform _VertPCO { VertPCO v_pco; };
@@ -23,18 +23,18 @@ layout(location = 2) out vec3 f_normal;
 
 void main()
 {
-	mat4 bone_transform = mat4(0.0);
-	for (int i = 0; i < BONE_NUM_PER_VERTEX; ++i)
-	{
-		bone_transform += ubo.gBones[bones[i]] * weights[i];
-	}
+	mat4 blend_bone_matrix = mat4(1.0);
+	// for (int i = 0; i < BONE_NUM_PER_VERTEX; ++i)
+	// {
+	// 	blend_bone_matrix += ubo.bone_matrices[bones[i]] * weights[i];
+	// }
 
-	vec4 local_position = bone_transform * vec4(position, 1.0);
-	vec4 local_normal = bone_transform * vec4(normal, 0.0);
-
-	gl_Position = v_pco.mvp * local_position;
+	vec4 local_position = blend_bone_matrix * vec4(position, 1.0);
+	vec4 local_normal = blend_bone_matrix * vec4(normal, 0.0);
 	
 	f_position = (v_pco.m * local_position).xyz;
 	f_tex_coord = tex_coord;
 	f_normal = (v_pco.m * local_normal).xyz;
+
+	gl_Position = v_pco.mvp * local_position;
 }

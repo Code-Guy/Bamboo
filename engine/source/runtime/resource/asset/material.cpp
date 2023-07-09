@@ -13,6 +13,9 @@ rttr::registration::class_<Bamboo::Material>("Material")
 	 .property("m_emissive_texure", &Bamboo::Material::m_emissive_texure);
 }
 
+CEREAL_REGISTER_TYPE(Bamboo::Material)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Material)
+
 namespace Bamboo
 {
 	void Material::bindRefs()

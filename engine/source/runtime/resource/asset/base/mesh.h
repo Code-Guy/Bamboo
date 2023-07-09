@@ -43,7 +43,7 @@ struct StaticMeshUBO
 
 struct SkeletalMeshUBO
 {
-	glm::mat4 gBones[MAX_BONE_NUM];
+	glm::mat4 bone_matrices[MAX_BONE_NUM];
 };
 
 namespace Bamboo

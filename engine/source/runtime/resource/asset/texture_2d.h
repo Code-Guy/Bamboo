@@ -22,6 +22,3 @@ namespace Bamboo
 		}
 	};
 }
-
-CEREAL_REGISTER_TYPE(Bamboo::Texture2D)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Texture2D)

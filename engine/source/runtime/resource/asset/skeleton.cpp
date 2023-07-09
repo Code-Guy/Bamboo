@@ -1,6 +1,9 @@
 #include "skeleton.h"
 #include <queue>
 
+CEREAL_REGISTER_TYPE(Bamboo::Skeleton)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Skeleton)
+
 namespace Bamboo
 {
 

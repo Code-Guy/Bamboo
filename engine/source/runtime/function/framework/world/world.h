@@ -37,6 +37,3 @@ namespace Bamboo
 		std::map<uint32_t, std::shared_ptr<Entity>> m_entities;
 	};
 }
-
-CEREAL_REGISTER_TYPE(Bamboo::World)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::World)

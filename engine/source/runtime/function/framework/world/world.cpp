@@ -3,6 +3,9 @@
 #include "runtime/function/framework/component/camera_component.h"
 #include <fstream>
 
+CEREAL_REGISTER_TYPE(Bamboo::World)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::World)
+
 namespace Bamboo
 {
 
