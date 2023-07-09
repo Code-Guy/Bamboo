@@ -4,11 +4,7 @@
 
 #include "host_device.h"
 
-layout(binding = 0) uniform UBO
-{
-	mat4 bone_matrices[MAX_BONE_NUM];
-} ubo;
-
+layout(binding = 0) uniform _SkeletalMeshUBO { SkeletalMeshUBO ubo; };
 layout(push_constant) uniform _VertPCO { VertPCO v_pco; };
 
 layout(location = 0) in vec3 position;

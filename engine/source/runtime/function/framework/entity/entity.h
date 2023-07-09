@@ -11,12 +11,12 @@
 namespace Bamboo
 {
 	class World;
-	class Entity : public std::enable_shared_from_this<Entity>
+	class Entity : public std::enable_shared_from_this<Entity>, public ITickable
 	{
 	public:
 		~Entity();
 
-		virtual void tick(float delta_time);
+		virtual void tick(float delta_time) override;
 		void inflate();
 
 		void attach(std::weak_ptr<Entity>& parent);

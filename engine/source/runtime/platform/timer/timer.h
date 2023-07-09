@@ -46,8 +46,8 @@ namespace Bamboo
 		long long elapsedTimeMs();
 
 	private:
-		std::chrono::time_point<std::chrono::system_clock> m_start_time;
-		std::chrono::time_point<std::chrono::system_clock> m_end_time;
+		std::chrono::time_point<std::chrono::steady_clock> m_start_time;
+		std::chrono::time_point<std::chrono::steady_clock> m_end_time;
 		long long m_elapsed_time_ms;
 	};
 

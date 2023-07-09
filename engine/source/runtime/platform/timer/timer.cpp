@@ -57,12 +57,12 @@ namespace Bamboo
 
 	void StopWatch::start()
 	{
-		m_start_time = std::chrono::system_clock::now();
+		m_start_time = std::chrono::steady_clock::now();
 	}
 
 	long long StopWatch::stop()
 	{
-		m_end_time = std::chrono::system_clock::now();
+		m_end_time = std::chrono::steady_clock::now();
 		m_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_start_time).count();
 		return m_elapsed_time_ms;
 	}

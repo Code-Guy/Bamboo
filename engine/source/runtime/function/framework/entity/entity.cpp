@@ -18,7 +18,7 @@ namespace Bamboo
 	{
 		for (auto& component : m_components)
 		{
-			component->tick(delta_time);
+			component->tickable(delta_time);
 		}
 	}
 

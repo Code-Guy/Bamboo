@@ -92,7 +92,8 @@ namespace Bamboo
 
 	void SimulationUI::loadAsset(const std::string& url)
 	{
-		EAssetType asset_type = g_runtime_context.assetManager()->getAssetType(url);
+		const auto& as = g_runtime_context.assetManager();
+		EAssetType asset_type = as->getAssetType(url);
 		std::string basename = g_runtime_context.fileSystem()->basename(url);
 
 		std::shared_ptr<World> world = g_runtime_context.worldManager()->getCurrentWorld();
@@ -105,16 +106,30 @@ namespace Bamboo
 		if (asset_type == EAssetType::StaticMesh)
 		{
 			std::shared_ptr<StaticMeshComponent> static_mesh_component = std::make_shared<StaticMeshComponent>();
-			std::shared_ptr<StaticMesh> static_mesh = g_runtime_context.assetManager()->loadAsset<StaticMesh>(url);
+			std::shared_ptr<StaticMesh> static_mesh = as->loadAsset<StaticMesh>(url);
 			static_mesh_component->setStaticMesh(static_mesh);
 			entity->addComponent(static_mesh_component);
 		}
 		else if (asset_type == EAssetType::SkeletalMesh)
 		{
 			std::shared_ptr<SkeletalMeshComponent> skeletal_mesh_component = std::make_shared<SkeletalMeshComponent>();
-			std::shared_ptr<SkeletalMesh> skeletal_mesh = g_runtime_context.assetManager()->loadAsset<SkeletalMesh>(url);
+			std::shared_ptr<SkeletalMesh> skeletal_mesh = as->loadAsset<SkeletalMesh>(url);
 			skeletal_mesh_component->setSkeletalMesh(skeletal_mesh);
 			entity->addComponent(skeletal_mesh_component);
+
+			std::shared_ptr<AnimationComponent> animation_component = std::make_shared<AnimationComponent>();
+			std::shared_ptr<Animation> animation = as->loadAsset<Animation>("asset/cesium_man/anim_cesium_man_0.anim");
+			animation_component->addAnimation(animation);
+			entity->addComponent(animation_component);
+
+			std::shared_ptr<AnimatorComponent> animator_component = std::make_shared<AnimatorComponent>();
+			std::shared_ptr<Skeleton> skeleton = as->loadAsset<Skeleton>("asset/cesium_man/skl_Armature.skl");
+			animator_component->setSkeleton(skeleton);
+			animator_component->setTickEnabled(true);
+			animator_component->setTickInterval(0.033f);
+			entity->addComponent(animator_component);
+
+			entity->setTickEnabled(true);
 		}
 	}
 

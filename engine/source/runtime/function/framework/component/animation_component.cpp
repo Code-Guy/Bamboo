@@ -6,27 +6,29 @@ RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::AnimationComponent>("AnimationComponent")
 	 .constructor<>()
-	 .property("m_animation", &Bamboo::AnimationComponent::m_animation);
+	 .property("m_animations", &Bamboo::AnimationComponent::m_animations);
 }
 
 namespace Bamboo
 {
-	void AnimationComponent::setAnimation(std::shared_ptr<Animation>& animation)
+	void AnimationComponent::addAnimation(std::shared_ptr<Animation>& animation)
 	{
-		m_animation = animation;
-		m_ref_urls["m_animation"] = m_animation->getURL();
+		m_ref_urls[std::to_string(m_animations.size())] = animation->getURL();
+		m_animations.push_back(animation);
 	}
 
 	void AnimationComponent::bindRefs()
 	{
-		if (m_animation)
+		if (m_animations.empty())
 		{
 			return;
 		}
 
-		const auto& iter = m_ref_urls.begin();
-		std::shared_ptr<Animation> animation = g_runtime_context.assetManager()->loadAsset<Animation>(iter->second);
-		rttr::type::get(*this).get_property(iter->first).set_value(*this, animation);
+		for (auto iter : m_ref_urls)
+		{
+			std::shared_ptr<Animation> animation = g_runtime_context.assetManager()->loadAsset<Animation>(iter.second);
+			m_animations.push_back(animation);
+		}
 	}
 
 }

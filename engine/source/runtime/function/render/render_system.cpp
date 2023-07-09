@@ -140,6 +140,8 @@ namespace Bamboo
 				{
 					// create mesh render data
 					std::shared_ptr<MeshRenderData> render_data = std::make_shared<MeshRenderData>();
+					render_data->mesh_type = static_mesh_component ? EMeshType::Static : EMeshType::Skeletal;
+
 					render_data->vertex_buffer = mesh->m_vertex_buffer;
 					render_data->index_buffer = mesh->m_index_buffer;
 					render_data->uniform_buffers = mesh->m_uniform_buffers;

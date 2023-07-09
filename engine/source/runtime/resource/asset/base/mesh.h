@@ -1,7 +1,7 @@
 #pragma once
 
 #include "runtime/resource/asset/base/sub_mesh.h"
-#include "shader_constants.h"
+#include "host_device.h"
 
 struct StaticVertex
 {
@@ -34,16 +34,6 @@ private:
 		ar(cereal::make_nvp("bones", m_bones));
 		ar(cereal::make_nvp("weights", m_weights));
 	}
-};
-
-struct StaticMeshUBO
-{
-	glm::mat4 padding;
-};
-
-struct SkeletalMeshUBO
-{
-	glm::mat4 bone_matrices[MAX_BONE_NUM];
 };
 
 namespace Bamboo

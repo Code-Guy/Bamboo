@@ -8,8 +8,8 @@ namespace Bamboo
 	class AnimationComponent : public Component, public IAssetRef
 	{
 	public:
-		void setAnimation(std::shared_ptr<Animation>& animation);
-		std::shared_ptr<Animation> getAnimation() { return m_animation; }
+		void addAnimation(std::shared_ptr<Animation>& animation);
+		const std::vector<std::shared_ptr<Animation>>& getAnimations() { return m_animations; }
 
 	private:
 		RTTR_REGISTRATION_FRIEND
@@ -23,7 +23,7 @@ namespace Bamboo
 
 		virtual void bindRefs() override;
 
-		std::shared_ptr<Animation> m_animation;
+		std::vector<std::shared_ptr<Animation>> m_animations;
 	};
 }
 

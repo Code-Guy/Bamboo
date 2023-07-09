@@ -23,7 +23,7 @@ namespace Bamboo
 	{
 		for (const auto& iter : m_entities)
 		{
-			iter.second->tick(delta_time);
+			iter.second->tickable(delta_time);
 		}
 	}
 

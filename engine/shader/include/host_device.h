@@ -14,6 +14,16 @@ using uint = unsigned int;
 
 #include "shader_constants.h"
 
+struct StaticMeshUBO
+{
+	mat4 padding;
+};
+
+struct SkeletalMeshUBO
+{
+	mat4 bone_matrices[MAX_BONE_NUM];
+};
+
 struct VertPCO
 {
     mat4 m;
