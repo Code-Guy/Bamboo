@@ -9,6 +9,7 @@
 #include "runtime/function/framework/component/camera_component.h"
 #include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/static_mesh_component.h"
+#include "runtime/function/framework/component/skeletal_mesh_component.h"
 
 namespace Bamboo
 {
@@ -116,21 +117,32 @@ namespace Bamboo
 		{
 			const auto& entity = iter.second;
 
-			// get static mesh component render data
+			// get static/skeletal mesh component render data
 			auto static_mesh_component = entity->getComponent<StaticMeshComponent>();
-			if (static_mesh_component)
+			auto skeletal_mesh_component = entity->getComponent<SkeletalMeshComponent>();
+
+			if (static_mesh_component || skeletal_mesh_component)
 			{
 				// get transform component
 				auto transform_component = entity->getComponent<TransformComponent>();
 
-				const auto& static_mesh = static_mesh_component->getStaticMesh();
-				if (static_mesh)
+				std::shared_ptr<Mesh> mesh = nullptr;
+				if (static_mesh_component)
+				{
+					mesh = static_mesh_component->getStaticMesh();
+				}
+				else
+				{
+					mesh = skeletal_mesh_component->getSkeletalMesh();
+				}
+
+				if (mesh)
 				{
 					// create mesh render data
 					std::shared_ptr<MeshRenderData> render_data = std::make_shared<MeshRenderData>();
-					render_data->vertex_buffer = static_mesh->m_vertex_buffer;
-					render_data->index_buffer = static_mesh->m_index_buffer;
-					render_data->uniform_buffers = static_mesh->m_uniform_buffers;
+					render_data->vertex_buffer = mesh->m_vertex_buffer;
+					render_data->index_buffer = mesh->m_index_buffer;
+					render_data->uniform_buffers = mesh->m_uniform_buffers;
 
 					// set push constants
 					render_data->vert_pco.m = transform_component->world_matrix;
@@ -139,9 +151,9 @@ namespace Bamboo
 					render_data->frag_pco.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
 					
 					// traverse all sub meshes
-					for (size_t i = 0; i < static_mesh->m_sub_meshes.size(); ++i)
+					for (size_t i = 0; i < mesh->m_sub_meshes.size(); ++i)
 					{
-						const auto& sub_mesh = static_mesh->m_sub_meshes[i];
+						const auto& sub_mesh = mesh->m_sub_meshes[i];
 
 						render_data->index_counts.push_back(sub_mesh.m_index_count);
 						render_data->index_offsets.push_back(sub_mesh.m_index_offset);

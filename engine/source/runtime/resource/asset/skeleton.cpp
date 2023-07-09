@@ -12,14 +12,14 @@ namespace Bamboo
 		}
 	}
 
-	bool Skeleton::has_bone(const std::string& name)
+	bool Skeleton::hasBone(const std::string& name)
 	{
 		return m_name_index.find(name) != m_name_index.end();
 	}
 
-	Bone* Skeleton::get_bone(const std::string& name)
+	Bone* Skeleton::getBone(const std::string& name)
 	{
-		if (has_bone(name))
+		if (hasBone(name))
 		{
 			return &m_bones[m_name_index[name]];
 		}

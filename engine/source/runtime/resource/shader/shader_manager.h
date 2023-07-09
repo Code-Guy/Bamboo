@@ -12,6 +12,7 @@ namespace Bamboo
 		void destroy();
 
 		VkShaderModule getShaderModule(const std::string& name);
+		const char* getEntryName() { return "main"; }
 
 	private:
 		std::string execute(const char* cmd);

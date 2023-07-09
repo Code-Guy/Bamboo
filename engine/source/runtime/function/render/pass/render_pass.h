@@ -18,9 +18,9 @@ namespace Bamboo
 		virtual void destroy();
 
 		virtual void createRenderPass() = 0;
-		virtual void createDescriptorSetLayout() = 0;
-		virtual void createPipelineLayout() = 0;
-		virtual void createPipeline() = 0;
+		virtual void createDescriptorSetLayouts() = 0;
+		virtual void createPipelineLayouts() = 0;
+		virtual void createPipelines() = 0;
 		virtual void createFramebuffer() = 0;
 		virtual void createResizableObjects(uint32_t width, uint32_t height);
 		virtual void destroyResizableObjects() {}
@@ -33,10 +33,13 @@ namespace Bamboo
 		// vulkan objects
 		VkRenderPass m_render_pass;
 		VkDescriptorPool m_descriptor_pool;
-		VkDescriptorSetLayout m_desc_set_layout;
+		std::vector<VkDescriptorSetLayout> m_desc_set_layouts;
 		std::vector<VkPushConstantRange> m_push_constant_ranges;
-		VkPipelineLayout m_pipeline_layout;
-		VkPipeline m_pipeline;
+		std::vector<VkPipelineLayout> m_pipeline_layouts;
+		VkPipelineCache m_pipeline_cache;
+		std::vector<VkPipeline> m_pipelines;
+		std::vector<VkFramebuffer> m_framebuffers;
+		VkFramebuffer m_framebuffer;
 
 		// render dependent data
 		std::vector<std::shared_ptr<RenderData>> m_render_datas;

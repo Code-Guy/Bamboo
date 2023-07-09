@@ -6,17 +6,15 @@
 #include "runtime/function/render/render_data.h"
 #include <array>
 
-#define MAX_PRIMITIVE_NUM 64
-
 namespace Bamboo
 {
 
 	void BasePass::init()
 	{
 		createRenderPass();
-		createDescriptorSetLayout();
-		createPipelineLayout();
-		createPipeline();
+		createDescriptorSetLayouts();
+		createPipelineLayouts();
+		createPipelines();
 	}
 
 	void BasePass::render(VkCommandBuffer command_buffer, uint32_t flight_index)
@@ -52,11 +50,14 @@ namespace Bamboo
 		scissor.extent = { m_width, m_height };
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
-		// 3.bind pipeline
-		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+		// 3.bind states and render
 		for (auto& render_data : m_render_datas)
 		{
 			std::shared_ptr<MeshRenderData> mesh_render_data = std::static_pointer_cast<MeshRenderData>(render_data);
+			EMeshType mesh_type = mesh_render_data->mesh_type;
+			
+			// bind pipeline
+			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[(uint32_t)mesh_type]);
 
 			// bind vertex and index buffer
 			VkBuffer vertexBuffers[] = { mesh_render_data->vertex_buffer.buffer };
@@ -69,10 +70,10 @@ namespace Bamboo
 			for (size_t i = 0; i < m_push_constant_ranges.size(); ++i)
 			{
 				const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[i];
-				vkCmdPushConstants(command_buffer, m_pipeline_layout, pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[i]);
+				vkCmdPushConstants(command_buffer, m_pipeline_layouts[0], pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[i]);
 			}
 
-			// render all subs
+			// render all sub meshes
 			std::vector<uint32_t>& index_counts = mesh_render_data->index_counts;
 			std::vector<uint32_t>& index_offsets = mesh_render_data->index_offsets;
 			size_t sub_mesh_count = index_counts.size();
@@ -84,7 +85,7 @@ namespace Bamboo
 				VkDescriptorBufferInfo desc_buffer_info{};
 				desc_buffer_info.buffer = mesh_render_data->uniform_buffers[flight_index].buffer;
 				desc_buffer_info.offset = 0;
-				desc_buffer_info.range = sizeof(StaticMeshUBO);
+				desc_buffer_info.range = mesh_type == EMeshType::Static ? sizeof(StaticMeshUBO) : sizeof(SkeletalMeshUBO);
 
 				desc_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				desc_writes[0].dstSet = 0;
@@ -108,7 +109,7 @@ namespace Bamboo
 				desc_writes[1].pImageInfo = &desc_image_info;
 
 				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-					m_pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+					m_pipeline_layouts[0], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 
 				// render sub mesh
 				vkCmdDrawIndexed(command_buffer, index_counts[i], 1, index_offsets[i], 0, 0);
@@ -199,7 +200,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create render pass");
 	}
 
-	void BasePass::createDescriptorSetLayout()
+	void BasePass::createDescriptorSetLayouts()
 	{
 		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
@@ -211,16 +212,18 @@ namespace Bamboo
 		desc_set_layout_ci.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
-		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layout);
+
+		m_desc_set_layouts.resize(1);
+		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create descriptor set layout");
 	}
 
-	void BasePass::createPipelineLayout()
+	void BasePass::createPipelineLayouts()
 	{
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
 		pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_ci.setLayoutCount = 1;
-		pipeline_layout_ci.pSetLayouts = &m_desc_set_layout;
+		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[0];
 
 		// set push constant range
 		m_push_constant_ranges =
@@ -232,11 +235,12 @@ namespace Bamboo
 		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
 		pipeline_layout_ci.pPushConstantRanges = m_push_constant_ranges.data();
 
-		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layout);
+		m_pipeline_layouts.resize(1);
+		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create pipeline layout");
 	}
 
-	void BasePass::createPipeline()
+	void BasePass::createPipelines()
 	{
 		// input assembly
 		VkPipelineInputAssemblyStateCreateInfo input_assembly_state_ci{};
@@ -343,14 +347,14 @@ namespace Bamboo
 		vert_shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		vert_shader_stage_ci.stage = VK_SHADER_STAGE_VERTEX_BIT;
 		vert_shader_stage_ci.module = shader_manager->getShaderModule("blinn_phong_static_mesh.vert");
-		vert_shader_stage_ci.pName = "main";
+		vert_shader_stage_ci.pName = shader_manager->getEntryName();
 		vert_shader_stage_ci.pSpecializationInfo = nullptr;
 
 		VkPipelineShaderStageCreateInfo frag_shader_stage_ci{};
 		frag_shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		frag_shader_stage_ci.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		frag_shader_stage_ci.module = shader_manager->getShaderModule("blinn_phong_mesh.frag");
-		frag_shader_stage_ci.pName = "main";
+		frag_shader_stage_ci.pName = shader_manager->getEntryName();
 		frag_shader_stage_ci.pSpecializationInfo = nullptr;
 
 		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = { vert_shader_stage_ci, frag_shader_stage_ci };
@@ -368,12 +372,37 @@ namespace Bamboo
 		graphics_pipeline_ci.pDepthStencilState = &depth_stencil_ci;
 		graphics_pipeline_ci.pColorBlendState = &color_blend_ci;
 		graphics_pipeline_ci.pDynamicState = &dynamic_state_ci;
-		graphics_pipeline_ci.layout = m_pipeline_layout;
+		graphics_pipeline_ci.layout = m_pipeline_layouts[0];
 		graphics_pipeline_ci.renderPass = m_render_pass;
 		graphics_pipeline_ci.subpass = 0;
 
-		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), VK_NULL_HANDLE, 1, &graphics_pipeline_ci, nullptr, &m_pipeline);
-		CHECK_VULKAN_RESULT(result, "create graphics pipeline");
+		m_pipelines.resize(2);
+
+		// create static mesh pipeline
+		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &graphics_pipeline_ci, nullptr, &m_pipelines[0]);
+		CHECK_VULKAN_RESULT(result, "create static mesh graphics pipeline");
+
+		// create skeletal mesh pipeline
+		shader_stage_cis[0].module = shader_manager->getShaderModule("blinn_phong_skeletal_mesh.vert");
+
+		vertex_input_binding_descriptions[0].stride = sizeof(SkeletalVertex);
+
+		vertex_input_attribute_descriptions.resize(5);
+		vertex_input_attribute_descriptions[3].binding = 0;
+		vertex_input_attribute_descriptions[3].location = 3;
+		vertex_input_attribute_descriptions[3].format = VK_FORMAT_R32G32B32A32_SINT;
+		vertex_input_attribute_descriptions[3].offset = offsetof(SkeletalVertex, m_bones);
+
+		vertex_input_attribute_descriptions[4].binding = 0;
+		vertex_input_attribute_descriptions[4].location = 4;
+		vertex_input_attribute_descriptions[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+		vertex_input_attribute_descriptions[4].offset = offsetof(SkeletalVertex, m_weights);
+
+		vertex_input_ci.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attribute_descriptions.size());
+		vertex_input_ci.pVertexAttributeDescriptions = vertex_input_attribute_descriptions.data();
+
+		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &graphics_pipeline_ci, nullptr, &m_pipelines[1]);
+		CHECK_VULKAN_RESULT(result, "create skeletal mesh graphics pipeline");
 	}
 
 	void BasePass::createFramebuffer()

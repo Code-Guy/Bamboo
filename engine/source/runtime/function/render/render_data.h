@@ -5,6 +5,11 @@
 
 namespace Bamboo
 {
+	enum class EMeshType
+	{
+		Static, Skeletal
+	};
+
 	struct RenderData
 	{
 		VmaBuffer vertex_buffer;
@@ -15,6 +20,8 @@ namespace Bamboo
 
 	struct MeshRenderData : public RenderData
 	{
+		EMeshType mesh_type;
+
 		std::vector<VmaBuffer> uniform_buffers;
 		std::vector<VmaImageViewSampler> textures;
 

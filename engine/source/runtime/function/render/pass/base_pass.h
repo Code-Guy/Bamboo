@@ -12,9 +12,9 @@ namespace Bamboo
 		virtual void destroy() override;
 
 		virtual void createRenderPass() override;
-		virtual void createDescriptorSetLayout() override;
-		virtual void createPipelineLayout() override;
-		virtual void createPipeline() override;
+		virtual void createDescriptorSetLayouts() override;
+		virtual void createPipelineLayouts() override;
+		virtual void createPipelines() override;
 		virtual void createFramebuffer() override;
 		virtual void createResizableObjects(uint32_t width, uint32_t height) override;
 		virtual void destroyResizableObjects() override;
@@ -24,6 +24,5 @@ namespace Bamboo
 	private:
 		VmaImageView m_depth_stencil_image_view;
 		VmaImageView m_color_image_view;
-		VkFramebuffer m_framebuffer;
 	};
 }

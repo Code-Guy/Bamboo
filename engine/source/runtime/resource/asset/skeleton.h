@@ -14,8 +14,8 @@ namespace Bamboo
 
 		virtual void inflate() override;
 
-		bool has_bone(const std::string& name);
-		Bone* get_bone(const std::string& name);
+		bool hasBone(const std::string& name);
+		Bone* getBone(const std::string& name);
 		void update();
 
 	private:
