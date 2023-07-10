@@ -34,9 +34,8 @@ namespace Bamboo
 			uint32_t texture_index,
 			std::shared_ptr<Texture2D>& texture);
 		static void importGltfPrimitives(const tinygltf::Model& gltf_model,
-			const std::vector<tinygltf::Primitive>& primitives,
+			const std::vector<std::pair<tinygltf::Primitive, glm::mat4>>& primitives,
 			const std::vector<std::shared_ptr<Material>>& materials,
-			const glm::mat4& matrix,
 			std::shared_ptr<StaticMesh>& static_mesh,
 			std::shared_ptr<SkeletalMesh>& skeletal_mesh);
 

@@ -84,7 +84,7 @@ namespace Bamboo
 		{
 			if (primitive.attributes.find("POSITION") == primitive.attributes.end() ||
 				primitive.attributes.find("NORMAL") == primitive.attributes.end() ||
-				primitive.attributes.find("TEXCOORD_0") == primitive.attributes.end() ||
+				//primitive.attributes.find("TEXCOORD_0") == primitive.attributes.end() ||
 				primitive.indices == INVALID_INDEX)
 			{
 				LOG_WARNING("ignore gltf mesh that doesn't have postion or normal/texcoord/index data");
@@ -195,20 +195,17 @@ namespace Bamboo
 	}
 
 	void GltfImporter::importGltfPrimitives(const tinygltf::Model& gltf_model,
-		const std::vector<tinygltf::Primitive>& primitives,
+		const std::vector<std::pair<tinygltf::Primitive, glm::mat4>>& primitives,
 		const std::vector<std::shared_ptr<Material>>& materials,
-		const glm::mat4& matrix,
 		std::shared_ptr<StaticMesh>& static_mesh,
 		std::shared_ptr<SkeletalMesh>& skeletal_mesh)
 	{
-		glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(matrix)));
-
 		size_t vertex_count = 0, index_count = 0;
 		size_t primitive_count = primitives.size();
-		for (const tinygltf::Primitive& primitive : primitives)
+		for (const auto& primitive_pair : primitives)
 		{
-			vertex_count += gltf_model.accessors[primitive.attributes.find("POSITION")->second].count;
-			index_count += gltf_model.accessors[primitive.indices].count;
+			vertex_count += gltf_model.accessors[primitive_pair.first.attributes.find("POSITION")->second].count;
+			index_count += gltf_model.accessors[primitive_pair.first.indices].count;
 		}
 
 		std::shared_ptr<Mesh> mesh = nullptr;
@@ -240,7 +237,7 @@ namespace Bamboo
 		uint32_t dummy_material_index = 0;
 		for (int p = 0; p < primitive_count; ++p)
 		{
-			const tinygltf::Primitive& primitive = primitives[p];
+			const tinygltf::Primitive& primitive = primitives[p].first;
 
 			const tinygltf::Accessor& position_accessor = gltf_model.accessors[primitive.attributes.find("POSITION")->second];
 			const tinygltf::BufferView& position_buffer_view = gltf_model.bufferViews[position_accessor.bufferView];
@@ -251,11 +248,16 @@ namespace Bamboo
 			size_t primitive_vertex_count = position_accessor.count;
 			int position_byte_stride = position_accessor.ByteStride(position_buffer_view) ? (position_accessor.ByteStride(position_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC3);
 
-			const tinygltf::Accessor& tex_coord_accessor = gltf_model.accessors[primitive.attributes.find("TEXCOORD_0")->second];
-			const tinygltf::BufferView& tex_coord_buffer_view = gltf_model.bufferViews[tex_coord_accessor.bufferView];
-			const float* tex_coord_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[tex_coord_buffer_view.buffer].data[tex_coord_accessor.byteOffset + tex_coord_buffer_view.byteOffset]));
-			int tex_coord_byte_stride = tex_coord_accessor.ByteStride(tex_coord_buffer_view) ? (tex_coord_accessor.ByteStride(tex_coord_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC2);
-
+			const float* tex_coord_buffer = nullptr;
+			int tex_coord_byte_stride = 0;
+			if (primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end())
+			{
+				const tinygltf::Accessor& tex_coord_accessor = gltf_model.accessors[primitive.attributes.find("TEXCOORD_0")->second];
+				const tinygltf::BufferView& tex_coord_buffer_view = gltf_model.bufferViews[tex_coord_accessor.bufferView];
+				tex_coord_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[tex_coord_buffer_view.buffer].data[tex_coord_accessor.byteOffset + tex_coord_buffer_view.byteOffset]));
+				tex_coord_byte_stride = tex_coord_accessor.ByteStride(tex_coord_buffer_view) ? (tex_coord_accessor.ByteStride(tex_coord_buffer_view) / sizeof(float)) : tinygltf::GetNumComponentsInType(TINYGLTF_TYPE_VEC2);
+			}
+			
 			const tinygltf::Accessor& normal_accessor = gltf_model.accessors[primitive.attributes.find("NORMAL")->second];
 			const tinygltf::BufferView& normal_buffer_view = gltf_model.bufferViews[normal_accessor.bufferView];
 			const float* normal_buffer = reinterpret_cast<const float*>(&(gltf_model.buffers[normal_buffer_view.buffer].data[normal_accessor.byteOffset + normal_buffer_view.byteOffset]));
@@ -281,6 +283,8 @@ namespace Bamboo
 			}
 
 			// set vertices
+			const glm::mat4& matrix = primitives[p].second;
+			glm::mat3 normal_matrix = glm::mat3(glm::transpose(glm::inverse(matrix)));
 			for (size_t v = 0; v < primitive_vertex_count; ++v)
 			{
 				StaticVertex* static_vertex = nullptr;
@@ -297,9 +301,9 @@ namespace Bamboo
 
 				static_vertex->m_position = glm::make_vec3(&position_buffer[v * position_byte_stride]);
 				static_vertex->m_position = matrix * glm::vec4(static_vertex->m_position, 1.0f);
-				static_vertex->m_tex_coord = glm::make_vec2(&tex_coord_buffer[v * tex_coord_byte_stride]);
+				static_vertex->m_tex_coord = tex_coord_buffer ? glm::make_vec2(&tex_coord_buffer[v * tex_coord_byte_stride]) : glm::vec2(0.0f);
 				static_vertex->m_normal = glm::make_vec3(&normal_buffer[v * normal_byte_stride]);
-				static_vertex->m_normal = normal_matrix * static_vertex->m_normal;
+				static_vertex->m_normal = glm::normalize(normal_matrix * static_vertex->m_normal);
 
 				if (!static_mesh)
 				{
@@ -525,7 +529,8 @@ namespace Bamboo
 			std::queue<std::pair<glm::mat4, const tinygltf::Node*>> node_queue;
 			for (int index : gltf_scene.nodes)
 			{
-				node_queue.push(std::make_pair(glm::mat4(1.0f), &gltf_model.nodes[index]));
+				const tinygltf::Node* node = &gltf_model.nodes[index];
+				node_queue.push(std::make_pair(getGltfNodeMatrix(node), node));
 			}
 
 			while (!node_queue.empty())
@@ -559,14 +564,17 @@ namespace Bamboo
 			static_mesh->setURL(url);
 			std::shared_ptr<SkeletalMesh> skeletal_mesh = nullptr;
 
-			std::vector<tinygltf::Primitive> primitives;
+			std::vector<std::pair<tinygltf::Primitive, glm::mat4>> primitives;
 			for (const auto& node_pair : nodes)
 			{
 				const tinygltf::Mesh& gltf_mesh = gltf_model.meshes[node_pair.second->mesh];
-				primitives.insert(primitives.end(), gltf_mesh.primitives.begin(), gltf_mesh.primitives.end());
+				for (const tinygltf::Primitive& primitive : gltf_mesh.primitives)
+				{
+					primitives.push_back(std::make_pair(primitive, node_pair.first));
+				}
 			}
 
-			importGltfPrimitives(gltf_model, primitives, materials, glm::mat4(1.0f), static_mesh, skeletal_mesh);
+			importGltfPrimitives(gltf_model, primitives, materials, static_mesh, skeletal_mesh);
 
 			static_mesh->inflate();
 			as->serializeAsset(static_mesh);
@@ -595,7 +603,12 @@ namespace Bamboo
 					static_mesh->setURL(url);
 				}
 
-				importGltfPrimitives(gltf_model, gltf_mesh.primitives, materials, node_pair.first, static_mesh, skeletal_mesh);
+				std::vector<std::pair<tinygltf::Primitive, glm::mat4>> primitives;
+				for (const tinygltf::Primitive& primitive : gltf_mesh.primitives)
+				{
+					primitives.push_back(std::make_pair(primitive, node_pair.first));
+				}
+				importGltfPrimitives(gltf_model, primitives, materials, static_mesh, skeletal_mesh);
 
 				if (is_skeletal_mesh)
 				{
