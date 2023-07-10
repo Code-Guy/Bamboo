@@ -159,6 +159,14 @@ namespace Bamboo
 		endInstantCommands(command_buffer);
 	}
 
+	void VulkanUtil::updateBuffer(VmaBuffer& buffer, void* data, size_t size)
+	{
+		void* mapped_data;
+		vmaMapMemory(VulkanRHI::get().getAllocator(), buffer.allocation, &mapped_data);
+		memcpy(mapped_data, data, size);
+		vmaUnmapMemory(VulkanRHI::get().getAllocator(), buffer.allocation);
+	}
+
 	void VulkanUtil::createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
 		uint32_t mip_levels, bool is_srgb, VkFilter min_filter, VkFilter mag_filter,
 		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler)
@@ -169,10 +177,7 @@ namespace Bamboo
 		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
 
 		// copy image pixel data to staging buffer
-		void* staging_buffer_data;
-		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
-		memcpy(staging_buffer_data, image_data, image_size);
-		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation);
+		updateBuffer(staging_buffer, image_data, image_size);
 
 		// create Image
 		VkFormat image_format = is_srgb ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
@@ -288,10 +293,7 @@ namespace Bamboo
 			staging_buffer);
 
 		// copy vertex staging_buffer_data to staging buffer
-		void* staging_buffer_data;
-		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
-		memcpy(staging_buffer_data, vertex_data, static_cast<size_t>(buffer_size));
-		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation);
+		updateBuffer(staging_buffer, vertex_data, static_cast<size_t>(buffer_size));
 
 		createBuffer(buffer_size,
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -314,10 +316,7 @@ namespace Bamboo
 			staging_buffer);
 
 		// copy index data to staging buffer
-		void* staging_buffer_data;
-		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation, &staging_buffer_data);
-		memcpy(staging_buffer_data, indices.data(), static_cast<size_t>(buffer_size));
-		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation);
+		updateBuffer(staging_buffer, (void*)indices.data(), static_cast<size_t>(buffer_size));
 
 		createBuffer(buffer_size,
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,

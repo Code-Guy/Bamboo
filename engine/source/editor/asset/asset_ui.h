@@ -32,7 +32,7 @@ namespace Bamboo
 		void constructAsset(const std::string& filename, const ImVec2& size);
 
 		void pollFolders();
-		void pollSelectedFolder(const std::string& selected_folder = "");
+		void pollSelectedFolder(std::string selected_folder = "");
 		void pollImportFiles();
 
 		void onDropFiles(int n, const char** filenames);

@@ -69,6 +69,7 @@ namespace Bamboo
 
 		static void createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer);
 		static void copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
+		static void updateBuffer(VmaBuffer& buffer, void* data, size_t size);
 
 		static void createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
 			uint32_t mip_levels, bool is_srgb, VkFilter min_filter, VkFilter mag_filter,

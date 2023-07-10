@@ -365,8 +365,13 @@ namespace Bamboo
 		pollSelectedFolder();
 	}
 
-	void AssetUI::pollSelectedFolder(const std::string& selected_folder)
+	void AssetUI::pollSelectedFolder(std::string selected_folder)
 	{
+		if (!g_runtime_context.fileSystem()->exists(m_selected_folder))
+		{
+			selected_folder = g_runtime_context.fileSystem()->getAssetDir();
+		}
+
 		if (!selected_folder.empty() && m_selected_folder != selected_folder)
 		{
 			m_selected_folder = selected_folder;

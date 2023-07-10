@@ -118,18 +118,16 @@ namespace Bamboo
 			entity->addComponent(skeletal_mesh_component);
 
 			std::shared_ptr<AnimationComponent> animation_component = std::make_shared<AnimationComponent>();
-			std::shared_ptr<Animation> animation = as->loadAsset<Animation>("asset/cesium_man/anim_cesium_man_0.anim");
+			std::shared_ptr<Animation> animation = as->loadAsset<Animation>("asset/cesium_man/anim_Anim_0.anim");
 			animation_component->addAnimation(animation);
 			entity->addComponent(animation_component);
 
 			std::shared_ptr<AnimatorComponent> animator_component = std::make_shared<AnimatorComponent>();
 			std::shared_ptr<Skeleton> skeleton = as->loadAsset<Skeleton>("asset/cesium_man/skl_Armature.skl");
 			animator_component->setSkeleton(skeleton);
-			animator_component->setTickEnabled(true);
-			animator_component->setTickInterval(0.033f);
 			entity->addComponent(animator_component);
 
-			entity->setTickEnabled(true);
+			entity->setTickInterval(0.0167f);
 		}
 	}
 

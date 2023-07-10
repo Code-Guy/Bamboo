@@ -49,6 +49,7 @@ namespace Bamboo
 			m_time = animation->m_start_time;
 		}
 
+		// sampling animation
 		for (const auto& channel : animation->m_channels)
 		{
 			Bone* bone = m_skeleton->getBone(channel.m_bone_name);
@@ -71,6 +72,7 @@ namespace Bamboo
 					{
 						glm::quat q0 = glm::make_quat(glm::value_ptr(sampler.m_values[i]));
 						glm::quat q1 = glm::make_quat(glm::value_ptr(sampler.m_values[i + 1]));
+
 						bone->setRotation(glm::slerp(q0, q1, t));
 					}
 						break;
@@ -87,16 +89,24 @@ namespace Bamboo
 			}
 		}
 
+		// update time
 		m_time += delta_time;
 		if (m_loop && m_time > animation->m_end_time)
 		{
 			m_time = animation->m_start_time;
 		}
 
+		// update skeleton and bone matrices
 		m_skeleton->update();
 		for (size_t i = 0; i < m_skeleton->m_bones.size(); ++i)
 		{
 			m_skeletal_mesh_ubo.bone_matrices[i] = m_skeleton->m_bones[i].matrix();
+		}
+
+		// update uniform buffers
+		for (VmaBuffer& uniform_buffer : skeletal_mesh->m_uniform_buffers)
+		{
+			VulkanUtil::updateBuffer(uniform_buffer, (void*)&m_skeletal_mesh_ubo, sizeof(SkeletalMeshUBO));
 		}
 	}
 

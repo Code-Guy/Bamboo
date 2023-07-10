@@ -19,11 +19,11 @@ layout(location = 2) out vec3 f_normal;
 
 void main()
 {
-	mat4 blend_bone_matrix = mat4(1.0);
-	// for (int i = 0; i < BONE_NUM_PER_VERTEX; ++i)
-	// {
-	// 	blend_bone_matrix += ubo.bone_matrices[bones[i]] * weights[i];
-	// }
+	mat4 blend_bone_matrix = mat4(0.0);
+	for (int i = 0; i < BONE_NUM_PER_VERTEX; ++i)
+	{
+		blend_bone_matrix += ubo.bone_matrices[bones[i]] * weights[i];
+	}
 
 	vec4 local_position = blend_bone_matrix * vec4(position, 1.0);
 	vec4 local_normal = blend_bone_matrix * vec4(normal, 0.0);
