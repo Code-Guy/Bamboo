@@ -31,6 +31,6 @@ namespace Bamboo
 		glm::vec3 m_scale = glm::vec3(1.0f);
 
 		glm::mat4 matrix() const;
-		bool is_identity() const;
+		bool isIdentity() const;
 	};
 }

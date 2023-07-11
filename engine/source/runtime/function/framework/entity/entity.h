@@ -19,6 +19,7 @@ namespace Bamboo
 		virtual void tick(float delta_time) override;
 		void inflate();
 
+		bool isRoot() { return m_parent.expired(); }
 		void attach(std::weak_ptr<Entity>& parent);
 		void detach();
 
@@ -64,6 +65,8 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
+			ar(cereal::make_nvp("tickable", cereal::base_class<ITickable>(this)));
+
 			ar(cereal::make_nvp("id", m_id));
 			ar(cereal::make_nvp("parent_id", m_pid));
 			ar(cereal::make_nvp("child_ids", m_cids));
@@ -72,6 +75,8 @@ namespace Bamboo
 
 		friend World;
 		Entity() = default;
+
+		void updateTransforms();
 
 		uint32_t m_id;
 		uint32_t m_pid = UINT_MAX;

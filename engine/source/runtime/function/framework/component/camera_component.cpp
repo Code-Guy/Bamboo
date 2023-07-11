@@ -1,6 +1,9 @@
 #include "camera_component.h"
+#include "transform_component.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/function/render/window_system.h"
+#include "runtime/function/framework/entity/entity.h"
+
 #include <algorithm>
 #include <functional>
 
@@ -32,7 +35,7 @@ namespace Bamboo
 
 	glm::mat4 CameraComponent::getViewMatrix()
 	{
-		return glm::lookAt(m_position, m_position + m_forward, m_up);
+		return glm::lookAt(m_transform_component->m_position, m_transform_component->m_position + m_forward, m_up);
 	}
 
 	glm::mat4 CameraComponent::getPerspectiveMatrix()
@@ -54,32 +57,35 @@ namespace Bamboo
 
 		if (m_move_forward)
 		{
-			m_position += m_forward * offset;
+			m_transform_component->m_position += m_forward * offset;
 		}
 		if (m_move_back)
 		{
-			m_position -= m_forward * offset;
+			m_transform_component->m_position -= m_forward * offset;
 		}
 		if (m_move_left)
 		{
-			m_position -= m_right * offset;
+			m_transform_component->m_position -= m_right * offset;
 		}
 		if (m_move_right)
 		{
-			m_position += m_right * offset;
+			m_transform_component->m_position += m_right * offset;
 		}
 		if (m_move_up)
 		{
-			m_position += k_up_vector * offset;
+			m_transform_component->m_position += k_up_vector * offset;
 		}
 		if (m_move_down)
 		{
-			m_position -= k_up_vector * offset;
+			m_transform_component->m_position -= k_up_vector * offset;
 		}
 	}
 
 	void CameraComponent::inflate()
 	{
+		// get transform component
+		m_transform_component = m_parent.lock()->getComponent<TransformComponent>();
+
 		// bind camera input callbacks
 		g_runtime_context.windowSystem()->registerOnKeyFunc(std::bind(&CameraComponent::onKey, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
@@ -159,9 +165,11 @@ namespace Bamboo
 		xoffset *= m_turn_speed;
 		yoffset *= m_turn_speed;
 
-		m_yaw -= xoffset;
-		m_pitch -= yoffset;
-		m_pitch = std::clamp(m_pitch, -89.0f, 89.0f);
+		float& yaw = m_transform_component->m_rotation.y;
+		float& pitch = m_transform_component->m_rotation.z;
+		yaw -= xoffset;
+		pitch -= yoffset;
+		pitch = std::clamp(pitch, -89.0f, 89.0f);
 
 		updatePose();
 	}
@@ -186,14 +194,16 @@ namespace Bamboo
 			return;
 		}
 
-		m_position += m_forward * (float)yoffset * m_zoom_speed;
+		m_transform_component->m_position += m_forward * (float)yoffset * m_zoom_speed;
 	}
 
 	void CameraComponent::updatePose()
 	{
-		m_forward.x = std::cos(glm::radians(m_yaw)) * std::cos(glm::radians(m_pitch));
-		m_forward.y = std::sin(glm::radians(m_pitch));
-		m_forward.z = -std::sin(glm::radians(m_yaw)) * std::cos(glm::radians(m_pitch));
+		float& yaw = m_transform_component->m_rotation.y;
+		float& pitch = m_transform_component->m_rotation.z;
+		m_forward.x = std::cos(glm::radians(yaw)) * std::cos(glm::radians(pitch));
+		m_forward.y = std::sin(glm::radians(pitch));
+		m_forward.z = -std::sin(glm::radians(yaw)) * std::cos(glm::radians(pitch));
 		m_forward = glm::normalize(m_forward);
 
 		m_right = glm::normalize(glm::cross(m_forward, k_up_vector));

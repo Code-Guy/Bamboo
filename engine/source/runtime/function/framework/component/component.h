@@ -21,7 +21,15 @@ namespace Bamboo
 		virtual void tick(float delta_time) {}
 
 	private:
-		bool m_tick_enabled = true;
+		friend class cereal::access;
+		template<class Archive>
+		void serialize(Archive& ar)
+		{
+			ar(cereal::make_nvp("tick_enabled", m_tick_enabled));
+			ar(cereal::make_nvp("tick_interval", m_tick_interval));
+		}
+
+		bool m_tick_enabled = false;
 		float m_tick_interval = 0.0f;
 		float m_tick_timer = 0.0f;
 		std::chrono::time_point<std::chrono::steady_clock> m_last_tick_time = std::chrono::steady_clock::now();
@@ -48,7 +56,7 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-
+			ar(cereal::make_nvp("tickable", cereal::base_class<ITickable>(this)));
 		}
 	};
 }

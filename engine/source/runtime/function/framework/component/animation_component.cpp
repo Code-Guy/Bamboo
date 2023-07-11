@@ -22,7 +22,7 @@ namespace Bamboo
 
 	void AnimationComponent::bindRefs()
 	{
-		if (m_animations.empty())
+		if (!m_animations.empty())
 		{
 			return;
 		}

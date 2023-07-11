@@ -22,7 +22,7 @@ namespace Bamboo
 	void Bone::update(const glm::mat4& parent_global_bind_pose_matrix)
 	{
 		glm::mat4 anim_matrix = m_local_bind_pose_matrix;
-		if (!m_anim_transform.is_identity())
+		if (!m_anim_transform.isIdentity())
 		{
 			anim_matrix = m_anim_transform.matrix();
 		}

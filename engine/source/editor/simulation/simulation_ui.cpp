@@ -102,6 +102,7 @@ namespace Bamboo
 		// add transform component
 		std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
 		entity->addComponent(transform_component);
+		entity->setTickEnabled(true);
 
 		if (asset_type == EAssetType::StaticMesh)
 		{
@@ -124,6 +125,7 @@ namespace Bamboo
 
 			std::shared_ptr<AnimatorComponent> animator_component = std::make_shared<AnimatorComponent>();
 			std::shared_ptr<Skeleton> skeleton = as->loadAsset<Skeleton>("asset/cesium_man/skl_Armature.skl");
+			animator_component->setTickEnabled(true);
 			animator_component->setSkeleton(skeleton);
 			entity->addComponent(animator_component);
 

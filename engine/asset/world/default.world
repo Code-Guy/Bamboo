@@ -5,7 +5,7 @@
         "ptr_wrapper": {
             "id": 2147483649,
             "data": {
-                "entity_counter": 1,
+                "entity_counter": 4,
                 "entities": [
                     {
                         "key": 0,
@@ -14,30 +14,324 @@
                             "ptr_wrapper": {
                                 "id": 2147483650,
                                 "data": {
+                                    "tickable": {
+                                        "tick_enabled": true,
+                                        "tick_interval": 0.0
+                                    },
                                     "id": 0,
                                     "parent_id": 4294967295,
                                     "child_ids": [],
                                     "components": [
                                         {
                                             "polymorphic_id": 2147483650,
-                                            "polymorphic_name": "Bamboo::CameraComponent",
+                                            "polymorphic_name": "Bamboo::TransformComponent",
                                             "ptr_wrapper": {
                                                 "id": 2147483651,
                                                 "data": {
-                                                    "position": {
-                                                        "x": 12.0,
-                                                        "y": 4.0,
-                                                        "z": -2.0
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
                                                     },
-                                                    "yaw": -150.0,
-                                                    "pitch": -20.0,
+                                                    "position": {
+                                                        "x": 2.2612297534942629,
+                                                        "y": 1.9635127782821656,
+                                                        "z": -2.729043960571289
+                                                    },
+                                                    "rotation": {
+                                                        "x": 0.0,
+                                                        "y": -126.5001449584961,
+                                                        "z": -16.699987411499025
+                                                    },
+                                                    "scale": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 2147483651,
+                                            "polymorphic_name": "Bamboo::CameraComponent",
+                                            "ptr_wrapper": {
+                                                "id": 2147483652,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": true,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
                                                     "fovy": 60.0,
-                                                    "aspect_ratio": 1.778,
-                                                    "near": 0.1,
+                                                    "aspect_ratio": 1.7995909452438355,
+                                                    "near": 0.10000000149011612,
                                                     "far": 1000.0,
                                                     "move_speed": 4.0,
-                                                    "turn_speed": 0.1,
+                                                    "turn_speed": 0.10000000149011612,
                                                     "zoom_speed": 2.0
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "key": 1,
+                        "value": {
+                            "polymorphic_id": 1073741824,
+                            "ptr_wrapper": {
+                                "id": 2147483653,
+                                "data": {
+                                    "tickable": {
+                                        "tick_enabled": true,
+                                        "tick_interval": 0.0
+                                    },
+                                    "id": 1,
+                                    "parent_id": 4294967295,
+                                    "child_ids": [],
+                                    "components": [
+                                        {
+                                            "polymorphic_id": 2,
+                                            "ptr_wrapper": {
+                                                "id": 2147483654,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "rotation": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "scale": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 2147483652,
+                                            "polymorphic_name": "Bamboo::StaticMeshComponent",
+                                            "ptr_wrapper": {
+                                                "id": 2147483655,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "asset_ref": {
+                                                        "ref_urls": [
+                                                            {
+                                                                "key": "m_static_mesh",
+                                                                "value": "asset\\sponza\\sm_sponza.sm"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "key": 2,
+                        "value": {
+                            "polymorphic_id": 1073741824,
+                            "ptr_wrapper": {
+                                "id": 2147483656,
+                                "data": {
+                                    "tickable": {
+                                        "tick_enabled": true,
+                                        "tick_interval": 0.016699999570846559
+                                    },
+                                    "id": 2,
+                                    "parent_id": 4294967295,
+                                    "child_ids": [],
+                                    "components": [
+                                        {
+                                            "polymorphic_id": 2,
+                                            "ptr_wrapper": {
+                                                "id": 2147483657,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "rotation": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "scale": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 2147483653,
+                                            "polymorphic_name": "Bamboo::SkeletalMeshComponent",
+                                            "ptr_wrapper": {
+                                                "id": 2147483658,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "asset_ref": {
+                                                        "ref_urls": [
+                                                            {
+                                                                "key": "m_skeletal_mesh",
+                                                                "value": "asset\\cesium_man\\skm_Cesium_Man.skm"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 2147483654,
+                                            "polymorphic_name": "Bamboo::AnimationComponent",
+                                            "ptr_wrapper": {
+                                                "id": 2147483659,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "asset_ref": {
+                                                        "ref_urls": [
+                                                            {
+                                                                "key": "0",
+                                                                "value": "asset/cesium_man/anim_Anim_0.anim"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 2147483655,
+                                            "polymorphic_name": "Bamboo::AnimatorComponent",
+                                            "ptr_wrapper": {
+                                                "id": 2147483660,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": true,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "asset_ref": {
+                                                        "ref_urls": [
+                                                            {
+                                                                "key": "m_skeleton",
+                                                                "value": "asset/cesium_man/skl_Armature.skl"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "key": 3,
+                        "value": {
+                            "polymorphic_id": 1073741824,
+                            "ptr_wrapper": {
+                                "id": 2147483661,
+                                "data": {
+                                    "tickable": {
+                                        "tick_enabled": true,
+                                        "tick_interval": 0.0
+                                    },
+                                    "id": 3,
+                                    "parent_id": 4294967295,
+                                    "child_ids": [],
+                                    "components": [
+                                        {
+                                            "polymorphic_id": 2,
+                                            "ptr_wrapper": {
+                                                "id": 2147483662,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "rotation": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "scale": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 4,
+                                            "ptr_wrapper": {
+                                                "id": 2147483663,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "asset_ref": {
+                                                        "ref_urls": [
+                                                            {
+                                                                "key": "m_static_mesh",
+                                                                "value": "asset\\dragon\\sm_dragon.sm"
+                                                            }
+                                                        ]
+                                                    }
                                                 }
                                             }
                                         }

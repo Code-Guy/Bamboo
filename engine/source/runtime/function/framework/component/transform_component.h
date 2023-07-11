@@ -8,17 +8,27 @@ namespace Bamboo
 	class TransformComponent : public Component, public Transform
 	{
 	public:
-		glm::mat4 local_matrix = glm::mat4(1.0f);
-		glm::mat4 world_matrix = glm::mat4(1.0f);
+		void setPosition(const glm::vec3& position);
+		void setRotation(const glm::vec3& rotation);
+		void setScale(const glm::vec3& scale);
+
+		bool update(bool is_chain_dirty = false, const glm::mat4& parent_global_matrix = glm::mat4(1.0));
+
+		const glm::mat4& getGlobalMatrix();
 
 	private:
 		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
+			ar(cereal::make_nvp("component", cereal::base_class<Component>(this)));
 			ar(cereal::make_nvp("position", m_position));
 			ar(cereal::make_nvp("rotation", m_rotation));
 			ar(cereal::make_nvp("scale", m_scale));
 		}
+
+		bool m_is_dirty = true;
+		glm::mat4 m_local_matrix;
+		glm::mat4 m_global_matrix;
 	};
 }

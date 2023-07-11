@@ -1,6 +1,9 @@
 #include "entity.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/function/framework/world/world.h"
+#include "runtime/function/framework/component/transform_component.h"
+
+#include <queue>
 
 namespace Bamboo
 {
@@ -16,6 +19,10 @@ namespace Bamboo
 
 	void Entity::tick(float delta_time)
 	{
+		// update own and children transforms
+		updateTransforms();
+
+		// tick components
 		for (auto& component : m_components)
 		{
 			component->tickable(delta_time);
@@ -62,6 +69,41 @@ namespace Bamboo
 	{
 		component->dettach();
 		m_components.erase(std::remove(m_components.begin(), m_components.end(), component), m_components.end());
+	}
+
+	void Entity::updateTransforms()
+	{
+		if (!isRoot())
+		{
+			return;
+		}
+
+		if (m_children.empty())
+		{
+			getComponent<TransformComponent>()->update();
+			return;
+		}
+
+		std::queue<std::tuple<Entity*, bool, glm::mat4>> queue;
+		queue.push(std::make_tuple(this, false, glm::mat4(1.0)));
+
+		while (!queue.empty())
+		{
+			std::tuple<Entity*, bool, glm::mat4> tuple = queue.front();
+			queue.pop();
+
+			Entity* entity = std::get<0>(tuple);
+			bool is_chain_dirty = std::get<1>(tuple);
+			const glm::mat4& parent_global_matrix = std::get<2>(tuple);
+
+			auto& transform_component = entity->getComponent<TransformComponent>();
+			is_chain_dirty = transform_component->update(is_chain_dirty, parent_global_matrix);
+
+			for (auto& child : entity->m_children)
+			{
+				queue.push(std::make_tuple(child.lock().get(), is_chain_dirty, transform_component->getGlobalMatrix()));
+			}
+		}
 	}
 
 }

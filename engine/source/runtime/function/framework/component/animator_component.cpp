@@ -96,7 +96,7 @@ namespace Bamboo
 		m_time += delta_time;
 		if (m_loop && m_time > animation->m_end_time)
 		{
-			m_time = animation->m_start_time;
+			m_time -= animation->m_duration;
 		}
 
 		// update skeleton and bone matrices

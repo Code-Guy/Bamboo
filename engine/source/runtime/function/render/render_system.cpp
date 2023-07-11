@@ -109,6 +109,7 @@ namespace Bamboo
 
 		// get camera entity
 		const auto& camera_entity = current_world->getCameraEntity();
+		auto camera_transform_component = camera_entity->getComponent<TransformComponent>();
 		auto camera_component = camera_entity->getComponent<CameraComponent>();
 
 		// traverse all entities
@@ -147,11 +148,11 @@ namespace Bamboo
 					render_data->uniform_buffers = mesh->m_uniform_buffers;
 
 					// set push constants
-					render_data->vert_pco.m = transform_component->world_matrix;
-					render_data->vert_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->world_matrix;
+					render_data->vert_pco.m = transform_component->getGlobalMatrix();
+					render_data->vert_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->getGlobalMatrix();
 
 					FragPCO frag_pco;
-					frag_pco.camera_pos = camera_component->m_position;
+					frag_pco.camera_pos = camera_transform_component->m_position;
 					frag_pco.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
 					
 					// traverse all sub meshes

@@ -6,6 +6,7 @@
 #include "runtime/resource/asset/skeletal_mesh.h"
 #include "runtime/resource/asset/texture_2d.h"
 #include "runtime/resource/asset/animation.h"
+#include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/camera_component.h"
 
 namespace Bamboo
@@ -49,10 +50,12 @@ namespace Bamboo
 		std::shared_ptr<World> world = std::shared_ptr<World>(new World);
 		world->setURL(url);
 
+		std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
+		transform_component->m_position = glm::vec3(12.0f, 4.0f, -2.0f);
+		transform_component->m_rotation = glm::vec3(0.0f, -150.0f, -20.0f);
+
 		std::shared_ptr<CameraComponent> camera_component = std::make_shared<CameraComponent>();
-		camera_component->m_position = glm::vec3(3.0f, -3.0f, 3.0f);
-		camera_component->m_yaw = -225.0f;
-		camera_component->m_pitch = -35.2f;
+		camera_component->setTickEnabled(true);
 		camera_component->m_fovy = 60.0f;
 		camera_component->m_aspect_ratio = 1.778f;
 		camera_component->m_near = 0.1f;
@@ -62,7 +65,9 @@ namespace Bamboo
 		camera_component->m_zoom_speed = 2.0f;
 
 		std::shared_ptr<Entity> camera_entity = world->createEntity("camera");
+		camera_entity->addComponent(transform_component);
 		camera_entity->addComponent(camera_component);
+		camera_entity->setTickEnabled(true);
 
 		world->m_camera_entity = camera_entity;
 		world->inflate();

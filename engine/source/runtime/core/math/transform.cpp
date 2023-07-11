@@ -2,6 +2,7 @@
 
 namespace Bamboo
 {
+
 	glm::mat4 Transform::matrix() const
 	{
 		glm::mat4 model_matrix(1.0f);
@@ -27,7 +28,7 @@ namespace Bamboo
 		return model_matrix;
 	}
 
-	bool QTranform::is_identity() const
+	bool QTranform::isIdentity() const
 	{
 		return glm::all(glm::epsilonEqual(m_position, k_zero_vector, k_epsilon)) &&
 			glm::all(glm::epsilonEqual(m_rotation, k_zero_quat, k_epsilon)) &&

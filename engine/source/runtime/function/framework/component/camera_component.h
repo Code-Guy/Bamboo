@@ -21,11 +21,6 @@ namespace Bamboo
 		virtual void tick(float delta_time) override;
 		virtual void inflate() override;
 
-		// pose
-		glm::vec3 m_position;
-		float m_yaw;
-		float m_pitch;
-
 		// projection
 		float m_fovy;
 		float m_aspect_ratio;
@@ -42,10 +37,8 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			// pose
-			ar(cereal::make_nvp("position", m_position));
-			ar(cereal::make_nvp("yaw", m_yaw));
-			ar(cereal::make_nvp("pitch", m_pitch));
+			// component
+			ar(cereal::make_nvp("component", cereal::base_class<Component>(this)));
 
 			// projection
 			ar(cereal::make_nvp("fovy", m_fovy));
@@ -66,6 +59,9 @@ namespace Bamboo
 
 		void updatePose();
 		bool isInContentRegion(double xpos, double ypos);
+
+		// camera component depends a transform component
+		std::shared_ptr<class TransformComponent> m_transform_component;
 
 		glm::vec3 m_forward;
 		glm::vec3 m_right;
