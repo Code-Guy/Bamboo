@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <functional>
 
+CEREAL_REGISTER_TYPE(Bamboo::CameraComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::CameraComponent)
+
 namespace Bamboo
 {
 	CameraComponent::CameraComponent()

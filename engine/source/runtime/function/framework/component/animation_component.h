@@ -26,6 +26,3 @@ namespace Bamboo
 		std::vector<std::shared_ptr<Animation>> m_animations;
 	};
 }
-
-CEREAL_REGISTER_TYPE(Bamboo::AnimationComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::AnimationComponent)

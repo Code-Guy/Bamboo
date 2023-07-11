@@ -26,6 +26,6 @@ namespace Bamboo
 		std::vector<VmaImageViewSampler> textures;
 
 		VertPCO vert_pco;
-		FragPCO frag_pco;
+		std::vector<FragPCO> frag_pcos;
 	};
 }

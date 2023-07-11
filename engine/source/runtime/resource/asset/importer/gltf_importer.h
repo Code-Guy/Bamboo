@@ -2,6 +2,7 @@
 
 #include <tinygltf/tiny_gltf.h>
 
+#include "import_option.h"
 #include "runtime/resource/asset/material.h"
 #include "runtime/resource/asset/static_mesh.h"
 #include "runtime/resource/asset/skeletal_mesh.h"
@@ -39,6 +40,6 @@ namespace Bamboo
 			std::shared_ptr<StaticMesh>& static_mesh,
 			std::shared_ptr<SkeletalMesh>& skeletal_mesh);
 
-		static bool importGltf(const std::string& filename, const URL& folder, bool is_combined = false);
+		static bool importGltf(const std::string& filename, const URL& folder, const GltfImportOption& option);
 	};
 }

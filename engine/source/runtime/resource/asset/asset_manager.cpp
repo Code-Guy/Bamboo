@@ -51,32 +51,9 @@ namespace Bamboo
 		m_assets.clear();
 	}
 
-	bool AssetManager::importAsset(const std::string& filename, const URL& folder)
+	bool AssetManager::importGltf(const std::string& filename, const URL& folder, const GltfImportOption& option)
 	{
-		std::string extension = g_runtime_context.fileSystem()->extension(filename);
-		if (extension == "glb" || extension == "gltf")
-		{
-			return GltfImporter::importGltf(filename, folder);
-		}
-		else if (extension == "png" || extension == "jpg")
-		{
-			return importTexture2D(filename, folder);
-		}
-		else
-		{
-			LOG_WARNING("unknown asset format");
-			return false;
-		}
-	}
-
-	EAssetType AssetManager::getAssetType(const URL& url)
-	{
-		std::string extension = g_runtime_context.fileSystem()->extension(url);
-		if (m_ext_asset_types.find(extension) != m_ext_asset_types.end())
-		{
-			return m_ext_asset_types[extension];
-		}
-		return EAssetType::Invalid;
+		return GltfImporter::importGltf(filename, folder, option);
 	}
 
 	bool AssetManager::importTexture2D(const std::string& filename, const URL& folder)
@@ -102,6 +79,28 @@ namespace Bamboo
 
 		m_assets[url] = texture;
 		return true;
+	}
+
+	bool AssetManager::isGltfFile(const std::string& filename)
+	{
+		std::string extension = g_runtime_context.fileSystem()->extension(filename);
+		return extension == "glb" || extension == "gltf";
+	}
+
+	bool AssetManager::isTexture2DFile(const std::string& filename)
+	{
+		std::string extension = g_runtime_context.fileSystem()->extension(filename);
+		return extension == "png" || extension == "jpg";
+	}
+
+	EAssetType AssetManager::getAssetType(const URL& url)
+	{
+		std::string extension = g_runtime_context.fileSystem()->extension(url);
+		if (m_ext_asset_types.find(extension) != m_ext_asset_types.end())
+		{
+			return m_ext_asset_types[extension];
+		}
+		return EAssetType::Invalid;
 	}
 
 	void AssetManager::serializeAsset(std::shared_ptr<Asset> asset)

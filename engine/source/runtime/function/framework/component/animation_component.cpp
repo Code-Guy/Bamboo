@@ -9,6 +9,9 @@ rttr::registration::class_<Bamboo::AnimationComponent>("AnimationComponent")
 	 .property("m_animations", &Bamboo::AnimationComponent::m_animations);
 }
 
+CEREAL_REGISTER_TYPE(Bamboo::AnimationComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::AnimationComponent)
+
 namespace Bamboo
 {
 	void AnimationComponent::addAnimation(std::shared_ptr<Animation>& animation)

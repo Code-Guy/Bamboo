@@ -405,7 +405,7 @@ namespace Bamboo
 		}
 	}
 
-	bool GltfImporter::importGltf(const std::string& filename, const URL& folder, bool is_combined)
+	bool GltfImporter::importGltf(const std::string& filename, const URL& folder, const GltfImportOption& option)
 	{
 		tinygltf::Model gltf_model;
 		tinygltf::TinyGLTF gltf_context;
@@ -555,7 +555,7 @@ namespace Bamboo
 		}
 
 		// turn nodes to static mesh/skeletal mesh
-		if (is_combined)
+		if (option.combine_meshes)
 		{
 			EAssetType asset_type = EAssetType::StaticMesh;
 			std::string asset_name = as->getAssetName(basename, asset_type, asset_indices[asset_type]++, basename);
@@ -585,7 +585,7 @@ namespace Bamboo
 			for (const auto& node_pair : nodes)
 			{
 				const tinygltf::Mesh& gltf_mesh = gltf_model.meshes[node_pair.second->mesh];
-				bool is_skeletal_mesh = isGltfSkeletalMesh(gltf_mesh);
+				bool is_skeletal_mesh = option.force_static_mesh ? false : isGltfSkeletalMesh(gltf_mesh);
 				EAssetType asset_type = is_skeletal_mesh ? EAssetType::SkeletalMesh : EAssetType::StaticMesh;
 				std::string asset_name = as->getAssetName(gltf_mesh.name, asset_type, asset_indices[asset_type]++, basename);
 				URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);

@@ -39,6 +39,3 @@ namespace Bamboo
 		bool m_paused = false;
 	};
 }
-
-CEREAL_REGISTER_TYPE(Bamboo::AnimatorComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::AnimatorComponent)

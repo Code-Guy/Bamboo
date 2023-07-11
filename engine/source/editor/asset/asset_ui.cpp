@@ -79,13 +79,20 @@ namespace Bamboo
 		constructFolderFiles();
 		ImGui::EndChild();
 
-		pollImportFiles();
+		// get folder window rect
+		m_folder_rect.x = ImGui::GetItemRectMin().x;
+		m_folder_rect.y = ImGui::GetItemRectMax().x;
+		m_folder_rect.z = ImGui::GetItemRectMin().y;
+		m_folder_rect.w = ImGui::GetItemRectMax().y;
 
 		ImGui::EndChild();
 
 		ImGui::PopStyleVar();
 		ImGui::PopStyleVar();
 		ImGui::End();
+
+		// construct popup modal windows
+		constructImportPopups();
 	}
 
 	void AssetUI::destroy()
@@ -301,6 +308,81 @@ namespace Bamboo
 		}
 	}
 
+	void AssetUI::constructImportPopups()
+	{
+		if (m_imported_files.empty())
+		{
+			return;
+		}
+
+		const auto& as = g_runtime_context.assetManager();
+		std::string import_folder = g_runtime_context.fileSystem()->relative(m_selected_folder);
+		for (auto iter = m_imported_files.begin(); iter != m_imported_files.end(); )
+		{
+			// check import file type
+			const std::string& import_file = *iter;
+			if (as->isGltfFile(import_file))
+			{
+				ImGui::OpenPopup("Import Asset");
+				if (ImGui::BeginPopupModal("Import Asset", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+				{
+					ImGui::Text("Importing gltf: %s", import_file.c_str());
+					ImGui::Separator();
+
+					static bool combine_meshes = false;
+					ImGui::Checkbox("combine meshes", &combine_meshes);
+
+					static bool force_static_mesh = false;
+					if (combine_meshes)
+					{
+						force_static_mesh = true;
+						ImGui::BeginDisabled();
+					}
+					ImGui::Checkbox("force static mesh", &force_static_mesh);
+					if (combine_meshes)
+					{
+						ImGui::EndDisabled();
+					}
+
+					if (ImGui::Button("OK", ImVec2(120, 0)))
+					{
+						ImGui::CloseCurrentPopup();
+
+						StopWatch stop_watch;
+						stop_watch.start();
+
+						as->importGltf(import_file, import_folder, { combine_meshes, force_static_mesh });
+						LOG_INFO("import gltf {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stop());
+						iter = m_imported_files.erase(iter);
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::Button("Cancel", ImVec2(120, 0)))
+					{
+						ImGui::CloseCurrentPopup();
+					}
+					ImGui::EndPopup();
+				}
+				break;
+			}
+			else if (as->isTexture2DFile(import_file))
+			{
+				StopWatch stop_watch;
+				stop_watch.start();
+
+				as->importTexture2D(import_file, import_folder);
+				LOG_INFO("import texture {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stop());
+				iter = m_imported_files.erase(iter);
+			}
+			else
+			{
+				LOG_WARNING("unknown asset format: {}", import_file);
+				iter = m_imported_files.erase(iter);
+			}
+		}
+	}
+
 	void AssetUI::pollFolders()
 	{
 		// recursively traverse the root folder by a queue
@@ -403,31 +485,19 @@ namespace Bamboo
 		}
 	}
 
-	void AssetUI::pollImportFiles()
+	void AssetUI::onDropFiles(int n, const char** filenames)
 	{
-		if (m_imported_files.empty() ||
-			ImGui::GetMousePos().x < ImGui::GetItemRectMin().x ||
-			ImGui::GetMousePos().x > ImGui::GetItemRectMax().x ||
-			ImGui::GetMousePos().y < ImGui::GetItemRectMin().y ||
-			ImGui::GetMousePos().y > ImGui::GetItemRectMax().y)
+		int mouse_pos_x, mouse_pos_y;
+		g_runtime_context.windowSystem()->getMousePos(mouse_pos_x, mouse_pos_y);
+
+		if (mouse_pos_x < m_folder_rect.x ||
+			mouse_pos_x > m_folder_rect.y ||
+			mouse_pos_y < m_folder_rect.z ||
+			mouse_pos_y > m_folder_rect.w)
 		{
-			m_imported_files.clear();
 			return;
 		}
 
-		std::string import_folder = g_runtime_context.fileSystem()->relative(m_selected_folder);
-		for (const std::string& import_file : m_imported_files)
-		{
-			StopWatch stop_watch;
-			stop_watch.start();
-			g_runtime_context.assetManager()->importAsset(import_file, import_folder);
-			LOG_INFO("import asset {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stop());
-		}
-		m_imported_files.clear();
-	}
-
-	void AssetUI::onDropFiles(int n, const char** filenames)
-	{
 		m_imported_files.clear();
 		for (int i = 0; i < n; ++i)
 		{

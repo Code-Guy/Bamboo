@@ -9,6 +9,9 @@ rttr::registration::class_<Bamboo::SkeletalMeshComponent>("SkeletalMeshComponent
 	 .property("m_skeletal_mesh", &Bamboo::SkeletalMeshComponent::m_skeletal_mesh);
 }
 
+CEREAL_REGISTER_TYPE(Bamboo::SkeletalMeshComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::SkeletalMeshComponent)
+
 namespace Bamboo
 {
 	void SkeletalMeshComponent::setSkeletalMesh(std::shared_ptr<SkeletalMesh>& skeletal_mesh)

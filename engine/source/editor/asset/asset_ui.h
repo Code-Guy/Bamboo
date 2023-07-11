@@ -30,10 +30,10 @@ namespace Bamboo
 		void constructAssetNavigator();
 		void constructFolderFiles();
 		void constructAsset(const std::string& filename, const ImVec2& size);
+		void constructImportPopups();
 
 		void pollFolders();
 		void pollSelectedFolder(std::string selected_folder = "");
-		void pollImportFiles();
 
 		void onDropFiles(int n, const char** filenames);
 
@@ -62,6 +62,7 @@ namespace Bamboo
 		std::map<std::string, HoverState> m_selected_file_hover_states;
 
 		// import files
+		glm::vec4 m_folder_rect;
 		std::vector<std::string> m_imported_files;
 	};
 }

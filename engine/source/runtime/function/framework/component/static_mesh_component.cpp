@@ -9,6 +9,9 @@ rttr::registration::class_<Bamboo::StaticMeshComponent>("StaticMeshComponent")
 	 .property("m_static_mesh", &Bamboo::StaticMeshComponent::m_static_mesh);
 }
 
+CEREAL_REGISTER_TYPE(Bamboo::StaticMeshComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::StaticMeshComponent)
+
 namespace Bamboo
 {
 	void StaticMeshComponent::setStaticMesh(std::shared_ptr<StaticMesh>& static_mesh)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "runtime/resource/asset/base/asset.h"
+#include "importer/import_option.h"
 
 namespace Bamboo
 {
@@ -15,7 +16,12 @@ namespace Bamboo
 		void init();
 		void destroy();
 
-		bool importAsset(const std::string& filename, const URL& folder);
+		bool importGltf(const std::string& filename, const URL& folder, const GltfImportOption& option);
+		bool importTexture2D(const std::string& filename, const URL& folder);
+
+		bool isGltfFile(const std::string& filename);
+		bool isTexture2DFile(const std::string& filename);
+
 		EAssetType getAssetType(const URL& url);
 
 		template<typename AssetClass>
@@ -30,10 +36,7 @@ namespace Bamboo
 	private:
 		friend class GltfImporter;
 
-		bool importTexture2D(const std::string& filename, const URL& folder);
-
 		std::shared_ptr<Asset> deserializeAsset(const URL& url);
-
 		std::string getAssetName(const std::string& asset_name, EAssetType asset_type, int asset_index = 0, const std::string& basename = "");
 
 		std::map<URL, std::shared_ptr<Asset>> m_assets;

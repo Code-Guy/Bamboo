@@ -21,6 +21,7 @@ namespace Bamboo
 		GLFWwindow* getWindow() { return m_window; }
 		void getWindowSize(int& width, int& height);
 		void getScreenSize(int& width, int& height);
+		void getMousePos(int& x, int& y);
 
 		typedef std::function<void()> OnResetFunc;
 		typedef std::function<void(int, int, int, int)> OnKeyFunc;
@@ -64,6 +65,8 @@ namespace Bamboo
 		GLFWwindow* m_window;
 		int m_width;
 		int m_height;
+		int m_mouse_pos_x;
+		int m_mouse_pos_y;
 		bool m_is_focus;
 
 		std::vector<OnKeyFunc>         m_onKeyFuncs;

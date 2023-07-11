@@ -65,20 +65,20 @@ namespace Bamboo
 			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
 			vkCmdBindIndexBuffer(command_buffer, mesh_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-			// push constants
-			const void* pcos[] = { &mesh_render_data->vert_pco, &mesh_render_data->frag_pco };
-			for (size_t i = 0; i < m_push_constant_ranges.size(); ++i)
-			{
-				const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[i];
-				vkCmdPushConstants(command_buffer, m_pipeline_layouts[0], pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[i]);
-			}
-
 			// render all sub meshes
 			std::vector<uint32_t>& index_counts = mesh_render_data->index_counts;
 			std::vector<uint32_t>& index_offsets = mesh_render_data->index_offsets;
 			size_t sub_mesh_count = index_counts.size();
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
+				// push constants
+				const void* pcos[] = { &mesh_render_data->vert_pco, &mesh_render_data->frag_pcos[i]};
+				for (size_t i = 0; i < m_push_constant_ranges.size(); ++i)
+				{
+					const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[i];
+					vkCmdPushConstants(command_buffer, m_pipeline_layouts[0], pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[i]);
+				}
+
 				// update(push) sub mesh descriptors
 				std::vector<VkWriteDescriptorSet> desc_writes(2, VkWriteDescriptorSet{});
 

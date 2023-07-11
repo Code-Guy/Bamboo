@@ -77,6 +77,12 @@ namespace Bamboo
 		height = mode->height;
 	}
 
+	void WindowSystem::getMousePos(int& x, int& y)
+	{
+		x = m_mouse_pos_x;
+		y = m_mouse_pos_y;
+	}
+
 	bool WindowSystem::isMouseButtonDown(int button)
 	{
 		if (button < GLFW_MOUSE_BUTTON_1 || button > GLFW_MOUSE_BUTTON_LAST)
@@ -131,6 +137,9 @@ namespace Bamboo
 	void WindowSystem::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 	{
 		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
+		window_system->m_mouse_pos_x = xpos;
+		window_system->m_mouse_pos_y = ypos;
+
 		for (auto& func : window_system->m_onCursorPosFuncs)
 		{
 			func(xpos, ypos);

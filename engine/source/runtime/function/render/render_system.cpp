@@ -149,8 +149,10 @@ namespace Bamboo
 					// set push constants
 					render_data->vert_pco.m = transform_component->world_matrix;
 					render_data->vert_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->world_matrix;
-					render_data->frag_pco.camera_pos = camera_component->m_position;
-					render_data->frag_pco.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
+
+					FragPCO frag_pco;
+					frag_pco.camera_pos = camera_component->m_position;
+					frag_pco.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
 					
 					// traverse all sub meshes
 					for (size_t i = 0; i < mesh->m_sub_meshes.size(); ++i)
@@ -160,12 +162,13 @@ namespace Bamboo
 						render_data->index_counts.push_back(sub_mesh.m_index_count);
 						render_data->index_offsets.push_back(sub_mesh.m_index_offset);
 
-						render_data->frag_pco.base_color_factor = sub_mesh.m_material->m_base_color_factor;
-						render_data->frag_pco.has_base_color_texture = sub_mesh.m_material->m_base_color_texure != nullptr;
-						render_data->frag_pco.emissive_factor = sub_mesh.m_material->m_emissive_factor;
-						render_data->frag_pco.has_emissive_texture = sub_mesh.m_material->m_emissive_texure != nullptr;
-						render_data->frag_pco.m_metallic_factor = sub_mesh.m_material->m_metallic_factor;
-						render_data->frag_pco.m_roughness_factor = sub_mesh.m_material->m_roughness_factor;
+						frag_pco.base_color_factor = sub_mesh.m_material->m_base_color_factor;
+						frag_pco.has_base_color_texture = sub_mesh.m_material->m_base_color_texure != nullptr;
+						frag_pco.emissive_factor = sub_mesh.m_material->m_emissive_factor;
+						frag_pco.has_emissive_texture = sub_mesh.m_material->m_emissive_texure != nullptr;
+						frag_pco.m_metallic_factor = sub_mesh.m_material->m_metallic_factor;
+						frag_pco.m_roughness_factor = sub_mesh.m_material->m_roughness_factor;
+						render_data->frag_pcos.push_back(frag_pco);
 
 						std::shared_ptr<Texture2D> base_color_texture = sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure : m_dummy_texture;
 						std::shared_ptr<Texture2D> emissive_texture = sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure : m_dummy_texture;

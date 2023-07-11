@@ -26,6 +26,3 @@ namespace Bamboo
 		std::shared_ptr<SkeletalMesh> m_skeletal_mesh;
 	};
 }
-
-CEREAL_REGISTER_TYPE(Bamboo::SkeletalMeshComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::SkeletalMeshComponent)

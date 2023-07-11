@@ -12,6 +12,9 @@ rttr::registration::class_<Bamboo::AnimatorComponent>("AnimatorComponent")
 	 .property("m_skeleton", &Bamboo::AnimatorComponent::m_skeleton);
 }
 
+CEREAL_REGISTER_TYPE(Bamboo::AnimatorComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::AnimatorComponent)
+
 namespace Bamboo
 {
 	void AnimatorComponent::setSkeleton(std::shared_ptr<Skeleton>& skeleton)

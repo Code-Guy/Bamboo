@@ -26,6 +26,3 @@ namespace Bamboo
 		std::shared_ptr<StaticMesh> m_static_mesh;
 	};
 }
-
-CEREAL_REGISTER_TYPE(Bamboo::StaticMeshComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::StaticMeshComponent)
