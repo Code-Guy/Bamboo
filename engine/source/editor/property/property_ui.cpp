@@ -17,11 +17,6 @@ namespace Bamboo
 			return;
 		}
 
-		for (int i = 0; i < 10; ++i)
-		{
-			ImGui::Text((m_title + std::to_string(i)).c_str());
-		}
-
 		ImGui::End();
 	}
 

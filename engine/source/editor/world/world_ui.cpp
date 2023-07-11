@@ -1,4 +1,5 @@
 #include "world_ui.h"
+#include "runtime/function/framework/world/world_manager.h"
 
 namespace Bamboo
 {
@@ -17,9 +18,20 @@ namespace Bamboo
 			return;
 		}
 
-		for (int i = 0; i < 10; ++i)
+		// get current active world
+		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
+
+		// traverse all entities
+		const float k_unindent_w = 16;
+		ImGui::Unindent(k_unindent_w);
+		const auto& entities = current_world->getEntities();
+		for (const auto& iter : entities)
 		{
-			ImGui::Text((m_title + std::to_string(i)).c_str());
+			const auto& entity = iter.second;
+			if (entity->isRoot())
+			{
+				constructEntityTree(entity);
+			}
 		}
 		
 		ImGui::End();
@@ -31,4 +43,22 @@ namespace Bamboo
 
 	}
 
+	void WorldUI::constructEntityTree(const std::shared_ptr<class Entity>& entity)
+	{
+		ImGuiTreeNodeFlags tree_node_flags = 0;
+		tree_node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
+		if (entity->isLeaf())
+		{
+			tree_node_flags |= ImGuiTreeNodeFlags_Leaf;
+		}
+
+		ImGui::TreeNodeEx(entity->getName().c_str(), tree_node_flags);
+
+		for (const auto& child : entity->getChildren())
+		{
+			constructEntityTree(child.lock());
+		}
+
+		ImGui::TreePop();
+	}
 }

@@ -18,6 +18,7 @@
                                         "tick_enabled": true,
                                         "tick_interval": 0.0
                                     },
+                                    "name": "camera",
                                     "id": 0,
                                     "parent_id": 4294967295,
                                     "child_ids": [],
@@ -90,6 +91,7 @@
                                         "tick_enabled": true,
                                         "tick_interval": 0.0
                                     },
+                                    "name": "sponza",
                                     "id": 1,
                                     "parent_id": 4294967295,
                                     "child_ids": [],
@@ -162,6 +164,7 @@
                                         "tick_enabled": true,
                                         "tick_interval": 0.016699999570846559
                                     },
+                                    "name": "cesium_man",
                                     "id": 2,
                                     "parent_id": 4294967295,
                                     "child_ids": [],
@@ -178,9 +181,9 @@
                                                         }
                                                     },
                                                     "position": {
-                                                        "x": 0.0,
+                                                        "x": -0.5,
                                                         "y": 0.0,
-                                                        "z": 0.0
+                                                        "z": -1.0
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
@@ -280,6 +283,7 @@
                                         "tick_enabled": true,
                                         "tick_interval": 0.0
                                     },
+                                    "name": "dragon",
                                     "id": 3,
                                     "parent_id": 4294967295,
                                     "child_ids": [],
@@ -296,13 +300,13 @@
                                                         }
                                                     },
                                                     "position": {
-                                                        "x": 0.0,
+                                                        "x": 0.5,
                                                         "y": 0.0,
-                                                        "z": 0.0
+                                                        "z": 0.5
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
-                                                        "y": 0.0,
+                                                        "y": -165.0,
                                                         "z": 0.0
                                                     },
                                                     "scale": {

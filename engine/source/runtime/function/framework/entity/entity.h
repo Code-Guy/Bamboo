@@ -20,13 +20,16 @@ namespace Bamboo
 		void inflate();
 
 		bool isRoot() { return m_parent.expired(); }
+		bool isLeaf() { return m_children.empty(); }
+
 		void attach(std::weak_ptr<Entity>& parent);
 		void detach();
 
 		uint32_t getID() { return m_id; }
 		std::weak_ptr<World> getWorld() { return m_world; }
 		const std::string& getName() const { return m_name; }
-		std::weak_ptr<Entity>& getParent() { return m_parent; }
+		const std::weak_ptr<Entity>& getParent() { return m_parent; }
+		const std::vector<std::weak_ptr<Entity>>& getChildren() { return m_children; }
 		const auto& getComponents() const { return m_components; }
 
 		void addComponent(std::shared_ptr<Component> component);
@@ -67,6 +70,7 @@ namespace Bamboo
 		{
 			ar(cereal::make_nvp("tickable", cereal::base_class<ITickable>(this)));
 
+			ar(cereal::make_nvp("name", m_name));
 			ar(cereal::make_nvp("id", m_id));
 			ar(cereal::make_nvp("parent_id", m_pid));
 			ar(cereal::make_nvp("child_ids", m_cids));

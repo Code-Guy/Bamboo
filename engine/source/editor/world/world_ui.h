@@ -12,6 +12,6 @@ namespace Bamboo
 		virtual void destroy() override;
 
 	private:
-
+		void constructEntityTree(const std::shared_ptr<class Entity>& entity);
 	};
 }

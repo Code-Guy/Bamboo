@@ -9,8 +9,8 @@ namespace Bamboo
 
 		model_matrix = glm::translate(model_matrix, m_position);
 		model_matrix = glm::rotate(model_matrix, glm::radians(m_rotation.x), k_forward_vector);
-		model_matrix = glm::rotate(model_matrix, glm::radians(m_rotation.y), k_right_vector);
-		model_matrix = glm::rotate(model_matrix, glm::radians(m_rotation.z), k_up_vector);
+		model_matrix = glm::rotate(model_matrix, glm::radians(m_rotation.z), k_right_vector);
+		model_matrix = glm::rotate(model_matrix, glm::radians(m_rotation.y), k_up_vector);
 		model_matrix = glm::scale(model_matrix, m_scale);
 
 		return model_matrix;
