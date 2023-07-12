@@ -61,6 +61,7 @@ namespace Bamboo
 
 	void Entity::addComponent(std::shared_ptr<Component> component)
 	{
+		
 		component->attach(weak_from_this());
 		m_components.push_back(component);
 	}
@@ -80,7 +81,7 @@ namespace Bamboo
 
 		if (m_children.empty())
 		{
-			getComponent<TransformComponent>()->update();
+			getComponent(TransformComponent)->update();
 			return;
 		}
 
@@ -96,7 +97,7 @@ namespace Bamboo
 			bool is_chain_dirty = std::get<1>(tuple);
 			const glm::mat4& parent_global_matrix = std::get<2>(tuple);
 
-			auto& transform_component = entity->getComponent<TransformComponent>();
+			auto& transform_component = entity->getComponent(TransformComponent);
 			is_chain_dirty = transform_component->update(is_chain_dirty, parent_global_matrix);
 
 			for (auto& child : entity->m_children)

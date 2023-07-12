@@ -77,7 +77,7 @@ namespace Bamboo
 
 	std::shared_ptr<CameraComponent> WorldManager::getCameraComponent()
 	{
-		return m_current_world->getCameraEntity()->getComponent<CameraComponent>();
+		return m_current_world->getCameraEntity()->getComponent(CameraComponent);
 	}
 
 }

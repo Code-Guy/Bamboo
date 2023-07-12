@@ -35,12 +35,11 @@ namespace Bamboo
 		void addComponent(std::shared_ptr<Component> component);
 		void removeComponent(std::shared_ptr<Component> component);
 
-		template<typename TComponent>
-		bool hasComponent() const
+		bool hasComponent(const std::string& type_name) const
 		{
 			for (auto& component : m_components)
 			{
-				if (std::dynamic_pointer_cast<TComponent>(component))
+				if (component->getTypeName() == type_name)
 				{
 					return true;
 				}
@@ -49,19 +48,21 @@ namespace Bamboo
 		}
 
 		template<typename TComponent>
-		std::shared_ptr<TComponent> getComponent()
+		std::shared_ptr<TComponent> getComponent(const std::string& type_name)
 		{
-			for (auto& component : m_components)
+			for (const auto& component : m_components)
 			{
-				std::shared_ptr<TComponent> find_component = std::dynamic_pointer_cast<TComponent>(component);
-				if (find_component)
+				if (component->getTypeName() == type_name)
 				{
-					return find_component;
+					return std::static_pointer_cast<TComponent>(component);
 				}
 			}
 
 			return nullptr;
 		}
+
+#define getComponent(TComponent) getComponent<TComponent>(#TComponent)
+#define hasComponent(TComponent) hasComponent(#TComponent)
 
 	private:
 		friend class cereal::access;

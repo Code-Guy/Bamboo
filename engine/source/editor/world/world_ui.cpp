@@ -1,4 +1,5 @@
 #include "world_ui.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/function/framework/world/world_manager.h"
 
 namespace Bamboo
@@ -61,7 +62,12 @@ namespace Bamboo
 		ImGui::TreeNodeEx(entity->getName().c_str(), tree_node_flags);
 		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 		{
-			m_selected_entity_id = entity_id;
+			if (m_selected_entity_id != entity_id)
+			{
+				m_selected_entity_id = entity_id;
+
+				g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<UISelectEntityEvent>(m_selected_entity_id));
+			}
 		}
 
 		for (const auto& child : entity->getChildren())

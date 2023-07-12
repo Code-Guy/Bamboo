@@ -10,7 +10,7 @@ namespace Bamboo
 	class CameraComponent : public Component
 	{
 	public:
-		CameraComponent();
+		REGISTER_COMPONENT(CameraComponent)
 
 		void setContentRegion(const glm::uvec4& content_region);
 
@@ -33,7 +33,6 @@ namespace Bamboo
 		float m_zoom_speed;
 
 	private:
-		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
@@ -67,17 +66,17 @@ namespace Bamboo
 		glm::vec3 m_right;
 		glm::vec3 m_up;
 
-		bool m_move_forward;
-		bool m_move_back;
-		bool m_move_left;
-		bool m_move_right;
-		bool m_move_up;
-		bool m_move_down;
+		bool m_move_forward = false;
+		bool m_move_back = false;
+		bool m_move_left = false;
+		bool m_move_right = false;
+		bool m_move_up = false;
+		bool m_move_down = false;
 
-		bool m_mouse_in_content;
-		bool m_mouse_right_button_pressed;
+		bool m_mouse_in_content = false;
+		bool m_mouse_right_button_pressed = false;
 
 		glm::uvec4 m_content_region;
-		double m_last_xpos, m_last_ypos;
+		double m_last_xpos = 0.0f, m_last_ypos = 0.0f;
 	};
 }

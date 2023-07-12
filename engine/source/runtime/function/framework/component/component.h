@@ -4,6 +4,8 @@
 #include <string>
 #include <chrono>
 
+#include <rttr/registration>
+#include <rttr/registration_friend.h>
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/json.hpp>
 
@@ -47,9 +49,11 @@ namespace Bamboo
 		std::weak_ptr<Entity>& getParent() { return m_parent; }
 
 		virtual void inflate() {}
+		virtual const std::string& getTypeName() = 0;
 
 	protected:
 		std::weak_ptr<Entity> m_parent;
+		std::string m_type_name;
 
 	private:
 		friend class cereal::access;
@@ -60,3 +64,15 @@ namespace Bamboo
 		}
 	};
 }
+
+#define REGISTER_COMPONENT(TComponent) \
+		RTTR_REGISTRATION_FRIEND \
+		friend class cereal::access; \
+		virtual const std::string& ##TComponent::getTypeName() override \
+		{ \
+			if (m_type_name.empty()) \
+			{ \
+				m_type_name = #TComponent; \
+			} \
+			return m_type_name; \
+		}

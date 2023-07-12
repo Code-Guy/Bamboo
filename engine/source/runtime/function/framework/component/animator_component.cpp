@@ -8,7 +8,6 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::AnimatorComponent>("AnimatorComponent")
-	 .constructor<>()
 	 .property("m_skeleton", &Bamboo::AnimatorComponent::m_skeleton);
 }
 
@@ -20,6 +19,7 @@ namespace Bamboo
 	void AnimatorComponent::setSkeleton(std::shared_ptr<Skeleton>& skeleton)
 	{
 		m_skeleton = skeleton;
+		m_skeleton_inst = *m_skeleton;
 		m_ref_urls["m_skeleton"] = m_skeleton->getURL();
 	}
 
@@ -27,11 +27,11 @@ namespace Bamboo
 	{
 		if (!m_animation_component)
 		{
-			m_animation_component = m_parent.lock()->getComponent<AnimationComponent>();
+			m_animation_component = m_parent.lock()->getComponent(AnimationComponent);
 		}
 		if (!m_skeletal_mesh_component)
 		{
-			m_skeletal_mesh_component = m_parent.lock()->getComponent<SkeletalMeshComponent>();
+			m_skeletal_mesh_component = m_parent.lock()->getComponent(SkeletalMeshComponent);
 		}
 
 		if (!m_animation_component || !m_skeletal_mesh_component)
@@ -55,7 +55,7 @@ namespace Bamboo
 		// sampling animation
 		for (const auto& channel : animation->m_channels)
 		{
-			Bone* bone = m_skeleton->getBone(channel.m_bone_name);
+			Bone* bone = m_skeleton_inst.getBone(channel.m_bone_name);
 			const auto& sampler = animation->m_samplers[channel.m_sampler_index];
 
 			for (size_t i = 0; i < sampler.m_times.size() - 1; ++i)
@@ -100,10 +100,10 @@ namespace Bamboo
 		}
 
 		// update skeleton and bone matrices
-		m_skeleton->update();
-		for (size_t i = 0; i < m_skeleton->m_bones.size(); ++i)
+		m_skeleton_inst.update();
+		for (size_t i = 0; i < m_skeleton_inst.m_bones.size(); ++i)
 		{
-			m_skeletal_mesh_ubo.bone_matrices[i] = m_skeleton->m_bones[i].matrix();
+			m_skeletal_mesh_ubo.bone_matrices[i] = m_skeleton_inst.m_bones[i].matrix();
 		}
 
 		// update uniform buffers
@@ -130,6 +130,7 @@ namespace Bamboo
 		const auto& iter = m_ref_urls.begin();
 		std::shared_ptr<Skeleton> skeleton = g_runtime_context.assetManager()->loadAsset<Skeleton>(iter->second);
 		rttr::type::get(*this).get_property(iter->first).set_value(*this, skeleton);
+		m_skeleton_inst = *skeleton;
 	}
 
 }

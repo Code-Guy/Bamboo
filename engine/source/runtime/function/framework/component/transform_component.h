@@ -8,6 +8,8 @@ namespace Bamboo
 	class TransformComponent : public Component, public Transform
 	{
 	public:
+		REGISTER_COMPONENT(TransformComponent)
+
 		void setPosition(const glm::vec3& position);
 		void setRotation(const glm::vec3& rotation);
 		void setScale(const glm::vec3& scale);
@@ -17,7 +19,6 @@ namespace Bamboo
 		const glm::mat4& getGlobalMatrix();
 
 	private:
-		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
 		{

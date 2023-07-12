@@ -13,7 +13,7 @@ namespace Bamboo
 
 		bool loadWorld(const URL& url);
 		std::shared_ptr<World> createWorld(const URL& url);
-		std::shared_ptr<World> getCurrentWorld() { return m_current_world; }
+		const std::shared_ptr<World>& getCurrentWorld() { return m_current_world; }
 		const std::string& getCurrentWorldName() { return m_current_world_name; }
 
 		std::shared_ptr<class CameraComponent> getCameraComponent();

@@ -5,7 +5,6 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::Material>("Material")
-	 .constructor<>()
 	 .property("m_base_color_texure", &Bamboo::Material::m_base_color_texure)
 	 .property("m_metallic_roughness_texure", &Bamboo::Material::m_metallic_roughness_texure)
 	 .property("m_normal_texure", &Bamboo::Material::m_normal_texure)

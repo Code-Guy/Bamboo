@@ -8,12 +8,12 @@ namespace Bamboo
 	class SkeletalMeshComponent : public Component, public IAssetRef
 	{
 	public:
+		REGISTER_COMPONENT(SkeletalMeshComponent)
+
 		void setSkeletalMesh(std::shared_ptr<SkeletalMesh>& skeletal_mesh);
 		std::shared_ptr<SkeletalMesh> getSkeletalMesh() { return m_skeletal_mesh; }
 
 	private:
-		RTTR_REGISTRATION_FRIEND
-		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
 		{

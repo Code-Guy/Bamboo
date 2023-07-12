@@ -9,6 +9,8 @@ namespace Bamboo
 	class AnimatorComponent : public Component, public IAssetRef
 	{
 	public:
+		REGISTER_COMPONENT(AnimatorComponent)
+
 		void setSkeleton(std::shared_ptr<Skeleton>& skeleton);
 		std::shared_ptr<Skeleton> getSkeleton() { return m_skeleton; }
 
@@ -17,8 +19,6 @@ namespace Bamboo
 		void play(bool loop = true);
 
 	private:
-		RTTR_REGISTRATION_FRIEND
-		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
@@ -30,6 +30,8 @@ namespace Bamboo
 		virtual void bindRefs() override;
 
 		std::shared_ptr<Skeleton> m_skeleton;
+		Skeleton m_skeleton_inst;
+
 		std::shared_ptr<class AnimationComponent> m_animation_component;
 		std::shared_ptr<class SkeletalMeshComponent> m_skeletal_mesh_component;
 		SkeletalMeshUBO m_skeletal_mesh_ubo;

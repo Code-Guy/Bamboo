@@ -15,9 +15,9 @@ namespace Bamboo
 
 		const auto& getCameraEntity() { return m_camera_entity; }
 		const auto& getEntities() const { return m_entities; }
-		std::shared_ptr<Entity> getEntity(uint32_t id);
+		const std::shared_ptr<Entity>& getEntity(uint32_t id);
 
-		std::shared_ptr<Entity> createEntity(const std::string& name);
+		const std::shared_ptr<Entity>& createEntity(const std::string& name);
 		bool removeEntity(uint32_t id);
 
 	private:

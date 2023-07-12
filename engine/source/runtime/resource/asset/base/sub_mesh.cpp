@@ -5,7 +5,6 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::SubMesh>("SubMesh")
-	 .constructor<>()
 	 .property("m_material", &Bamboo::SubMesh::m_material);
 }
 

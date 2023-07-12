@@ -1,6 +1,14 @@
 #include "transform_component.h"
 #include "runtime/function/framework/entity/entity.h"
 
+RTTR_REGISTRATION
+{
+rttr::registration::class_<Bamboo::TransformComponent>("TransformComponent")
+	 .property("m_position", &Bamboo::TransformComponent::m_position)
+	 .property("m_rotation", &Bamboo::TransformComponent::m_rotation)
+	 .property("m_scale", &Bamboo::TransformComponent::m_scale);
+}
+
 CEREAL_REGISTER_TYPE(Bamboo::TransformComponent)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::TransformComponent)
 

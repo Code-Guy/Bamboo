@@ -109,8 +109,8 @@ namespace Bamboo
 
 		// get camera entity
 		const auto& camera_entity = current_world->getCameraEntity();
-		auto camera_transform_component = camera_entity->getComponent<TransformComponent>();
-		auto camera_component = camera_entity->getComponent<CameraComponent>();
+		auto camera_transform_component = camera_entity->getComponent(TransformComponent);
+		auto camera_component = camera_entity->getComponent(CameraComponent);
 
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
@@ -119,13 +119,13 @@ namespace Bamboo
 			const auto& entity = iter.second;
 
 			// get static/skeletal mesh component render data
-			auto static_mesh_component = entity->getComponent<StaticMeshComponent>();
-			auto skeletal_mesh_component = entity->getComponent<SkeletalMeshComponent>();
+			auto static_mesh_component = entity->getComponent(StaticMeshComponent);
+			auto skeletal_mesh_component = entity->getComponent(SkeletalMeshComponent);
 
 			if (static_mesh_component || skeletal_mesh_component)
 			{
 				// get transform component
-				auto transform_component = entity->getComponent<TransformComponent>();
+				auto transform_component = entity->getComponent(TransformComponent);
 
 				std::shared_ptr<Mesh> mesh = nullptr;
 				if (static_mesh_component)

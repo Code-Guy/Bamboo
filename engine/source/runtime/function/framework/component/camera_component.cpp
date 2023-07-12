@@ -8,25 +8,22 @@
 #include <algorithm>
 #include <functional>
 
+RTTR_REGISTRATION
+{
+rttr::registration::class_<Bamboo::CameraComponent>("CameraComponent")
+	 .property("m_fovy", &Bamboo::CameraComponent::m_fovy)
+	 .property("m_near", &Bamboo::CameraComponent::m_near)
+	 .property("m_far", &Bamboo::CameraComponent::m_far)
+	 .property("m_move_speed", &Bamboo::CameraComponent::m_move_speed)
+	 .property("m_turn_speed", &Bamboo::CameraComponent::m_turn_speed)
+	 .property("m_zoom_speed", &Bamboo::CameraComponent::m_zoom_speed);
+}
+
 CEREAL_REGISTER_TYPE(Bamboo::CameraComponent)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::CameraComponent)
 
 namespace Bamboo
 {
-	CameraComponent::CameraComponent()
-	{
-		m_move_forward = false;
-		m_move_back = false;
-		m_move_left = false;
-		m_move_right = false;
-		m_move_up = false;
-		m_move_down = false;
-
-		m_mouse_in_content = false;
-		m_mouse_right_button_pressed = false;
-
-		m_last_xpos = m_last_ypos = 0.0f;
-	}
 
 	void CameraComponent::setContentRegion(const glm::uvec4& content_region)
 	{
@@ -85,7 +82,7 @@ namespace Bamboo
 	void CameraComponent::inflate()
 	{
 		// get transform component
-		m_transform_component = m_parent.lock()->getComponent<TransformComponent>();
+		m_transform_component = m_parent.lock()->getComponent(TransformComponent);
 
 		// bind camera input callbacks
 		g_runtime_context.eventSystem()->addListener(EventType::WindowKey, std::bind(&CameraComponent::onKey, this, std::placeholders::_1));

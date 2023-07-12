@@ -8,12 +8,12 @@ namespace Bamboo
 	class AnimationComponent : public Component, public IAssetRef
 	{
 	public:
+		REGISTER_COMPONENT(AnimationComponent)
+
 		void addAnimation(std::shared_ptr<Animation>& animation);
 		const std::vector<std::shared_ptr<Animation>>& getAnimations() { return m_animations; }
 
 	private:
-		RTTR_REGISTRATION_FRIEND
-		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
 		{

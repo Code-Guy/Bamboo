@@ -35,25 +35,27 @@ namespace Bamboo
 			entity->m_world = weak_from_this();
 			entity->inflate();
 
-			if (!m_camera_entity && entity->hasComponent<CameraComponent>())
+			if (!m_camera_entity && entity->hasComponent(CameraComponent))
 			{
 				m_camera_entity = entity;
 			}
 		}
 	}
 
-	std::shared_ptr<Entity> World::getEntity(uint32_t id)
+	const std::shared_ptr<Entity>& World::getEntity(uint32_t id)
 	{
-		auto iter = m_entities.find(id);
+		static std::shared_ptr<Entity> null_entity = nullptr;
+
+		const auto& iter = m_entities.find(id);
 		if (iter != m_entities.end())
 		{
 			return iter->second;
 		}
 
-		return nullptr;
+		return null_entity;
 	}
 
-	std::shared_ptr<Entity> World::createEntity(const std::string& name)
+	const std::shared_ptr<Entity>& World::createEntity(const std::string& name)
 	{
 		std::shared_ptr<Entity> entity = std::shared_ptr<Entity>(new Entity);
 		entity->m_id = m_entity_counter++;
@@ -61,7 +63,7 @@ namespace Bamboo
 		entity->m_world = weak_from_this();
 
 		m_entities[entity->m_id] = entity;
-		return entity;
+		return m_entities[entity->m_id];
 	}
 
 	bool World::removeEntity(uint32_t id)
