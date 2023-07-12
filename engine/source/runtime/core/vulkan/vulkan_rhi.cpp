@@ -1,4 +1,5 @@
 #include "vulkan_rhi.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/function/render/window_system.h"
 
 #include <array>
@@ -273,10 +274,7 @@ namespace Bamboo
 		}
 
 		// 2.create render passes' swapchain related objects
-		if (m_callbacks.on_create_swapchain_objects_func)
-		{
-			m_callbacks.on_create_swapchain_objects_func(m_extent.width, m_extent.height);
-		}
+		g_runtime_context.eventSystem()->syncDispatch(std::make_shared<RenderCreateSwapchainObjectsEvent>(m_extent.width, m_extent.height));
 	}
 
 	void VulkanRHI::destroySwapchainObjects()
@@ -288,7 +286,7 @@ namespace Bamboo
 		}
 
 		// 2.destroy render passes' swapchain related objects
-		m_callbacks.on_destroy_swapchain_objects_func();
+		g_runtime_context.eventSystem()->syncDispatch(std::make_shared<RenderDestroySwapchainObjectsEvent>());
 	}
 
 	void VulkanRHI::recreateSwapchain()
@@ -403,7 +401,7 @@ namespace Bamboo
 		vkBeginCommandBuffer(command_buffer, &command_buffer_bi);
 
 		// record all render passes
-		m_callbacks.on_record_frame_func(command_buffer, m_flight_index);
+		g_runtime_context.eventSystem()->syncDispatch(std::make_shared<RenderRecordFrameEvent>(command_buffer, m_flight_index));
 
 		vkEndCommandBuffer(command_buffer);
 	}

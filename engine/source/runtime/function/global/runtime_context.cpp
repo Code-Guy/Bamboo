@@ -1,8 +1,9 @@
 #include "runtime_context.h"
 #include "runtime/platform/timer/timer.h"
 #include "runtime/platform/file/file_system.h"
-#include "runtime/resource/config/config_manager.h"
 #include "runtime/core/log/log_system.h"
+#include "runtime/core/config/config_manager.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/function/render/window_system.h"
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/function/render/render_system.h"
@@ -27,6 +28,9 @@ namespace Bamboo
 
         m_config_manager = std::make_shared<ConfigManager>();
         m_config_manager->init();
+
+		m_event_system = std::make_shared<EventSystem>();
+        m_event_system->init();
 
         m_window_system = std::make_shared<WindowSystem>();
         m_window_system->init();
@@ -58,6 +62,7 @@ namespace Bamboo
         m_shader_manager->destroy();
         VulkanRHI::get().destroy();
 		m_window_system->destroy();
+        m_event_system->destroy();
         m_config_manager->destroy();
         m_log_system->destroy();
 		m_file_system->destroy();

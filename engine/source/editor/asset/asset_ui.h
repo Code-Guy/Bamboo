@@ -35,7 +35,7 @@ namespace Bamboo
 		void pollFolders();
 		void pollSelectedFolder(std::string selected_folder = "");
 
-		void onDropFiles(int n, const char** filenames);
+		void onDropFiles(const std::shared_ptr<class Event>& event);
 
 		// icon images
 		std::map<EAssetType, std::shared_ptr<ImGuiImage>> m_asset_images;

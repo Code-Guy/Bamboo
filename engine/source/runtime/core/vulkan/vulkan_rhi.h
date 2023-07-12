@@ -9,13 +9,6 @@
 
 namespace Bamboo
 {
-	struct VulkanRHICallbacks
-	{
-		std::function<void(uint32_t width, uint32_t height)> on_create_swapchain_objects_func;
-		std::function<void()> on_destroy_swapchain_objects_func;
-		std::function<void(VkCommandBuffer command_buffer, uint32_t flight_index)> on_record_frame_func;
-	};
-
 	class VulkanRHI
 	{
 	public:
@@ -23,7 +16,6 @@ namespace Bamboo
 		void render();
 		void destroy();
 
-		void setCallbacks(const VulkanRHICallbacks& callbacks) { m_callbacks = callbacks; }
 		void waitDeviceIdle() { vkDeviceWaitIdle(m_device); }
 
 		VkInstance getInstance() { return m_instance; }
@@ -158,8 +150,5 @@ namespace Bamboo
 
 		// additional device extension functions
 		PFN_vkCmdPushDescriptorSetKHR m_vk_cmd_push_desc_set_func;
-
-		// vulkan callbacks to call functions outside
-		VulkanRHICallbacks m_callbacks;
 	};
 }

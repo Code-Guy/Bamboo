@@ -45,14 +45,24 @@ namespace Bamboo
 
 	void WorldUI::constructEntityTree(const std::shared_ptr<class Entity>& entity)
 	{
+		uint32_t entity_id = entity->getID();
+
 		ImGuiTreeNodeFlags tree_node_flags = 0;
 		tree_node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
 		if (entity->isLeaf())
 		{
 			tree_node_flags |= ImGuiTreeNodeFlags_Leaf;
 		}
-
+		if (entity_id == m_selected_entity_id)
+		{
+			tree_node_flags |= ImGuiTreeNodeFlags_Selected;
+		}
+		
 		ImGui::TreeNodeEx(entity->getName().c_str(), tree_node_flags);
+		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+		{
+			m_selected_entity_id = entity_id;
+		}
 
 		for (const auto& child : entity->getChildren())
 		{

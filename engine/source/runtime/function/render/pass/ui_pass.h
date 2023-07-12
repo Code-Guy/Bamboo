@@ -22,8 +22,6 @@ namespace Bamboo
 		virtual void createResizableObjects(uint32_t width, uint32_t height) override;
 		virtual void destroyResizableObjects() override;
 
-		void setConstructFunc(const std::function<void()>& construct_func) { m_construct_func = construct_func; }
-
 	private:
 		std::function<void()> m_construct_func;
 	};

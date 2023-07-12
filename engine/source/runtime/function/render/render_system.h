@@ -15,13 +15,12 @@ namespace Bamboo
 		void tick(float delta_time);
 		void destroy();
 
-		void setConstructUIFunc(const std::function<void()>& construct_ui_func);
 		std::shared_ptr<RenderPass> getRenderPass(ERenderPassType render_pass_type);
 
 	private:
-		void onCreateSwapchainObjects(uint32_t width, uint32_t height);
-		void onDestroySwapchainObjects();
-		void onRecordFrame(VkCommandBuffer command_buffer, uint32_t flight_index);
+		void onCreateSwapchainObjects(const std::shared_ptr<class Event>& event);
+		void onDestroySwapchainObjects(const std::shared_ptr<class Event>& event);
+		void onRecordFrame(const std::shared_ptr<class Event>& event);
 
 		void collectRenderDatas();
 

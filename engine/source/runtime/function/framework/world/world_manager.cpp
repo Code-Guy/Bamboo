@@ -1,7 +1,7 @@
 #include "world_manager.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/function/global/runtime_context.h"
-#include "runtime/resource/config/config_manager.h"
+#include "runtime/core/config/config_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/resource/asset/skeletal_mesh.h"
 #include "runtime/resource/asset/texture_2d.h"

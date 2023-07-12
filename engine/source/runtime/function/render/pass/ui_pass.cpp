@@ -1,6 +1,7 @@
 #include "ui_pass.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/function/render/window_system.h"
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
@@ -91,10 +92,7 @@ namespace Bamboo
 		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
 
 		// construct imgui widgets
-		if (m_construct_func)
-		{
-			m_construct_func();
-		}
+		g_runtime_context.eventSystem()->syncDispatch(std::make_shared<RenderConstructUIEvent>());
 
 		// calculate imgui draw data
 		ImGui::Render();

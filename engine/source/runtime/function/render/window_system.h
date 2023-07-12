@@ -23,29 +23,6 @@ namespace Bamboo
 		void getScreenSize(int& width, int& height);
 		void getMousePos(int& x, int& y);
 
-		typedef std::function<void()> OnResetFunc;
-		typedef std::function<void(int, int, int, int)> OnKeyFunc;
-		typedef std::function<void(unsigned int)> OnCharFunc;
-		typedef std::function<void(int, unsigned int)> OnCharModsFunc;
-		typedef std::function<void(int, int, int)> OnMouseButtonFunc;
-		typedef std::function<void(double, double)> OnCursorPosFunc;
-		typedef std::function<void(int)> OnCursorEnterFunc;
-		typedef std::function<void(double, double)> OnScrollFunc;
-		typedef std::function<void(int, const char**)> OnDropFunc;
-		typedef std::function<void(int, int)> OnWindowSizeFunc;
-		typedef std::function<void()> OnWindowCloseFunc;
-
-		void registerOnKeyFunc(OnKeyFunc func) { m_onKeyFuncs.push_back(func); }
-		void registerOnCharFunc(OnCharFunc func) { m_onCharFuncs.push_back(func); }
-		void registerOnCharModsFunc(OnCharModsFunc func) { m_onCharModsFuncs.push_back(func); }
-		void registerOnMouseButtonFunc(OnMouseButtonFunc func) { m_onMouseButtonFuncs.push_back(func); }
-		void registerOnCursorPosFunc(OnCursorPosFunc func) { m_onCursorPosFuncs.push_back(func); }
-		void registerOnCursorEnterFunc(OnCursorEnterFunc func) { m_onCursorEnterFuncs.push_back(func); }
-		void registerOnScrollFunc(OnScrollFunc func) { m_onScrollFuncs.push_back(func); }
-		void registerOnDropFunc(OnDropFunc func) { m_onDropFuncs.push_back(func); }
-		void registerOnWindowSizeFunc(OnWindowSizeFunc func) { m_onWindowSizeFuncs.push_back(func); }
-		void registerOnWindowCloseFunc(OnWindowCloseFunc func) { m_onWindowCloseFuncs.push_back(func); }
-
 		bool isMouseButtonDown(int button);
 		bool getIsFocus() const { return m_is_focus; }
 		void setIsFocus(bool is_focus);
@@ -68,16 +45,5 @@ namespace Bamboo
 		int m_mouse_pos_x;
 		int m_mouse_pos_y;
 		bool m_is_focus;
-
-		std::vector<OnKeyFunc>         m_onKeyFuncs;
-		std::vector<OnCharFunc>        m_onCharFuncs;
-		std::vector<OnCharModsFunc>    m_onCharModsFuncs;
-		std::vector<OnMouseButtonFunc> m_onMouseButtonFuncs;
-		std::vector<OnCursorPosFunc>   m_onCursorPosFuncs;
-		std::vector<OnCursorEnterFunc> m_onCursorEnterFuncs;
-		std::vector<OnScrollFunc>      m_onScrollFuncs;
-		std::vector<OnDropFunc>        m_onDropFuncs;
-		std::vector<OnWindowSizeFunc>  m_onWindowSizeFuncs;
-		std::vector<OnWindowCloseFunc> m_onWindowCloseFuncs;
 	};
 }

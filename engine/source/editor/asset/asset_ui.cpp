@@ -1,7 +1,7 @@
 #include "asset_ui.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/platform/timer/timer.h"
-#include "runtime/function/render/window_system.h"
+#include "runtime/core/event/event_system.h"
 #include <queue>
 
 namespace Bamboo
@@ -32,7 +32,7 @@ namespace Bamboo
 		m_non_empty_folder_image = loadImGuiImage(fs->absolute("asset/engine/texture/asset/non_empty_folder.png"));
 
 		// register drop callback
-		g_runtime_context.windowSystem()->registerOnDropFunc(std::bind(&AssetUI::onDropFiles, this, std::placeholders::_1, std::placeholders::_2));
+		g_runtime_context.eventSystem()->addListener(EventType::WindowDrop, std::bind(&AssetUI::onDropFiles, this, std::placeholders::_1));
 	}
 
 	void AssetUI::construct()
@@ -485,23 +485,22 @@ namespace Bamboo
 		}
 	}
 
-	void AssetUI::onDropFiles(int n, const char** filenames)
+	void AssetUI::onDropFiles(const std::shared_ptr<class Event>& event)
 	{
-		int mouse_pos_x, mouse_pos_y;
-		g_runtime_context.windowSystem()->getMousePos(mouse_pos_x, mouse_pos_y);
-
-		if (mouse_pos_x < m_folder_rect.x ||
-			mouse_pos_x > m_folder_rect.y ||
-			mouse_pos_y < m_folder_rect.z ||
-			mouse_pos_y > m_folder_rect.w)
+		const WindowDropEvent* drop_event = static_cast<const WindowDropEvent*>(event.get());
+		if (drop_event->xpos < m_folder_rect.x ||
+			drop_event->xpos > m_folder_rect.y ||
+			drop_event->ypos < m_folder_rect.z ||
+			drop_event->ypos > m_folder_rect.w)
 		{
 			return;
 		}
 
 		m_imported_files.clear();
-		for (int i = 0; i < n; ++i)
+		for (int i = 0; i < drop_event->count; ++i)
 		{
-			m_imported_files.push_back(filenames[i]);
+			m_imported_files.push_back(drop_event->paths[i]);
 		}
 	}
+
 }

@@ -1,6 +1,6 @@
 #include "menu_ui.h"
 #include "runtime/core/base/macro.h"
-#include "runtime/resource/config/config_manager.h"
+#include "runtime/core/config/config_manager.h"
 #include <imgui/imgui_internal.h>
 
 namespace Bamboo

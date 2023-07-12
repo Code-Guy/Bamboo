@@ -1,6 +1,7 @@
 #include "window_system.h"
 #include "runtime/core/base/macro.h"
-#include "runtime/resource/config/config_manager.h"
+#include "runtime/core/config/config_manager.h"
+#include "runtime/core/event/event_system.h"
 
 namespace Bamboo
 {
@@ -100,38 +101,22 @@ namespace Bamboo
 
 	void WindowSystem::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
-		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
-		for (auto& func : window_system->m_onKeyFuncs)
-		{
-			func(key, scancode, action, mods);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowKeyEvent>(key, scancode, action, mods));
 	}
 
 	void WindowSystem::charCallback(GLFWwindow* window, unsigned int codepoint)
 	{
-		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
-		for (auto& func : window_system->m_onCharFuncs)
-		{
-			func(codepoint);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowCharEvent>(codepoint));
 	}
 
 	void WindowSystem::charModsCallback(GLFWwindow* window, unsigned int codepoint, int mods)
 	{
-		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
-		for (auto& func : window_system->m_onCharModsFuncs)
-		{
-			func(codepoint, mods);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowCharModsEvent>(codepoint, mods));
 	}
 
 	void WindowSystem::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 	{
-		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
-		for (auto& func : window_system->m_onMouseButtonFuncs)
-		{
-			func(button, action, mods);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowMouseButtonEvent>(button, action, mods));
 	}
 
 	void WindowSystem::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
@@ -140,46 +125,29 @@ namespace Bamboo
 		window_system->m_mouse_pos_x = xpos;
 		window_system->m_mouse_pos_y = ypos;
 
-		for (auto& func : window_system->m_onCursorPosFuncs)
-		{
-			func(xpos, ypos);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowCursorPosEvent>(xpos, ypos));
 	}
 
 	void WindowSystem::cursorEnterCallback(GLFWwindow* window, int entered)
 	{
-		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
-		for (auto& func : window_system->m_onCursorEnterFuncs)
-		{
-			func(entered);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowCursorEnterEvent>(entered));
 	}
 
 	void WindowSystem::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	{
-		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
-		for (auto& func : window_system->m_onScrollFuncs)
-		{
-			func(xoffset, yoffset);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowScrollEvent>(xoffset, yoffset));
 	}
 
 	void WindowSystem::dropCallback(GLFWwindow* window, int count, const char** paths)
 	{
 		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
-		for (auto& func : window_system->m_onDropFuncs)
-		{
-			func(count, paths);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowDropEvent>(count, paths, 
+			window_system->m_mouse_pos_x, window_system->m_mouse_pos_y));
 	}
 
 	void WindowSystem::windowSizeCallback(GLFWwindow* window, int width, int height)
 	{
-		WindowSystem* window_system = (WindowSystem*)glfwGetWindowUserPointer(window);
-		for (auto& func : window_system->m_onWindowSizeFuncs)
-		{
-			func(width, height);
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<WindowSizeEvent>(width, height));
 	}
 
 	void WindowSystem::windowCloseCallback(GLFWwindow* window)

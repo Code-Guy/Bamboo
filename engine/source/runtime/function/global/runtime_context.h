@@ -15,6 +15,7 @@ namespace Bamboo
 			const auto& fileSystem() { return m_file_system; }
 			const auto& logSystem() { return m_log_system; }
             const auto& configManager() { return m_config_manager; }
+            const auto& eventSystem() { return m_event_system; }
             const auto& windowSystem() { return m_window_system; }
             const auto& shaderManager() { return m_shader_manager; }
             const auto& assetManager() { return m_asset_manager; }
@@ -29,6 +30,7 @@ namespace Bamboo
 			std::shared_ptr<class FileSystem> m_file_system;
 			std::shared_ptr<class LogSystem> m_log_system;
             std::shared_ptr<class ConfigManager> m_config_manager;
+            std::shared_ptr<class EventSystem> m_event_system;
 			std::shared_ptr<class WindowSystem> m_window_system;
 			std::shared_ptr<class ShaderManager> m_shader_manager;
 			std::shared_ptr<class AssetManager> m_asset_manager;

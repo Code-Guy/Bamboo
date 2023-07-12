@@ -1,5 +1,6 @@
 #include "render_system.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
 
@@ -24,11 +25,12 @@ namespace Bamboo
 		}
 
 		// set vulkan rhi callback functions
-		VulkanRHI::get().setCallbacks({
-			std::bind(&RenderSystem::onCreateSwapchainObjects, this, std::placeholders::_1, std::placeholders::_2),
-			std::bind(&RenderSystem::onDestroySwapchainObjects, this),
-			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1, std::placeholders::_2),
-			});
+		g_runtime_context.eventSystem()->addListener(EventType::RenderCreateSwapchainObjects, 
+			std::bind(&RenderSystem::onCreateSwapchainObjects, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EventType::RenderDestroySwapchainObjects,
+			std::bind(&RenderSystem::onDestroySwapchainObjects, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EventType::RenderRecordFrame,
+			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1));
 
 		// get dummy texture2d
 		m_dummy_texture = g_runtime_context.assetManager()->loadAsset<Texture2D>("asset/engine/texture/material/tex_dummy.tex");
@@ -52,25 +54,21 @@ namespace Bamboo
 		m_dummy_texture.reset();
 	}
 
-	void RenderSystem::setConstructUIFunc(const std::function<void()>& construct_ui_func)
-	{
-		std::dynamic_pointer_cast<UIPass>(m_render_passes[ERenderPassType::UI])->setConstructFunc(construct_ui_func);
-	}
-
 	std::shared_ptr<RenderPass> RenderSystem::getRenderPass(ERenderPassType render_pass_type)
 	{
 		return m_render_passes[render_pass_type];
 	}
 
-	void RenderSystem::onCreateSwapchainObjects(uint32_t width, uint32_t height)
+	void RenderSystem::onCreateSwapchainObjects(const std::shared_ptr<class Event>& event)
 	{
+		const RenderCreateSwapchainObjectsEvent* p_event = static_cast<const RenderCreateSwapchainObjectsEvent*>(event.get());
 		if (m_render_passes.find(ERenderPassType::UI) != m_render_passes.end())
 		{
-			m_render_passes[ERenderPassType::UI]->createResizableObjects(width, height);
+			m_render_passes[ERenderPassType::UI]->createResizableObjects(p_event->width, p_event->height);
 		}
 	}
 
-	void RenderSystem::onDestroySwapchainObjects()
+	void RenderSystem::onDestroySwapchainObjects(const std::shared_ptr<class Event>& event)
 	{
 		if (m_render_passes.find(ERenderPassType::UI) != m_render_passes.end())
 		{
@@ -78,8 +76,10 @@ namespace Bamboo
 		}
 	}
 
-	void RenderSystem::onRecordFrame(VkCommandBuffer command_buffer, uint32_t flight_index)
+	void RenderSystem::onRecordFrame(const std::shared_ptr<class Event>& event)
 	{
+		const RenderRecordFrameEvent* p_event = static_cast<const RenderRecordFrameEvent*>(event.get());
+
 		// render pass preparation
 		for (auto& render_pass : m_render_passes)
 		{
@@ -94,7 +94,7 @@ namespace Bamboo
 		{
 			if (!render_pass.second->isMinimize())
 			{
-				render_pass.second->render(command_buffer, flight_index);
+				render_pass.second->render(p_event->command_buffer, p_event->flight_index);
 			}
 		}
 	}

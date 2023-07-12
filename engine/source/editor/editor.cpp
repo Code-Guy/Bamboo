@@ -9,8 +9,8 @@
 #include "runtime/engine.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/resource/asset/asset_manager.h"
-#include "runtime/function/render/render_system.h"
 
 namespace Bamboo
 {
@@ -34,7 +34,7 @@ namespace Bamboo
 		}
 
         // set construct ui function to UIPass through RenderSystem
-        g_runtime_context.renderSystem()->setConstructUIFunc([this]() {
+        g_runtime_context.eventSystem()->addListener(EventType::RenderConstructUI, [this](const EventPointer& event) {
             for (auto& editor_ui : m_editor_uis)
             {
                 editor_ui->construct();

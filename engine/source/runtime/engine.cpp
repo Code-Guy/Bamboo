@@ -1,9 +1,10 @@
 #include "engine.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/platform/timer/timer.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/function/render/window_system.h"
 #include "runtime/function/render/render_system.h"
 #include "runtime/function/framework/world/world_manager.h"
-#include "runtime/platform/timer/timer.h"
 
 namespace Bamboo
 {
@@ -53,6 +54,7 @@ namespace Bamboo
     void Engine::logicTick(float delta_time)
     {
         g_runtime_context.timerManager()->tick(delta_time);
+        g_runtime_context.eventSystem()->tick();
         g_runtime_context.worldManager()->tick(delta_time);
     }
 

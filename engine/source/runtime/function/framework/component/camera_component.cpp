@@ -1,9 +1,10 @@
 #include "camera_component.h"
 #include "transform_component.h"
 #include "runtime/core/base/macro.h"
-#include "runtime/function/render/window_system.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/function/framework/entity/entity.h"
 
+#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <functional>
 
@@ -87,56 +88,54 @@ namespace Bamboo
 		m_transform_component = m_parent.lock()->getComponent<TransformComponent>();
 
 		// bind camera input callbacks
-		g_runtime_context.windowSystem()->registerOnKeyFunc(std::bind(&CameraComponent::onKey, this,
-			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-		g_runtime_context.windowSystem()->registerOnCursorPosFunc(std::bind(&CameraComponent::onCursorPos, this,
-			std::placeholders::_1, std::placeholders::_2));
-		g_runtime_context.windowSystem()->registerOnMouseButtonFunc(std::bind(&CameraComponent::onMouseButton, this,
-			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-		g_runtime_context.windowSystem()->registerOnScrollFunc(std::bind(&CameraComponent::onScroll, this,
-			std::placeholders::_1, std::placeholders::_2));
+		g_runtime_context.eventSystem()->addListener(EventType::WindowKey, std::bind(&CameraComponent::onKey, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EventType::WindowCursorPos, std::bind(&CameraComponent::onCursorPos, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EventType::WindowMouseButton, std::bind(&CameraComponent::onMouseButton, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EventType::WindowScroll, std::bind(&CameraComponent::onScroll, this, std::placeholders::_1));
 
 		// update camera pose
 		updatePose();
 	}
 
-	void CameraComponent::onKey(int key, int scancode, int action, int mods)
+	void CameraComponent::onKey(const std::shared_ptr<class Event>& event)
 	{
-		if (action != GLFW_PRESS && action != GLFW_RELEASE)
+		const WindowKeyEvent* key_event = static_cast<const WindowKeyEvent*>(event.get());
+		if (key_event->action != GLFW_PRESS && key_event->action != GLFW_RELEASE)
 		{
 			return;
 		}
 
-		bool is_pressed = action == GLFW_PRESS;
-		if (key == GLFW_KEY_W)
+		bool is_pressed = key_event->action == GLFW_PRESS;
+		if (key_event->key == GLFW_KEY_W)
 		{
 			m_move_forward = is_pressed;
 		}
-		if (key == GLFW_KEY_S)
+		if (key_event->key == GLFW_KEY_S)
 		{
 			m_move_back = is_pressed;
 		}
-		if (key == GLFW_KEY_A)
+		if (key_event->key == GLFW_KEY_A)
 		{
 			m_move_left = is_pressed;
 		}
-		if (key == GLFW_KEY_D)
+		if (key_event->key == GLFW_KEY_D)
 		{
 			m_move_right = is_pressed;
 		}
-		if (key == GLFW_KEY_Q)
+		if (key_event->key == GLFW_KEY_Q)
 		{
 			m_move_up = is_pressed;
 		}
-		if (key == GLFW_KEY_E)
+		if (key_event->key == GLFW_KEY_E)
 		{
 			m_move_down = is_pressed;
 		}
 	}
 
-	void CameraComponent::onCursorPos(double xpos, double ypos)
+	void CameraComponent::onCursorPos(const std::shared_ptr<class Event>& event)
 	{
-		m_mouse_in_content = isInContentRegion(xpos, ypos);
+		const WindowCursorPosEvent* cursor_pos_event = static_cast<const WindowCursorPosEvent*>(event.get());
+		m_mouse_in_content = isInContentRegion(cursor_pos_event->xpos, cursor_pos_event->ypos);
 		if (!m_mouse_right_button_pressed)
 		{
 			return;
@@ -153,14 +152,14 @@ namespace Bamboo
 
 		if (m_last_xpos != 0.0)
 		{
-			xoffset = xpos - m_last_xpos;
+			xoffset = cursor_pos_event->xpos - m_last_xpos;
 		}
 		if (m_last_ypos != 0.0)
 		{
-			yoffset = ypos - m_last_ypos;
+			yoffset = cursor_pos_event->ypos - m_last_ypos;
 		}
-		m_last_xpos = xpos;
-		m_last_ypos = ypos;
+		m_last_xpos = cursor_pos_event->xpos;
+		m_last_ypos = cursor_pos_event->ypos;
 
 		xoffset *= m_turn_speed;
 		yoffset *= m_turn_speed;
@@ -174,27 +173,29 @@ namespace Bamboo
 		updatePose();
 	}
 
-	void CameraComponent::onMouseButton(int button, int action, int mods)
+	void CameraComponent::onMouseButton(const std::shared_ptr<class Event>& event)
 	{
-		if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_RIGHT)
+		const WindowMouseButtonEvent* mouse_button_event = static_cast<const WindowMouseButtonEvent*>(event.get());
+		if (mouse_button_event->action == GLFW_PRESS && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
 		{
 			m_mouse_right_button_pressed = true;
 		}
-		if (action == GLFW_RELEASE && button == GLFW_MOUSE_BUTTON_RIGHT)
+		if (mouse_button_event->action == GLFW_RELEASE && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
 		{
 			m_mouse_right_button_pressed = false;
 			m_last_xpos = m_last_ypos = 0.0;
 		}
 	}
 
-	void CameraComponent::onScroll(double xoffset, double yoffset)
+	void CameraComponent::onScroll(const std::shared_ptr<class Event>& event)
 	{
+		const WindowScrollEvent* scroll_event = static_cast<const WindowScrollEvent*>(event.get());
 		if (!m_mouse_in_content)
 		{
 			return;
 		}
 
-		m_transform_component->m_position += m_forward * (float)yoffset * m_zoom_speed;
+		m_transform_component->m_position += m_forward * (float)scroll_event->yoffset * m_zoom_speed;
 	}
 
 	void CameraComponent::updatePose()

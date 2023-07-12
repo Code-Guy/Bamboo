@@ -52,10 +52,10 @@ namespace Bamboo
 			ar(cereal::make_nvp("zoom_speed", m_zoom_speed));
 		}
 
-		void onKey(int key, int scancode, int action, int mods);
-		void onCursorPos(double xpos, double ypos);
-		void onMouseButton(int button, int action, int mods);
-		void onScroll(double xoffset, double yoffset);
+		void onKey(const std::shared_ptr<class Event>& event);
+		void onCursorPos(const std::shared_ptr<class Event>& event);
+		void onMouseButton(const std::shared_ptr<class Event>& event);
+		void onScroll(const std::shared_ptr<class Event>& event);
 
 		void updatePose();
 		bool isInContentRegion(double xpos, double ypos);
