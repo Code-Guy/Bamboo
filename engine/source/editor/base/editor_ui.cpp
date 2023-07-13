@@ -58,6 +58,7 @@ namespace Bamboo
 
 		VulkanUtil::createImageViewSampler(image->width, image->height, image_data, 1, true,
 			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, image->image_view_sampler);
+		stbi_image_free(image_data);
 
 		image->desc_set = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		m_imgui_images[filename] = image;

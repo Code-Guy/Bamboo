@@ -44,16 +44,19 @@ namespace Bamboo
 	{
 		// construct name title
 		ImGuiTreeNodeFlags tree_node_flags = 0;
-		tree_node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
-		ImGui::TreeNodeEx(component->getTypeName().c_str(), tree_node_flags);
+		tree_node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed;
 
-// 		for (auto& prop : rttr::type::get(b).get_properties())
-// 		{
-// 			std::cout << "name: " << prop.get_name() << std::endl;
-// 			std::cout << "type: " << prop.get_type().get_name() << std::endl;
-// 		}
-
-		ImGui::TreePop();
+		const std::string& type_name = component->getTypeName();
+		std::string title = type_name.substr(0, type_name.length() - 9);
+		if (ImGui::TreeNodeEx(title.c_str(), tree_node_flags))
+		{
+			for (auto& prop : rttr::type::get(*component.get()).get_properties())
+			{
+				std::string prop_type_name = prop.get_type().get_name().to_string();
+				ImGui::Text(prop_type_name.c_str());
+			}
+			ImGui::TreePop();
+		}
 	}
 
 	void PropertyUI::onSelectEntity(const std::shared_ptr<class Event>& event)

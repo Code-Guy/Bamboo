@@ -5,7 +5,7 @@
 
 #include "importer/gltf_importer.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "tinygltf/stb_image.h"
+#include <tinygltf/stb_image.h>
 
 #include <fstream>
 
@@ -73,6 +73,7 @@ namespace Bamboo
 		size_t image_size = width * height * IMAGE_COMPONENT;
 		texture->m_image_data.resize(image_size);
 		memcpy(texture->m_image_data.data(), image_data, image_size);
+		stbi_image_free(image_data);
 
 		texture->inflate();
 		serializeAsset(texture);

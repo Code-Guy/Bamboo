@@ -3,6 +3,8 @@
 #include "runtime/core/config/config_manager.h"
 #include "runtime/core/event/event_system.h"
 
+#include <tinygltf/stb_image.h>
+
 namespace Bamboo
 {
 	void WindowSystem::init()
@@ -40,7 +42,14 @@ namespace Bamboo
 		glfwSetWindowSizeCallback(m_window, windowSizeCallback);
 		glfwSetWindowCloseCallback(m_window, windowCloseCallback);
 
+		// set input mode
 		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+
+		// set window icon
+		GLFWimage images[1];
+		images[0].pixels = stbi_load(TO_ABSOLUTE("asset/engine/texture/icon/bamboo_small.png").c_str(), &images[0].width, &images[0].height, 0, 4);
+		glfwSetWindowIcon(m_window, 1, images);
+		stbi_image_free(images[0].pixels);
 	}
 
 	void WindowSystem::destroy()

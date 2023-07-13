@@ -1,10 +1,10 @@
 # custom
 build/
 engine/log/
-engine/asset
-!engine/asset/engine
-engine/asset/engine/spv
-!engine/asset/world
+engine/asset/*
+!engine/asset/engine/
+!engine/asset/world/
+engine/asset/engine/spv/
 
 # mac
 cpm_modules/

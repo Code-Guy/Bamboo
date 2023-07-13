@@ -14,6 +14,6 @@ namespace Bamboo
 	private:
 		void constructEntityTree(const std::shared_ptr<class Entity>& entity);
 
-		uint32_t m_selected_entity_id;
+		uint32_t m_selected_entity_id = UINT_MAX;
 	};
 }
