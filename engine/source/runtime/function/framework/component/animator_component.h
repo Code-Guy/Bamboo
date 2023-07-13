@@ -9,8 +9,6 @@ namespace Bamboo
 	class AnimatorComponent : public Component, public IAssetRef
 	{
 	public:
-		REGISTER_COMPONENT(AnimatorComponent)
-
 		void setSkeleton(std::shared_ptr<Skeleton>& skeleton);
 		std::shared_ptr<Skeleton> getSkeleton() { return m_skeleton; }
 
@@ -19,6 +17,8 @@ namespace Bamboo
 		void play(bool loop = true);
 
 	private:
+		REGISTER_COMPONENT
+
 		template<class Archive>
 		void serialize(Archive& ar)
 		{

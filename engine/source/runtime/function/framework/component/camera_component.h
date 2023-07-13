@@ -10,8 +10,6 @@ namespace Bamboo
 	class CameraComponent : public Component
 	{
 	public:
-		REGISTER_COMPONENT(CameraComponent)
-
 		void setContentRegion(const glm::uvec4& content_region);
 
 		glm::mat4 getViewMatrix();
@@ -33,6 +31,8 @@ namespace Bamboo
 		float m_zoom_speed;
 
 	private:
+		REGISTER_COMPONENT
+
 		template<class Archive>
 		void serialize(Archive& ar)
 		{

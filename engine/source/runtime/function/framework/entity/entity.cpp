@@ -33,6 +33,10 @@ namespace Bamboo
 	{
 		for (auto& component : m_components)
 		{
+			// set component type name
+			component->setTypeName(rttr::type::get(*component.get()).get_name().to_string());
+
+			// attach to current entity
 			component->attach(weak_from_this());
 			component->inflate();
 		}
@@ -61,7 +65,10 @@ namespace Bamboo
 
 	void Entity::addComponent(std::shared_ptr<Component> component)
 	{
-		
+		// set component type name
+		component->setTypeName(rttr::type::get(*component.get()).get_name().to_string());
+
+		// attach to current entity
 		component->attach(weak_from_this());
 		m_components.push_back(component);
 	}

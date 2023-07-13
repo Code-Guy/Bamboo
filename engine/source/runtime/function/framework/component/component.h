@@ -47,15 +47,17 @@ namespace Bamboo
 		void attach(std::weak_ptr<Entity>& parent);
 		void dettach();
 		std::weak_ptr<Entity>& getParent() { return m_parent; }
+		const std::string& getTypeName() { return m_type_name; }
+		void setTypeName(const std::string& type_name) { m_type_name = type_name; }
 
 		virtual void inflate() {}
-		virtual const std::string& getTypeName() = 0;
 
 	protected:
 		std::weak_ptr<Entity> m_parent;
 		std::string m_type_name;
 
 	private:
+		RTTR_ENABLE()
 		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
@@ -65,14 +67,7 @@ namespace Bamboo
 	};
 }
 
-#define REGISTER_COMPONENT(TComponent) \
-		RTTR_REGISTRATION_FRIEND \
-		friend class cereal::access; \
-		virtual const std::string& ##TComponent::getTypeName() override \
-		{ \
-			if (m_type_name.empty()) \
-			{ \
-				m_type_name = #TComponent; \
-			} \
-			return m_type_name; \
-		}
+#define REGISTER_COMPONENT \
+	RTTR_REGISTRATION_FRIEND \
+	RTTR_ENABLE(Bamboo::Component) \
+	friend class cereal::access;

@@ -42,7 +42,18 @@ namespace Bamboo
 
 	void PropertyUI::constructComponent(const std::shared_ptr<class Component>& component)
 	{
-		
+		// construct name title
+		ImGuiTreeNodeFlags tree_node_flags = 0;
+		tree_node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
+		ImGui::TreeNodeEx(component->getTypeName().c_str(), tree_node_flags);
+
+// 		for (auto& prop : rttr::type::get(b).get_properties())
+// 		{
+// 			std::cout << "name: " << prop.get_name() << std::endl;
+// 			std::cout << "type: " << prop.get_type().get_name() << std::endl;
+// 		}
+
+		ImGui::TreePop();
 	}
 
 	void PropertyUI::onSelectEntity(const std::shared_ptr<class Event>& event)
