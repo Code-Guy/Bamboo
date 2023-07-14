@@ -23,6 +23,6 @@ namespace Bamboo
 		virtual void destroyResizableObjects() override;
 
 	private:
-		std::function<void()> m_construct_func;
+
 	};
 }

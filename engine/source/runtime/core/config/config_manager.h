@@ -16,6 +16,7 @@ namespace Bamboo
 
 		std::string getDefaultWorldUrl();
 		std::string getEditorLayout();
+		bool getSaveLayout();
 
 	private:
 		YAML::Node m_config_node;

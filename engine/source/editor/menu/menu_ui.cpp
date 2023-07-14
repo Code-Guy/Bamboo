@@ -12,8 +12,8 @@ namespace Bamboo
 
 		// load editor layout
 		std::string layout_name = g_runtime_context.configManager()->getEditorLayout();
-		std::string layout_path = g_runtime_context.fileSystem()->absolute("asset/engine/layout/" + layout_name);
-		ImGui::LoadIniSettingsFromDisk(layout_path.c_str());
+		m_layout_path = g_runtime_context.fileSystem()->absolute("asset/engine/layout/" + layout_name);
+		ImGui::LoadIniSettingsFromDisk(m_layout_path.c_str());
 	}
 
 	void MenuUI::construct()
@@ -58,6 +58,10 @@ namespace Bamboo
 	{
 		EditorUI::destroy();
 
+		if (g_runtime_context.configManager()->getSaveLayout())
+		{
+			ImGui::SaveIniSettingsToDisk(m_layout_path.c_str());
+		}
 	}
 
 	void MenuUI::constructFileMenu()

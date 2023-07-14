@@ -4,3 +4,4 @@ window:
 
 default_world_url: "asset/world/default.world"
 editor_layout: "default.layout"
+save_layout: false

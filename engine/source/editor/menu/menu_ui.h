@@ -34,5 +34,7 @@ namespace Bamboo
 
 		void editorSettings(); 
 		void projectSettings();
+
+		std::string m_layout_path;
 	};
 }

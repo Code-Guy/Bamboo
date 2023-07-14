@@ -28,4 +28,9 @@ namespace Bamboo
 		return m_config_node["editor_layout"].as<std::string>();
 	}
 
+	bool ConfigManager::getSaveLayout()
+	{
+		return m_config_node["save_layout"].as<bool>();
+	}
+
 }
