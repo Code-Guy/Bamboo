@@ -46,6 +46,7 @@ namespace Bamboo
 		EPropertyType getPropertyType(const rttr::type& type);
 
 		std::shared_ptr<class Entity> m_selected_entity;
+		std::shared_ptr<ImGuiImage> m_dummy_image;
 		std::map<EPropertyValueType, std::function<void(const std::string&, rttr::variant&)>> m_property_constructors;
 	};
 }

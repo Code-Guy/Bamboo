@@ -6,8 +6,12 @@ namespace Bamboo
 {
 	void ImGuiImage::destroy()
 	{
-		image_view_sampler.destroy();
-		ImGui_ImplVulkan_RemoveTexture(desc_set);
+		if (is_from_file)
+		{
+			image_view_sampler.destroy();
+		}
+		
+		ImGui_ImplVulkan_RemoveTexture(tex_id);
 	}
 
 	void EditorUI::destroy()
@@ -43,7 +47,7 @@ namespace Bamboo
 		}
 	}
 
-	std::shared_ptr<ImGuiImage> EditorUI::loadImGuiImage(const std::string& filename)
+	std::shared_ptr<ImGuiImage> EditorUI::loadImGuiImageFromFile(const std::string& filename)
 	{
 		if (m_imgui_images.find(filename) != m_imgui_images.end())
 		{
@@ -51,7 +55,7 @@ namespace Bamboo
 		}
 
 		std::shared_ptr<ImGuiImage> image = std::make_shared<ImGuiImage>();
-		image->channels = 4;
+		image->is_from_file = true;
 
 		uint8_t* image_data = stbi_load(filename.c_str(), (int*)&image->width, (int*)&image->height, 0, image->channels);
 		ASSERT(image_data != nullptr, "failed to load imgui image");
@@ -60,8 +64,20 @@ namespace Bamboo
 			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, image->image_view_sampler);
 		stbi_image_free(image_data);
 
-		image->desc_set = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		image->tex_id = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		m_imgui_images[filename] = image;
+
+		return image;
+	}
+
+	std::shared_ptr<ImGuiImage> EditorUI::loadImGuiImageFromTexture2D(std::shared_ptr<class Texture2D>& texture)
+	{
+		std::shared_ptr<ImGuiImage> image = std::make_shared<ImGuiImage>();
+		image->width = texture->m_width;
+		image->height = texture->m_height;
+		image->image_view_sampler = texture->m_image_view_sampler;
+		image->tex_id = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		m_imgui_images[texture->getURL()] = image;
 
 		return image;
 	}

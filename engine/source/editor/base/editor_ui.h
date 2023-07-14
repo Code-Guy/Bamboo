@@ -5,7 +5,7 @@
 #include <imgui/font/IconsFontAwesome5.h>
 #include <glm/glm.hpp>
 
-#include "runtime/core/vulkan/vulkan_util.h"
+#include "runtime/resource/asset/texture_2d.h"
 
 namespace Bamboo
 {
@@ -13,10 +13,11 @@ namespace Bamboo
 	{
 		uint32_t width;
 		uint32_t height;
-		uint32_t channels;
+		uint32_t channels = 4;
+		bool is_from_file = false;
 
 		VmaImageViewSampler image_view_sampler;
-		VkDescriptorSet desc_set;
+		VkDescriptorSet tex_id;
 
 		void destroy();
 	};
@@ -32,7 +33,8 @@ namespace Bamboo
 
 	protected:
 		void updateWindowRegion();
-		std::shared_ptr<ImGuiImage> loadImGuiImage(const std::string& filename);
+		std::shared_ptr<ImGuiImage> loadImGuiImageFromFile(const std::string& filename);
+		std::shared_ptr<ImGuiImage> loadImGuiImageFromTexture2D(std::shared_ptr<class Texture2D>& texture);
 		ImFont* smallFont();
 
 		std::string m_title;

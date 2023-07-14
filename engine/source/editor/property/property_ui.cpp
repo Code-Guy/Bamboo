@@ -1,5 +1,6 @@
 #include "property_ui.h"
 #include "runtime/core/event/event_system.h"
+#include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/framework/world/world_manager.h"
 
 namespace Bamboo
@@ -20,6 +21,10 @@ namespace Bamboo
 		};
 
 		g_runtime_context.eventSystem()->addListener(EventType::UISelectEntity, std::bind(&PropertyUI::onSelectEntity, this, std::placeholders::_1));
+
+		// get dummy texture2d
+		std::shared_ptr<Texture2D> m_dummy_texture = g_runtime_context.assetManager()->loadAsset<Texture2D>("asset/engine/texture/material/tex_dummy.tex");
+		m_dummy_image = loadImGuiImageFromTexture2D(m_dummy_texture);
 	}
 
 	void PropertyUI::construct()
@@ -108,17 +113,34 @@ namespace Bamboo
 		{
 			ImGui::PushFont(smallFont());
 			ImGui::TableNextRow();
-			for (auto& prop : rttr::type::get(*component.get()).get_properties())
+
+			rttr::type component_type = rttr::type::get(*component.get());
+			for (auto& prop : component_type.get_properties())
 			{
 				std::string prop_name = prop.get_name().to_string();
 				StringUtil::remove(prop_name, "m_");
 
 				EPropertyType property_type = getPropertyType(prop.get_type());
-				ASSERT(property_type.second == EPropertyContainerType::Mono, "don't support container property type now");
+				ASSERT(property_type.second != EPropertyContainerType::Map, "don't support map container property type now");
 
 				rttr::variant& variant = prop.get_value(*component.get());
-				m_property_constructors[property_type.first](prop_name, variant);
-				prop.set_value(*component.get(), variant);
+				if (property_type.second == EPropertyContainerType::Mono)
+				{
+					m_property_constructors[property_type.first](prop_name, variant);
+					prop.set_value(*component.get(), variant);
+				}
+				else if (property_type.second == EPropertyContainerType::Array)
+				{
+					auto view = variant.create_sequential_view();
+					for (size_t i = 0; i < view.get_size(); ++i)
+					{
+						rttr::variant sub_variant = view.get_value(i);
+						std::string sub_prop_name = prop_name + "_" + std::to_string(i);
+						m_property_constructors[property_type.first](sub_prop_name, sub_variant);
+						view.set_value(i, sub_variant);
+					}
+					prop.set_value(*component.get(), variant);
+				}
 			}
 			ImGui::TreePop();
 			ImGui::PopFont();
@@ -236,10 +258,37 @@ namespace Bamboo
 	{
 		ImGui::TableNextColumn();
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("asset: %s", name.c_str());
+		ImGui::Text("%s", name.c_str());
 
 		ImGui::TableNextColumn();
-		ImGui::Text("asset: %s", name.c_str());
+
+		// asset preview image
+		const ImVec2 icon_size(60, 60);
+		ImGui::Image(m_dummy_image->tex_id, icon_size);
+
+		// asset find combo box
+		ImGui::SameLine();
+		const char* asset_names[] = { "asset_0", "asset_1", "asset_2", "asset_3" };
+		int selected_index = 0;
+		const char* preview_value = asset_names[selected_index];
+		ImGuiComboFlags combo_flags = 0;
+		if (ImGui::BeginCombo("##select_asset", preview_value, combo_flags))
+		{
+			for (int i = 0; i < IM_ARRAYSIZE(asset_names); ++i)
+			{
+				const bool is_selected = selected_index == i;
+				if (ImGui::Selectable(asset_names[i], is_selected))
+				{
+					selected_index = i;
+				}
+
+				if (is_selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}	
+			}
+			ImGui::EndCombo();
+		}
 	}
 
 	EPropertyType PropertyUI::getPropertyType(const rttr::type& type)

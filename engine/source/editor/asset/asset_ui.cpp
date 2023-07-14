@@ -18,18 +18,18 @@ namespace Bamboo
 
 		// load icon images
 		const auto& fs = g_runtime_context.fileSystem();
-		m_asset_images[EAssetType::Invalid] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/invalid.png"));
-		m_asset_images[EAssetType::Texture2D] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/texture_2d.png"));
-		m_asset_images[EAssetType::TextureCube] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/texture_cube.png"));
-		m_asset_images[EAssetType::Material] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/material.png"));
-		m_asset_images[EAssetType::Skeleton] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/skeleton.png"));
-		m_asset_images[EAssetType::StaticMesh] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/static_mesh.png"));
-		m_asset_images[EAssetType::SkeletalMesh] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/skeletal_mesh.png"));
-		m_asset_images[EAssetType::Animation] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/animation.png"));
-		m_asset_images[EAssetType::World] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/world.png"));
-		m_asset_images[EAssetType::Font] = loadImGuiImage(fs->absolute("asset/engine/texture/asset/font.png"));
-		m_empty_folder_image = loadImGuiImage(fs->absolute("asset/engine/texture/asset/empty_folder.png"));
-		m_non_empty_folder_image = loadImGuiImage(fs->absolute("asset/engine/texture/asset/non_empty_folder.png"));
+		m_asset_images[EAssetType::Invalid] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/invalid.png"));
+		m_asset_images[EAssetType::Texture2D] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/texture_2d.png"));
+		m_asset_images[EAssetType::TextureCube] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/texture_cube.png"));
+		m_asset_images[EAssetType::Material] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/material.png"));
+		m_asset_images[EAssetType::Skeleton] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/skeleton.png"));
+		m_asset_images[EAssetType::StaticMesh] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/static_mesh.png"));
+		m_asset_images[EAssetType::SkeletalMesh] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/skeletal_mesh.png"));
+		m_asset_images[EAssetType::Animation] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/animation.png"));
+		m_asset_images[EAssetType::World] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/world.png"));
+		m_asset_images[EAssetType::Font] = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/font.png"));
+		m_empty_folder_image = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/empty_folder.png"));
+		m_non_empty_folder_image = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/non_empty_folder.png"));
 
 		// register drop callback
 		g_runtime_context.eventSystem()->addListener(EventType::WindowDrop, std::bind(&AssetUI::onDropFiles, this, std::placeholders::_1));
@@ -219,12 +219,12 @@ namespace Bamboo
 		if (g_runtime_context.fileSystem()->isFile(filename))
 		{
 			EAssetType asset_type = g_runtime_context.assetManager()->getAssetType(filename);
-			tex_id = m_asset_images[asset_type]->desc_set;
+			tex_id = m_asset_images[asset_type]->tex_id;
 		}
 		else if (g_runtime_context.fileSystem()->isDir(filename))
 		{
 			bool is_empty = g_runtime_context.fileSystem()->isEmptyDir(filename);
-			tex_id = is_empty ? m_empty_folder_image->desc_set : m_non_empty_folder_image->desc_set;
+			tex_id = is_empty ? m_empty_folder_image->tex_id : m_non_empty_folder_image->tex_id;
 		}
 		else
 		{
