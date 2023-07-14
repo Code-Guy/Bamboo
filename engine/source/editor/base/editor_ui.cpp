@@ -66,4 +66,9 @@ namespace Bamboo
 		return image;
 	}
 
+	ImFont* EditorUI::smallFont()
+	{
+		return ImGui::GetIO().Fonts->Fonts[1];
+	}
+
 }

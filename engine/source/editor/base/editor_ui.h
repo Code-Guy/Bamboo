@@ -33,6 +33,7 @@ namespace Bamboo
 	protected:
 		void updateWindowRegion();
 		std::shared_ptr<ImGuiImage> loadImGuiImage(const std::string& filename);
+		ImFont* smallFont();
 
 		std::string m_title;
 		char m_title_buf[128];

@@ -76,7 +76,9 @@ namespace Bamboo
 
 		ImGui::BeginChild("folder_files");
 		ImGui::Indent(k_spacing);
+		ImGui::PushFont(smallFont());
 		constructFolderFiles();
+		ImGui::PopFont();
 		ImGui::EndChild();
 
 		// get folder window rect

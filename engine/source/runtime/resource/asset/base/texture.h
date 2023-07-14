@@ -3,7 +3,7 @@
 #include "runtime/core/vulkan/vulkan_util.h"
 #include <cereal/access.hpp>
 
-enum class TextureType
+enum class ETextureType
 {
 	Invalid, BaseColor, MetallicRoughness, Normal, Occlusion, Emissive
 };
@@ -19,7 +19,7 @@ namespace Bamboo
 		uint32_t m_width, m_height;
 		VkFilter m_min_filter, m_mag_filter;
 		VkSamplerAddressMode m_address_mode_u, m_address_mode_v, m_address_mode_w;
-		TextureType m_texture_type;
+		ETextureType m_texture_type;
 
 		uint32_t m_mip_levels;
 		VmaImageViewSampler m_image_view_sampler;

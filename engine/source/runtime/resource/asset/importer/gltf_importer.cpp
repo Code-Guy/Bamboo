@@ -173,23 +173,23 @@ namespace Bamboo
 		{
 			if (texture_index == gltf_material.pbrMetallicRoughness.baseColorTexture.index)
 			{
-				texture->m_texture_type = TextureType::BaseColor;
+				texture->m_texture_type = ETextureType::BaseColor;
 			}
 			else if (texture_index == gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index)
 			{
-				texture->m_texture_type = TextureType::MetallicRoughness;
+				texture->m_texture_type = ETextureType::MetallicRoughness;
 			}
 			else if (texture_index == gltf_material.normalTexture.index)
 			{
-				texture->m_texture_type = TextureType::Normal;
+				texture->m_texture_type = ETextureType::Normal;
 			}
 			else if (texture_index == gltf_material.occlusionTexture.index)
 			{
-				texture->m_texture_type = TextureType::Occlusion;
+				texture->m_texture_type = ETextureType::Occlusion;
 			}
 			else if (texture_index == gltf_material.emissiveTexture.index)
 			{
-				texture->m_texture_type = TextureType::Emissive;
+				texture->m_texture_type = ETextureType::Emissive;
 			}
 		}
 	}

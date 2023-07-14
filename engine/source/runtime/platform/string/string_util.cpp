@@ -46,6 +46,17 @@ namespace Bamboo
 		}
 	}
 
+	bool StringUtil::remove(std::string& str, const std::string& sub_str)
+	{
+		std::size_t pos = str.find(sub_str);
+		if (pos != std::string::npos)
+		{
+			str.erase(pos, sub_str.length());
+			return true;
+		}
+		return false;
+	}
+
 	void StringUtil::ltrim(std::string& s)
 	{
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {

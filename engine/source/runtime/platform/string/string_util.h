@@ -11,6 +11,7 @@ namespace Bamboo
 		static std::vector<std::string> split(const std::string& s, const std::string& delimiter);
 		static bool replace(std::string& str, const std::string& from, const std::string& to);
 		static void replace_all(std::string& str, const std::string& from, const std::string& to);
+		static bool remove(std::string& str, const std::string& sub_str);
 
 		static void ltrim(std::string& s);
 		static void rtrim(std::string& s);

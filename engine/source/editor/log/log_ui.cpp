@@ -22,6 +22,7 @@ namespace Bamboo
 			return;
 		}
 
+		ImGui::PushFont(smallFont());
 		ImGuiListClipper clipper;
 		clipper.Begin(lastest_logs.size());
 		while (clipper.Step())
@@ -33,6 +34,8 @@ namespace Bamboo
 		}
 
 		ImGui::SetScrollHereY(1.0f);
+
+		ImGui::PopFont();
 		ImGui::End();
 	}
 

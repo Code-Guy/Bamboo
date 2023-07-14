@@ -55,7 +55,7 @@ namespace Bamboo
 		bool is_success = ImGui_ImplVulkan_Init(&init_info, m_render_pass);
 		ASSERT(is_success, "failed to init imgui");
 
-		// add console font
+		// add consola font
 		const float k_base_font_size = 14.0f;
 		const float k_icon_font_size = k_base_font_size * 0.8f;
 		const auto& fs = g_runtime_context.fileSystem();
@@ -68,6 +68,10 @@ namespace Bamboo
 		icons_config.GlyphMinAdvanceX = k_icon_font_size;
 		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
 		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/fa-solid-900.ttf").c_str(), k_icon_font_size, &icons_config, icons_ranges);
+
+		// add small consola font
+		const float k_small_font_size = 12.0f;
+		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/consola.ttf").c_str(), k_small_font_size);
 
 		// upload fonts
 		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
