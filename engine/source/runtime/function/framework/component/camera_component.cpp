@@ -33,6 +33,12 @@ namespace Bamboo
 
 	glm::mat4 CameraComponent::getViewMatrix()
 	{
+		if (m_last_rotation != m_transform_component->m_rotation)
+		{
+			m_last_rotation = m_transform_component->m_rotation;
+			updatePose();
+		}
+
 		return glm::lookAt(m_transform_component->m_position, m_transform_component->m_position + m_forward, m_up);
 	}
 

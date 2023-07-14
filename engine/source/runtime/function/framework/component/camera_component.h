@@ -65,6 +65,7 @@ namespace Bamboo
 		glm::vec3 m_forward;
 		glm::vec3 m_right;
 		glm::vec3 m_up;
+		glm::vec3 m_last_rotation;
 
 		bool m_move_forward = false;
 		bool m_move_back = false;

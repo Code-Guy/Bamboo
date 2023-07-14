@@ -31,5 +31,7 @@ namespace Bamboo
 		bool m_is_dirty = true;
 		glm::mat4 m_local_matrix;
 		glm::mat4 m_global_matrix;
+
+		Transform m_last_transform;
 	};
 }

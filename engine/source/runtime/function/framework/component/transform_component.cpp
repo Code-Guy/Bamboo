@@ -18,28 +18,31 @@ namespace Bamboo
 	void TransformComponent::setPosition(const glm::vec3& position)
 	{
 		m_position = position;
-		m_is_dirty = true;
 	}
 
 	void TransformComponent::setRotation(const glm::vec3& rotation)
 	{
 		m_rotation = rotation;
-		m_is_dirty = true;
 	}
 
 	void TransformComponent::setScale(const glm::vec3& scale)
 	{
 		m_scale = scale;
-		m_is_dirty = true;
 	}
 
 	bool TransformComponent::update(bool is_chain_dirty, const glm::mat4& parent_global_matrix)
 	{
+		// check is dirty
+		if (m_last_transform != *(Transform*)this)
+		{
+			m_last_transform = *(Transform*)this;
+			m_is_dirty = true;
+		}
+
 		// update local matrix
 		if (m_is_dirty)
 		{
 			m_local_matrix = matrix();
-			m_is_dirty = false;
 		}
 
 		// update global matrix
@@ -48,7 +51,9 @@ namespace Bamboo
 			m_global_matrix = parent_global_matrix * m_local_matrix;
 		}
 
-		return m_is_dirty || is_chain_dirty;
+		is_chain_dirty |= m_is_dirty;
+		m_is_dirty = false;
+		return is_chain_dirty;
 	}
 
 	const glm::mat4& TransformComponent::getGlobalMatrix()

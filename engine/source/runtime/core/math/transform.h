@@ -22,6 +22,10 @@ namespace Bamboo
 		glm::vec3 m_scale = glm::vec3(1.0f);
 
 		glm::mat4 matrix() const;
+		glm::mat4 rotationMatrix(const glm::mat4& base_matrix = glm::mat4(1.0f)) const;
+
+		bool operator==(const Transform& other) const;
+		bool operator!=(const Transform& other) const;
 	};
 
 	struct QTranform
