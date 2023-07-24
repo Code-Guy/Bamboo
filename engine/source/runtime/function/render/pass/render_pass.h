@@ -12,9 +12,8 @@ namespace Bamboo
 	class RenderPass
 	{
 	public:
-		virtual void init() = 0;
-		virtual void prepare() {}
-		virtual void render(VkCommandBuffer command_buffer, uint32_t flight_index) = 0;
+		virtual void init();
+		virtual void render() = 0;
 		virtual void destroy();
 
 		virtual void createRenderPass() = 0;
@@ -23,11 +22,11 @@ namespace Bamboo
 		virtual void createPipelines() = 0;
 		virtual void createFramebuffer() = 0;
 		virtual void createResizableObjects(uint32_t width, uint32_t height);
-		virtual void destroyResizableObjects() {}
+		virtual void destroyResizableObjects();
 
 		void setRenderDatas(const std::vector<std::shared_ptr<RenderData>>& render_datas) { m_render_datas = render_datas; }
 		void onResize(uint32_t width, uint32_t height);
-		bool isMinimize();
+		bool isEnabled();
 
 	protected:
 		// vulkan objects
@@ -38,7 +37,6 @@ namespace Bamboo
 		std::vector<VkPipelineLayout> m_pipeline_layouts;
 		VkPipelineCache m_pipeline_cache;
 		std::vector<VkPipeline> m_pipelines;
-		std::vector<VkFramebuffer> m_framebuffers;
 		VkFramebuffer m_framebuffer;
 
 		// render dependent data

@@ -9,16 +9,11 @@
 namespace Bamboo
 {
 
-	void BasePass::init()
+	void BasePass::render()
 	{
-		createRenderPass();
-		createDescriptorSetLayouts();
-		createPipelineLayouts();
-		createPipelines();
-	}
+		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
+		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
 
-	void BasePass::render(VkCommandBuffer command_buffer, uint32_t flight_index)
-	{
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		render_pass_bi.renderPass = m_render_pass;
@@ -117,11 +112,6 @@ namespace Bamboo
 		}
 
 		vkCmdEndRenderPass(command_buffer);
-	}
-
-	void BasePass::destroy()
-	{
-		RenderPass::destroy();
 	}
 
 	void BasePass::createRenderPass()
@@ -434,13 +424,6 @@ namespace Bamboo
 		vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffer);
 	}
 
-	void BasePass::createResizableObjects(uint32_t width, uint32_t height)
-	{
-		RenderPass::createResizableObjects(width, height);
-
-		createFramebuffer();
-	}
-
 	void BasePass::destroyResizableObjects()
 	{
 		// 1.destroy depth stencil image and view
@@ -449,8 +432,7 @@ namespace Bamboo
 		// 2.destroy color image and view
 		m_color_image_view.destroy();
 
-		// 3.destroy framebuffers
-		vkDestroyFramebuffer(VulkanRHI::get().getDevice(), m_framebuffer, nullptr);
+		RenderPass::destroyResizableObjects();
 	}
 
 	VkImageView BasePass::getColorImageView()

@@ -179,13 +179,9 @@ namespace Bamboo
 	class RenderRecordFrameEvent : public Event
 	{
 	public:
-		RenderRecordFrameEvent(VkCommandBuffer command_buffer, uint32_t flight_index) : Event(EventType::RenderRecordFrame),
-			command_buffer(command_buffer), flight_index(flight_index)
+		RenderRecordFrameEvent() : Event(EventType::RenderRecordFrame)
 		{
 		}
-
-		VkCommandBuffer command_buffer;
-		uint32_t flight_index;
 	};
 
 	class RenderConstructUIEvent : public Event

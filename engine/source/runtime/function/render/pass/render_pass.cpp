@@ -4,6 +4,14 @@
 namespace Bamboo
 {
 
+	void RenderPass::init()
+	{
+		createRenderPass();
+		createDescriptorSetLayouts();
+		createPipelineLayouts();
+		createPipelines();
+	}
+
 	void RenderPass::destroy()
 	{
 		vkDestroyRenderPass(VulkanRHI::get().getDevice(), m_render_pass, nullptr);
@@ -29,6 +37,13 @@ namespace Bamboo
 	{
 		m_width = width;
 		m_height = height;
+
+		createFramebuffer();
+	}
+
+	void RenderPass::destroyResizableObjects()
+	{
+		vkDestroyFramebuffer(VulkanRHI::get().getDevice(), m_framebuffer, nullptr);
 	}
 
 	void RenderPass::onResize(uint32_t width, uint32_t height)
@@ -40,9 +55,9 @@ namespace Bamboo
 		createResizableObjects(width, height);
 	}
 
-	bool RenderPass::isMinimize()
+	bool RenderPass::isEnabled()
 	{
-		return m_width == 0 || m_height == 0;
+		return m_width > 0 && m_height > 0;
 	}
 
 }

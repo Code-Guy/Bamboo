@@ -3,6 +3,7 @@
 #include "runtime/core/base/macro.h"
 #include "runtime/core/event/event_system.h"
 #include "runtime/function/render/window_system.h"
+
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
 #include <imgui/backends/imgui_impl_glfw.h>
@@ -34,7 +35,7 @@ namespace Bamboo
 		createDescriptorPool();
 
 		// create render pass
-		createRenderPass();
+		RenderPass::init();
 
 		// setup platform/renderer backends
 		ImGui_ImplGlfw_InitForVulkan(g_runtime_context.windowSystem()->getWindow(), true);
@@ -102,8 +103,11 @@ namespace Bamboo
 		ImGui::Render();
 	}
 
-	void UIPass::render(VkCommandBuffer command_buffer, uint32_t flight_index)
+	void UIPass::render()
 	{
+		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
+		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
+
 		// record render pass
 		VkRenderPassBeginInfo renderpass_bi{};
 		renderpass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -214,13 +218,6 @@ namespace Bamboo
 			VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);
 			CHECK_VULKAN_RESULT(result, "create imgui frame buffer");
 		}
-	}
-
-	void UIPass::createResizableObjects(uint32_t width, uint32_t height)
-	{
-		RenderPass::createResizableObjects(width, height);
-
-		createFramebuffer();
 	}
 
 	void UIPass::destroyResizableObjects()

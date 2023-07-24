@@ -1,6 +1,7 @@
 #pragma once
 
-#include "pass/render_pass.h"
+#include "pass/ui_pass.h"
+#include "pass/base_pass.h"
 
 #include <map>
 #include <memory>
@@ -25,6 +26,7 @@ namespace Bamboo
 		void collectRenderDatas();
 
 		std::shared_ptr<class Texture2D> m_dummy_texture;
+		std::shared_ptr<UIPass> m_ui_pass;
 		std::map<ERenderPassType, std::shared_ptr<RenderPass>> m_render_passes;
 	};
 }

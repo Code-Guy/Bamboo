@@ -5,7 +5,6 @@
 #include "runtime/resource/asset/asset_manager.h"
 
 #include "runtime/core/vulkan/vulkan_rhi.h"
-#include "runtime/function/render/pass/ui_pass.h"
 #include "runtime/function/render/pass/base_pass.h"
 #include "runtime/function/framework/component/camera_component.h"
 #include "runtime/function/framework/component/transform_component.h"
@@ -18,7 +17,8 @@ namespace Bamboo
 	void RenderSystem::init()
 	{
 		m_render_passes[ERenderPassType::Base] = std::make_shared<BasePass>();
-		m_render_passes[ERenderPassType::UI] = std::make_shared<UIPass>();
+		m_ui_pass = std::make_shared<UIPass>();
+		m_render_passes[ERenderPassType::UI] = m_ui_pass;
 		for (auto& render_pass : m_render_passes)
 		{
 			render_pass.second->init();
@@ -62,39 +62,30 @@ namespace Bamboo
 	void RenderSystem::onCreateSwapchainObjects(const std::shared_ptr<class Event>& event)
 	{
 		const RenderCreateSwapchainObjectsEvent* p_event = static_cast<const RenderCreateSwapchainObjectsEvent*>(event.get());
-		if (m_render_passes.find(ERenderPassType::UI) != m_render_passes.end())
-		{
-			m_render_passes[ERenderPassType::UI]->createResizableObjects(p_event->width, p_event->height);
-		}
+		m_ui_pass->createResizableObjects(p_event->width, p_event->height);
 	}
 
 	void RenderSystem::onDestroySwapchainObjects(const std::shared_ptr<class Event>& event)
 	{
-		if (m_render_passes.find(ERenderPassType::UI) != m_render_passes.end())
-		{
-			m_render_passes[ERenderPassType::UI]->destroyResizableObjects();
-		}
+		m_ui_pass->destroyResizableObjects();
 	}
 
 	void RenderSystem::onRecordFrame(const std::shared_ptr<class Event>& event)
 	{
 		const RenderRecordFrameEvent* p_event = static_cast<const RenderRecordFrameEvent*>(event.get());
 
-		// render pass preparation
-		for (auto& render_pass : m_render_passes)
+		// ui render pass preparation
+		if (m_ui_pass->isEnabled())
 		{
-			if (!render_pass.second->isMinimize())
-			{
-				render_pass.second->prepare();
-			}
+			m_ui_pass->prepare();
 		}
 
 		// render pass rendering
 		for (auto& render_pass : m_render_passes)
 		{
-			if (!render_pass.second->isMinimize())
+			if (render_pass.second->isEnabled())
 			{
-				render_pass.second->render(p_event->command_buffer, p_event->flight_index);
+				render_pass.second->render();
 			}
 		}
 	}

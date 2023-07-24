@@ -401,7 +401,7 @@ namespace Bamboo
 		vkBeginCommandBuffer(command_buffer, &command_buffer_bi);
 
 		// record all render passes
-		g_runtime_context.eventSystem()->syncDispatch(std::make_shared<RenderRecordFrameEvent>(command_buffer, m_flight_index));
+		g_runtime_context.eventSystem()->syncDispatch(std::make_shared<RenderRecordFrameEvent>());
 
 		vkEndCommandBuffer(command_buffer);
 	}

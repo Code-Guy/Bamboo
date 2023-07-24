@@ -9,8 +9,8 @@ namespace Bamboo
 	{
 	public:
 		virtual void init() override;
-		virtual void prepare() override;
-		virtual void render(VkCommandBuffer command_buffer, uint32_t flight_index) override;
+		void prepare();
+		virtual void render() override;
 		virtual void destroy() override;
 
 		virtual void createRenderPass() override;
@@ -19,10 +19,9 @@ namespace Bamboo
 		virtual void createPipelineLayouts() override {}
 		virtual void createPipelines() override {}
 		virtual void createFramebuffer() override;
-		virtual void createResizableObjects(uint32_t width, uint32_t height) override;
 		virtual void destroyResizableObjects() override;
 
 	private:
-
+		std::vector<VkFramebuffer> m_framebuffers;
 	};
 }
