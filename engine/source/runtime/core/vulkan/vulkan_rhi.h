@@ -36,6 +36,8 @@ namespace Bamboo
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
 		VkCommandBuffer getCommandBuffer() { return m_command_buffers[m_flight_index]; }
 		PFN_vkCmdPushDescriptorSetKHR getVkCmdPushDescriptorSetKHR() { return m_vk_cmd_push_desc_set_func; }
+		VkPipelineCache getPipelineCache() { return m_pipeline_cache; }
+		VkPipelineCache copyPipelineCache();
 		static VulkanRHI& get()
 		{
 			static VulkanRHI vulkan_rhi;

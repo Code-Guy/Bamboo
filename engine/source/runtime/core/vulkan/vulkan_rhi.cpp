@@ -28,6 +28,7 @@ namespace Bamboo
 		createCommandPools();
 		createCommandBuffers();
 		createSynchronizationPrimitives();
+		createPipelineCache();
 	}
 
 	void VulkanRHI::render()
@@ -40,8 +41,6 @@ namespace Bamboo
 
 	void VulkanRHI::destroy()
 	{
-		vkDestroyPipelineCache(m_device, m_pipeline_cache, nullptr);
-		
 		for (VkSemaphore image_avaliable_semaphore : m_image_avaliable_semaphores)
 		{
 			vkDestroySemaphore(m_device, image_avaliable_semaphore, nullptr);
@@ -68,6 +67,24 @@ namespace Bamboo
 		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 		vkDestroyDevice(m_device, nullptr);
 		vkDestroyInstance(m_instance, nullptr);
+	}
+
+	VkPipelineCache VulkanRHI::copyPipelineCache()
+	{
+		// get data from initial pipeline cache
+		size_t initial_data_size = 0;
+		void* p_initial_data = nullptr;
+		vkGetPipelineCacheData(m_device, m_pipeline_cache, &initial_data_size, p_initial_data);
+
+		// create(copy) the new pipelien cache from the initial one
+		VkPipelineCacheCreateInfo pipeline_cache_ci{};
+		pipeline_cache_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+		pipeline_cache_ci.initialDataSize = initial_data_size;
+		pipeline_cache_ci.pInitialData = p_initial_data;
+
+		VkPipelineCache pipeline_cache;
+		vkCreatePipelineCache(VulkanRHI::get().getDevice(), &pipeline_cache_ci, nullptr, &pipeline_cache);
+		return pipeline_cache;
 	}
 
 	void VulkanRHI::createInstance()

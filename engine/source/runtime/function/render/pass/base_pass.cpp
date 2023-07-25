@@ -369,6 +369,7 @@ namespace Bamboo
 		m_pipelines.resize(2);
 
 		// create static mesh pipeline
+		m_pipeline_cache = VulkanRHI::get().getPipelineCache();
 		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &graphics_pipeline_ci, nullptr, &m_pipelines[0]);
 		CHECK_VULKAN_RESULT(result, "create static mesh graphics pipeline");
 
