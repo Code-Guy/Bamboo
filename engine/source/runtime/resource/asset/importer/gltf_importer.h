@@ -13,9 +13,6 @@
 	object-> ##prop_name = ref_asset; \
 	object->m_ref_urls[#prop_name] = ref_asset->getURL()
 
-#define IMAGE_COMPONENT 4
-#define IMAGE_BIT_DEPTH 8
-
 namespace Bamboo
 {
 	class GltfImporter

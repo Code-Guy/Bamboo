@@ -498,11 +498,7 @@ namespace Bamboo
 			return;
 		}
 
-		m_imported_files.clear();
-		for (int i = 0; i < drop_event->count; ++i)
-		{
-			m_imported_files.push_back(drop_event->paths[i]);
-		}
+		m_imported_files = drop_event->filenames;
 	}
 
 }

@@ -126,12 +126,15 @@ namespace Bamboo
 	{
 	public:
 		WindowDropEvent(int count, const char** paths, double xpos, double ypos) : Event(EventType::WindowDrop),
-			count(count), paths(paths), xpos(xpos), ypos(ypos)
+			xpos(xpos), ypos(ypos)
 		{
+			for (int i = 0; i < count; ++i)
+			{
+				filenames.push_back(paths[i]);
+			}
 		}
 
-		int count;
-		const char** paths;
+		std::vector<std::string> filenames;
 		double xpos;
 		double ypos;
 	};

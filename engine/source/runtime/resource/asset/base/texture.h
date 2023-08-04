@@ -5,7 +5,12 @@
 
 enum class ETextureType
 {
-	Invalid, BaseColor, MetallicRoughness, Normal, Occlusion, Emissive
+	Invalid, BaseColor, MetallicRoughness, Normal, Occlusion, Emissive, Data
+};
+
+enum class EPixelType
+{
+	RGBA8, RGBA16, RGBA32, RG16, R16, R32
 };
 
 namespace Bamboo
@@ -16,16 +21,18 @@ namespace Bamboo
 		Texture();
 		virtual ~Texture();
 
-		uint32_t m_width, m_height;
+		uint32_t m_width, m_height, m_channels;
 		VkFilter m_min_filter, m_mag_filter;
 		VkSamplerAddressMode m_address_mode_u, m_address_mode_v, m_address_mode_w;
 		ETextureType m_texture_type;
+		EPixelType m_pixel_type;
 
 		uint32_t m_mip_levels;
 		VmaImageViewSampler m_image_view_sampler;
 
 	protected:
 		bool isSRGB();
+		VkFormat getFormat();
 
 	private:
 		friend class cereal::access;
@@ -40,6 +47,7 @@ namespace Bamboo
 			ar(cereal::make_nvp("address_mode_v", m_address_mode_v));
 			ar(cereal::make_nvp("address_mode_w", m_address_mode_w));
 			ar(cereal::make_nvp("texture_type", m_texture_type));
+			ar(cereal::make_nvp("pixel_type", m_pixel_type));
 		}
 	};
 }

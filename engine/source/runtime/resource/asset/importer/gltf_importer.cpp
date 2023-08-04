@@ -149,15 +149,6 @@ namespace Bamboo
 		uint32_t texture_index,
 		std::shared_ptr<Texture2D>& texture)
 	{
-		if (gltf_image.component != IMAGE_COMPONENT)
-		{
-			LOG_FATAL("unsupported gltf image component: {}", gltf_image.component);
-		}
-		if (gltf_image.bits != IMAGE_BIT_DEPTH)
-		{
-			LOG_FATAL("unsupported gltf image bit depth: {}", gltf_image.bits);
-		}
-
 		texture->m_width = gltf_image.width;
 		texture->m_height = gltf_image.height;
 		texture->m_image_data = gltf_image.image;
@@ -191,6 +182,30 @@ namespace Bamboo
 			{
 				texture->m_texture_type = ETextureType::Emissive;
 			}
+		}
+
+		// set texture pixel type
+		const static std::map<std::pair<int, int>, EPixelType> component_bits_pixel_type_map = {
+			{ std::make_pair(4, 8), EPixelType::RGBA8 },
+			{ std::make_pair(4, 16), EPixelType::RGBA16 },
+			{ std::make_pair(4, 32), EPixelType::RGBA32 },
+			{ std::make_pair(2, 16), EPixelType::RG16 },
+			{ std::make_pair(1, 16), EPixelType::R16 },
+			{ std::make_pair(1, 32), EPixelType::R32 },
+		};
+
+		std::pair<int, int> component_bits = std::make_pair(gltf_image.component, gltf_image.bits);
+		if (component_bits_pixel_type_map.find(component_bits) != component_bits_pixel_type_map.end())
+		{
+			texture->m_pixel_type = component_bits_pixel_type_map.at(component_bits);
+			if (texture->m_pixel_type != EPixelType::RGBA8)
+			{
+				LOG_INFO("xxxxx");
+			}
+		}
+		else
+		{
+			LOG_FATAL("unsupported image component/bits pair:({}, {})", component_bits.first, component_bits.second);
 		}
 	}
 

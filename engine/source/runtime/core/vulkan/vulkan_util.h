@@ -72,7 +72,7 @@ namespace Bamboo
 		static void updateBuffer(VmaBuffer& buffer, void* data, size_t size);
 
 		static void createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
-			uint32_t mip_levels, bool is_srgb, VkFilter min_filter, VkFilter mag_filter,
+			uint32_t mip_levels, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
 			VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler);
 
 		static void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
@@ -91,5 +91,6 @@ namespace Bamboo
 		static void createImageMipmaps(VkImage image, VkFormat image_format, uint32_t width, uint32_t height, uint32_t mip_levels);
 
 		static bool hasStencil(VkFormat format);
+		static uint32_t getFormatSize(VkFormat format);
 	};
 }

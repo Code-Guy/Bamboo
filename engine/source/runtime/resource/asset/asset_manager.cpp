@@ -59,7 +59,8 @@ namespace Bamboo
 	bool AssetManager::importTexture2D(const std::string& filename, const URL& folder)
 	{
 		uint32_t width, height;
-		uint8_t* image_data = stbi_load(filename.c_str(), (int*)&width, (int*)&height, 0, IMAGE_COMPONENT);
+		uint32_t k_channels = 4;
+		uint8_t* image_data = stbi_load(filename.c_str(), (int*)&width, (int*)&height, 0, k_channels);
 		ASSERT(image_data != nullptr, "failed to import texture: {}", filename);
 
 		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
@@ -70,7 +71,7 @@ namespace Bamboo
 		texture->m_width = width;
 		texture->m_height = height;
 
-		size_t image_size = width * height * IMAGE_COMPONENT;
+		size_t image_size = width * height * k_channels;
 		texture->m_image_data.resize(image_size);
 		memcpy(texture->m_image_data.data(), image_data, image_size);
 		stbi_image_free(image_data);

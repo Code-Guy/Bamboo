@@ -168,11 +168,10 @@ namespace Bamboo
 	}
 
 	void VulkanUtil::createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
-		uint32_t mip_levels, bool is_srgb, VkFilter min_filter, VkFilter mag_filter,
+		uint32_t mip_levels, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
 		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler)
 	{
-		const uint32_t k_channels = 4;
-		VkDeviceSize image_size = width * height * k_channels;
+		size_t image_size = width * height * getFormatSize(format);
 		VmaBuffer staging_buffer;
 		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
 
@@ -180,16 +179,15 @@ namespace Bamboo
 		updateBuffer(staging_buffer, image_data, image_size);
 
 		// create Image
-		VkFormat image_format = is_srgb ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
-		createImage(width, height, mip_levels, VK_SAMPLE_COUNT_1_BIT, image_format, VK_IMAGE_TILING_OPTIMAL, 
+		createImage(width, height, mip_levels, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL, 
 			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 
 			vma_image_view_sampler.vma_image);
 
 		VkImage image = vma_image_view_sampler.image();
-		vma_image_view_sampler.view = createImageView(image, image_format, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
+		vma_image_view_sampler.view = createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
 
 		// transition image to DST_OPT state for copy into
-		transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image_format, mip_levels);
+		transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, format, mip_levels);
 
 		// copy staging buffer to image
 		copyBufferToImage(staging_buffer.buffer, image, width, height);
@@ -198,7 +196,7 @@ namespace Bamboo
 		vmaDestroyBuffer(VulkanRHI::get().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
 
 		// generate image mipmaps, and transition image to READ_ONLY_OPT state for shader reading
-		createImageMipmaps(image, image_format, width, height, mip_levels);
+		createImageMipmaps(image, format, width, height, mip_levels);
 
 		// create VkSampler
 		vma_image_view_sampler.sampler = createSampler(min_filter, mag_filter, mip_levels, address_mode, address_mode, address_mode);
@@ -267,6 +265,7 @@ namespace Bamboo
 		sampler_ci.addressModeU = address_mode_u;
 		sampler_ci.addressModeV = address_mode_v;
 		sampler_ci.addressModeW = address_mode_w;
+		sampler_ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		sampler_ci.anisotropyEnable = true;
 		sampler_ci.maxAnisotropy = VulkanRHI::get().getPhysicalDeviceProperties().limits.maxSamplerAnisotropy;
 		sampler_ci.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -528,6 +527,27 @@ namespace Bamboo
 	bool VulkanUtil::hasStencil(VkFormat format)
 	{
 		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+	}
+
+	uint32_t VulkanUtil::getFormatSize(VkFormat format)
+	{
+		switch (format)
+		{
+		case VK_FORMAT_R16_SFLOAT:
+			return 2;
+		case VK_FORMAT_R8G8B8A8_SRGB:
+		case VK_FORMAT_R8G8B8A8_UNORM:
+		case VK_FORMAT_R32_SFLOAT:
+		case VK_FORMAT_R16G16_SFLOAT:
+			return 4;
+		case VK_FORMAT_R16G16B16A16_SFLOAT:
+		return 8;
+		case VK_FORMAT_R32G32B32A32_SFLOAT:
+			return 16;
+		default:
+			LOG_FATAL("unsupported format: {}", format);
+			return 0;
+		}
 	}
 
 }
