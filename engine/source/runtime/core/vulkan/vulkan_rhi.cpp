@@ -54,6 +54,11 @@ namespace Bamboo
 			vkDestroyFence(m_device, flight_fence, nullptr);
 		}
 
+		if (m_pipeline_cache)
+		{
+			delete[] m_pipeline_cache;
+		}
+
 		destroySwapchainObjects();
 		vkDestroyCommandPool(m_device, m_instant_command_pool, nullptr);
 		vkDestroyCommandPool(m_device, m_command_pool, nullptr);
@@ -72,18 +77,25 @@ namespace Bamboo
 	VkPipelineCache VulkanRHI::copyPipelineCache()
 	{
 		// get data from initial pipeline cache
-		size_t initial_data_size = 0;
-		void* p_initial_data = nullptr;
-		vkGetPipelineCacheData(m_device, m_pipeline_cache, &initial_data_size, p_initial_data);
+		if (!m_pipeline_cache_data)
+		{
+			VkResult result = vkGetPipelineCacheData(m_device, m_pipeline_cache, &m_pipeline_cache_size, nullptr);
+			ASSERT(m_pipeline_cache_size != 0, "failed to get pipeline cache data");
 
+			m_pipeline_cache_data = new uint8_t[m_pipeline_cache_size];
+			result = vkGetPipelineCacheData(m_device, m_pipeline_cache, &m_pipeline_cache_size, m_pipeline_cache_data);
+			CHECK_VULKAN_RESULT(result, "failed to get pipeline cache data");
+		}
+		
 		// create(copy) the new pipelien cache from the initial one
 		VkPipelineCacheCreateInfo pipeline_cache_ci{};
 		pipeline_cache_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-		pipeline_cache_ci.initialDataSize = initial_data_size;
-		pipeline_cache_ci.pInitialData = p_initial_data;
+		pipeline_cache_ci.initialDataSize = m_pipeline_cache_size;
+		pipeline_cache_ci.pInitialData = m_pipeline_cache_data;
 
 		VkPipelineCache pipeline_cache;
-		vkCreatePipelineCache(VulkanRHI::get().getDevice(), &pipeline_cache_ci, nullptr, &pipeline_cache);
+		VkResult result = vkCreatePipelineCache(VulkanRHI::get().getDevice(), &pipeline_cache_ci, nullptr, &pipeline_cache);
+		CHECK_VULKAN_RESULT(result, "failed to create pipeline cache data");
 		return pipeline_cache;
 	}
 

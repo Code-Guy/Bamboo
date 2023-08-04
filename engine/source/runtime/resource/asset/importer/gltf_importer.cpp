@@ -198,10 +198,6 @@ namespace Bamboo
 		if (component_bits_pixel_type_map.find(component_bits) != component_bits_pixel_type_map.end())
 		{
 			texture->m_pixel_type = component_bits_pixel_type_map.at(component_bits);
-			if (texture->m_pixel_type != EPixelType::RGBA8)
-			{
-				LOG_INFO("xxxxx");
-			}
 		}
 		else
 		{

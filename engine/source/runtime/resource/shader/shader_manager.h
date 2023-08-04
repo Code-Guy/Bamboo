@@ -11,8 +11,7 @@ namespace Bamboo
 		void init();
 		void destroy();
 
-		VkShaderModule getShaderModule(const std::string& name);
-		const char* getEntryName() { return "main"; }
+		VkPipelineShaderStageCreateInfo getShaderStageCI(const std::string& name, VkShaderStageFlagBits stage);
 
 	private:
 		std::string execute(const char* cmd);

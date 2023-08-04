@@ -5,7 +5,9 @@
 #include "runtime/resource/asset/asset_manager.h"
 
 #include "runtime/core/vulkan/vulkan_rhi.h"
+#include "runtime/function/render/pass/brdf_lut_pass.h"
 #include "runtime/function/render/pass/base_pass.h"
+#include "runtime/function/render/pass/ui_pass.h"
 #include "runtime/function/framework/component/camera_component.h"
 #include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/static_mesh_component.h"
@@ -15,7 +17,8 @@ namespace Bamboo
 {
 
 	void RenderSystem::init()
-	{
+	{		
+		// init persistent render passes
 		m_render_passes[ERenderPassType::Base] = std::make_shared<BasePass>();
 		m_ui_pass = std::make_shared<UIPass>();
 		m_render_passes[ERenderPassType::UI] = m_ui_pass;
@@ -23,6 +26,13 @@ namespace Bamboo
 		{
 			render_pass.second->init();
 		}
+
+		// init instant render passes
+		std::shared_ptr<BRDFLUTPass> brdf_pass = std::make_shared<BRDFLUTPass>();
+		brdf_pass->init();
+		brdf_pass->createResizableObjects(2048, 2048);
+		brdf_pass->render();
+		brdf_pass->destroy();
 
 		// set vulkan rhi callback functions
 		g_runtime_context.eventSystem()->addListener(EventType::RenderCreateSwapchainObjects, 

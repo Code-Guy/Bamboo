@@ -4,9 +4,11 @@
 
 namespace Bamboo
 {
-	class BasePass : public RenderPass
+	class BRDFLUTPass : public RenderPass
 	{
 	public:
+		BRDFLUTPass();
+
 		virtual void render() override;
 
 		virtual void createRenderPass() override;
@@ -16,10 +18,11 @@ namespace Bamboo
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
 
-		VkImageView getColorImageView() { return m_color_image_view.view; }
+		VmaImageViewSampler getColorImageViewSampler() { return m_color_view_sampler; }
 
 	private:
-		VmaImageView m_depth_stencil_image_view;
-		VmaImageView m_color_image_view;
+		VkFormat m_format;
+		VmaImageViewSampler m_color_view_sampler;
+		VmaImage m_staging_image;
 	};
 }

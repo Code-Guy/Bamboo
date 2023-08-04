@@ -36,6 +36,7 @@ namespace Bamboo
 		VkCommandPool getInstantCommandPool() { return m_instant_command_pool; }
 		VkCommandBuffer getCommandBuffer() { return m_command_buffers[m_flight_index]; }
 		PFN_vkCmdPushDescriptorSetKHR getVkCmdPushDescriptorSetKHR() { return m_vk_cmd_push_desc_set_func; }
+		VkGraphicsPipelineCreateInfo& getPipelineCI() { return m_pipeline_ci; }
 		VkPipelineCache getPipelineCache() { return m_pipeline_cache; }
 		VkPipelineCache copyPipelineCache();
 		static VulkanRHI& get()
@@ -116,7 +117,11 @@ namespace Bamboo
 		VkCommandPool m_command_pool;
 		VkCommandPool m_instant_command_pool;
 		VkSwapchainKHR m_swapchain;
+
+		VkGraphicsPipelineCreateInfo m_pipeline_ci{};
 		VkPipelineCache m_pipeline_cache;
+		size_t m_pipeline_cache_size = 0;
+		void* m_pipeline_cache_data = nullptr;
 
 		// debug functions
 		PFN_vkCreateDebugUtilsMessengerEXT m_vk_create_debug_func;

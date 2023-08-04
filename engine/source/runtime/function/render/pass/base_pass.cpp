@@ -333,24 +333,13 @@ namespace Bamboo
 
 		// shader stages
 		const auto& shader_manager = g_runtime_context.shaderManager();
-		VkPipelineShaderStageCreateInfo vert_shader_stage_ci{};
-		vert_shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vert_shader_stage_ci.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vert_shader_stage_ci.module = shader_manager->getShaderModule("blinn_phong_static_mesh.vert");
-		vert_shader_stage_ci.pName = shader_manager->getEntryName();
-		vert_shader_stage_ci.pSpecializationInfo = nullptr;
-
-		VkPipelineShaderStageCreateInfo frag_shader_stage_ci{};
-		frag_shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		frag_shader_stage_ci.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		frag_shader_stage_ci.module = shader_manager->getShaderModule("blinn_phong_mesh.frag");
-		frag_shader_stage_ci.pName = shader_manager->getEntryName();
-		frag_shader_stage_ci.pSpecializationInfo = nullptr;
-
-		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = { vert_shader_stage_ci, frag_shader_stage_ci };
+		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = { 
+			shader_manager->getShaderStageCI("blinn_phong_static_mesh.vert", VK_SHADER_STAGE_VERTEX_BIT), 
+			shader_manager->getShaderStageCI("blinn_phong_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+		};
 
 		// create graphics pipeline
-		VkGraphicsPipelineCreateInfo graphics_pipeline_ci{};
+		VkGraphicsPipelineCreateInfo& graphics_pipeline_ci = VulkanRHI::get().getPipelineCI();
 		graphics_pipeline_ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		graphics_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());
 		graphics_pipeline_ci.pStages = shader_stage_cis.data();
@@ -374,7 +363,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create static mesh graphics pipeline");
 
 		// create skeletal mesh pipeline
-		shader_stage_cis[0].module = shader_manager->getShaderModule("blinn_phong_skeletal_mesh.vert");
+		shader_stage_cis[0] = shader_manager->getShaderStageCI("blinn_phong_skeletal_mesh.vert", VK_SHADER_STAGE_VERTEX_BIT);
 
 		vertex_input_binding_descriptions[0].stride = sizeof(SkeletalVertex);
 
@@ -434,11 +423,6 @@ namespace Bamboo
 		m_color_image_view.destroy();
 
 		RenderPass::destroyResizableObjects();
-	}
-
-	VkImageView BasePass::getColorImageView()
-	{
-		return m_color_image_view.view;
 	}
 
 }

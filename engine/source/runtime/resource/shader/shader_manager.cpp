@@ -82,34 +82,44 @@ namespace Bamboo
 		}
 	}
 
-	VkShaderModule ShaderManager::getShaderModule(const std::string& name)
+	VkPipelineShaderStageCreateInfo ShaderManager::getShaderStageCI(const std::string& name, VkShaderStageFlagBits stage)
 	{
 		if (m_shader_filenames.find(name) == m_shader_filenames.end())
 		{
 			LOG_FATAL("failed to find shader {}", name);
-			return VK_NULL_HANDLE;
+			return {};
 		}
-
-		if (m_shader_modules.find(name) != m_shader_modules.end())
-		{
-			return m_shader_modules[name];
-		}
-
-		// load spv binary data
-		std::vector<char> code = g_runtime_context.fileSystem()->loadBinary(m_shader_filenames[name]);
-
-		// create shader module
-		VkShaderModuleCreateInfo shader_module_ci{};
-		shader_module_ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		shader_module_ci.codeSize = code.size();
-		shader_module_ci.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
 		VkShaderModule shader_module;
-		VkResult result = vkCreateShaderModule(VulkanRHI::get().getDevice(), &shader_module_ci, nullptr, &shader_module);
-		CHECK_VULKAN_RESULT(result, "create shader module");
-		m_shader_modules[name] = shader_module;
+		if (m_shader_modules.find(name) != m_shader_modules.end())
+		{
+			shader_module = m_shader_modules[name];
+		}
+		else
+		{
+			// load spv binary data
+			std::vector<char> code = g_runtime_context.fileSystem()->loadBinary(m_shader_filenames[name]);
 
-		return shader_module;
+			// create shader module
+			VkShaderModuleCreateInfo shader_module_ci{};
+			shader_module_ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			shader_module_ci.codeSize = code.size();
+			shader_module_ci.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+			VkResult result = vkCreateShaderModule(VulkanRHI::get().getDevice(), &shader_module_ci, nullptr, &shader_module);
+			CHECK_VULKAN_RESULT(result, "create shader module");
+			m_shader_modules[name] = shader_module;
+		}
+		
+		// create shader stage create info
+		VkPipelineShaderStageCreateInfo shader_stage_ci{};
+		shader_stage_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		shader_stage_ci.stage = stage;
+		shader_stage_ci.module = shader_module;
+		shader_stage_ci.pName = "main";
+		shader_stage_ci.pSpecializationInfo = nullptr;
+
+		return shader_stage_ci;
 	}
 
 	std::string ShaderManager::execute(const char* cmd)
