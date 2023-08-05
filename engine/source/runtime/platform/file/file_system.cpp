@@ -164,7 +164,7 @@ namespace Bamboo
 			return false;
 		}
 
-		std::ofstream ofs(filename);
+		std::ofstream ofs(filename, mode);
 		ofs.close();
 		return true;
 	}

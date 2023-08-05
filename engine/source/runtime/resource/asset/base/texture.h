@@ -5,7 +5,7 @@
 
 enum class ETextureType
 {
-	Invalid, BaseColor, MetallicRoughness, Normal, Occlusion, Emissive, Data
+	Invalid, BaseColor, MetallicRoughness, Normal, Occlusion, Emissive, IBL, UI, Data
 };
 
 enum class EPixelType
@@ -21,7 +21,7 @@ namespace Bamboo
 		Texture();
 		virtual ~Texture();
 
-		uint32_t m_width, m_height, m_channels;
+		uint32_t m_width, m_height;
 		VkFilter m_min_filter, m_mag_filter;
 		VkSamplerAddressMode m_address_mode_u, m_address_mode_v, m_address_mode_w;
 		ETextureType m_texture_type;

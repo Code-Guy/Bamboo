@@ -2,6 +2,8 @@
 
 #include "render_pass.h"
 
+#define BRDF_TEX_URL "asset/engine/texture/ibl/tex_brdf_lut.tex"
+
 namespace Bamboo
 {
 	class BRDFLUTPass : public RenderPass
@@ -18,11 +20,9 @@ namespace Bamboo
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
 
-		VmaImageViewSampler getColorImageViewSampler() { return m_color_view_sampler; }
-
 	private:
 		VkFormat m_format;
-		VmaImageViewSampler m_color_view_sampler;
+		VmaImageView m_color_image_view;
 		VmaImage m_staging_image;
 	};
 }

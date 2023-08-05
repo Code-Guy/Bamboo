@@ -232,71 +232,6 @@ namespace Bamboo
 
 	void BasePass::createPipelines()
 	{
-		// input assembly
-		VkPipelineInputAssemblyStateCreateInfo input_assembly_state_ci{};
-		input_assembly_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		input_assembly_state_ci.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		input_assembly_state_ci.primitiveRestartEnable = VK_FALSE;
-
-		// rasterizer
-		VkPipelineRasterizationStateCreateInfo rasterize_state_ci{};
-		rasterize_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterize_state_ci.depthClampEnable = VK_FALSE;
-		rasterize_state_ci.rasterizerDiscardEnable = VK_FALSE;
-		rasterize_state_ci.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterize_state_ci.lineWidth = 1.0f;
-		rasterize_state_ci.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterize_state_ci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterize_state_ci.depthBiasEnable = VK_FALSE;
-		rasterize_state_ci.depthBiasConstantFactor = 0.0f;
-		rasterize_state_ci.depthBiasClamp = 0.0f;
-		rasterize_state_ci.depthBiasSlopeFactor = 0.0f;
-
-		// multisampling
-		VkPipelineMultisampleStateCreateInfo multisampling_ci{};
-		multisampling_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampling_ci.sampleShadingEnable = VK_TRUE;
-		multisampling_ci.minSampleShading = 0.2f;
-		multisampling_ci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-		// depth and stencil testing
-		VkPipelineDepthStencilStateCreateInfo depth_stencil_ci{};
-		depth_stencil_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depth_stencil_ci.depthTestEnable = VK_TRUE;
-		depth_stencil_ci.depthWriteEnable = VK_TRUE;
-		depth_stencil_ci.depthCompareOp = VK_COMPARE_OP_LESS;
-		depth_stencil_ci.depthBoundsTestEnable = VK_FALSE;
-
-		// color blending
-		VkPipelineColorBlendAttachmentState color_blend_attachment{};
-		color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		color_blend_attachment.blendEnable = VK_FALSE;
-
-		VkPipelineColorBlendStateCreateInfo color_blend_ci{};
-		color_blend_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		color_blend_ci.attachmentCount = 1;
-		color_blend_ci.pAttachments = &color_blend_attachment;
-
-		// viewport
-		VkPipelineViewportStateCreateInfo viewport_ci{};
-		viewport_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewport_ci.viewportCount = 1;
-		viewport_ci.pViewports = nullptr;
-		viewport_ci.scissorCount = 1;
-		viewport_ci.pScissors = nullptr;
-
-		// Dynamic state
-		VkDynamicState dynamic_states[] =
-		{
-			VK_DYNAMIC_STATE_VIEWPORT,
-			VK_DYNAMIC_STATE_SCISSOR
-		};
-
-		VkPipelineDynamicStateCreateInfo dynamic_state_ci{};
-		dynamic_state_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamic_state_ci.dynamicStateCount = 2;
-		dynamic_state_ci.pDynamicStates = dynamic_states;
-
 		// vertex input
 		// vertex bindings
 		std::vector<VkVertexInputBindingDescription> vertex_input_binding_descriptions;
@@ -339,27 +274,17 @@ namespace Bamboo
 		};
 
 		// create graphics pipeline
-		VkGraphicsPipelineCreateInfo& graphics_pipeline_ci = VulkanRHI::get().getPipelineCI();
-		graphics_pipeline_ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		graphics_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());
-		graphics_pipeline_ci.pStages = shader_stage_cis.data();
-		graphics_pipeline_ci.pVertexInputState = &vertex_input_ci;
-		graphics_pipeline_ci.pInputAssemblyState = &input_assembly_state_ci;
-		graphics_pipeline_ci.pViewportState = &viewport_ci;
-		graphics_pipeline_ci.pRasterizationState = &rasterize_state_ci;
-		graphics_pipeline_ci.pMultisampleState = &multisampling_ci;
-		graphics_pipeline_ci.pDepthStencilState = &depth_stencil_ci;
-		graphics_pipeline_ci.pColorBlendState = &color_blend_ci;
-		graphics_pipeline_ci.pDynamicState = &dynamic_state_ci;
-		graphics_pipeline_ci.layout = m_pipeline_layouts[0];
-		graphics_pipeline_ci.renderPass = m_render_pass;
-		graphics_pipeline_ci.subpass = 0;
+		m_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());
+		m_pipeline_ci.pStages = shader_stage_cis.data();
+		m_pipeline_ci.pVertexInputState = &vertex_input_ci;
+		m_pipeline_ci.layout = m_pipeline_layouts[0];
+		m_pipeline_ci.renderPass = m_render_pass;
+		m_pipeline_ci.subpass = 0;
 
 		m_pipelines.resize(2);
 
 		// create static mesh pipeline
-		m_pipeline_cache = VulkanRHI::get().getPipelineCache();
-		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &graphics_pipeline_ci, nullptr, &m_pipelines[0]);
+		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[0]);
 		CHECK_VULKAN_RESULT(result, "create static mesh graphics pipeline");
 
 		// create skeletal mesh pipeline
@@ -381,7 +306,7 @@ namespace Bamboo
 		vertex_input_ci.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attribute_descriptions.size());
 		vertex_input_ci.pVertexAttributeDescriptions = vertex_input_attribute_descriptions.data();
 
-		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &graphics_pipeline_ci, nullptr, &m_pipelines[1]);
+		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[1]);
 		CHECK_VULKAN_RESULT(result, "create skeletal mesh graphics pipeline");
 	}
 

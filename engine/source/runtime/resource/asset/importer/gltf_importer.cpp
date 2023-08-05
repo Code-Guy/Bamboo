@@ -403,7 +403,6 @@ namespace Bamboo
 				material->setURL(url);
 
 				as->serializeAsset(material);
-				as->m_assets[url] = material;
 			}
 			else
 			{
@@ -482,7 +481,6 @@ namespace Bamboo
 			texture->inflate();
 			as->serializeAsset(texture);
 			textures.push_back(texture);
-			as->m_assets[url] = texture;
 		}
 
 		// 2.load materials
@@ -529,7 +527,6 @@ namespace Bamboo
 
 			as->serializeAsset(material);
 			materials.push_back(material);
-			as->m_assets[url] = material;
 		}
 
 		// 3.load nodes recursively
@@ -589,7 +586,6 @@ namespace Bamboo
 
 			static_mesh->inflate();
 			as->serializeAsset(static_mesh);
-			as->m_assets[url] = static_mesh;
 		}
 		else
 		{
@@ -625,13 +621,11 @@ namespace Bamboo
 				{
 					skeletal_mesh->inflate();
 					as->serializeAsset(skeletal_mesh);
-					as->m_assets[url] = skeletal_mesh;
 				}
 				else
 				{
 					static_mesh->inflate();
 					as->serializeAsset(static_mesh);
-					as->m_assets[url] = static_mesh;
 				}
 			}
 		}
@@ -674,7 +668,6 @@ namespace Bamboo
 
 			skeleton->inflate();
 			as->serializeAsset(skeleton);
-			as->m_assets[url] = skeleton;
 		}
 
 		// load animations
@@ -760,7 +753,6 @@ namespace Bamboo
 
 			animation->inflate();
 			as->serializeAsset(animation);
-			as->m_assets[url] = animation;
 		}
 
 		return true;

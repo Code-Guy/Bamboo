@@ -4,6 +4,7 @@ engine/log/
 engine/asset/*
 !engine/asset/engine/
 !engine/asset/world/
+engine/asset/engine/texture/ibl/
 engine/asset/engine/spv/
 
 # mac

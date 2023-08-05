@@ -1,7 +1,7 @@
 #version 450
 
 layout (location = 0) in vec2 f_tex_coord;
-layout (location = 0) out vec4 f_color;
+layout (location = 0) out vec2 f_color;
 layout (constant_id = 0) const uint NUM_SAMPLES = 1024u;
 
 const float PI = 3.1415926536;
@@ -86,5 +86,5 @@ vec2 BRDF(float NoV, float roughness)
 
 void main() 
 {
-	f_color = vec4(BRDF(f_tex_coord.s, 1.0 - f_tex_coord.t), 0.0, 1.0);
+	f_color = BRDF(f_tex_coord.s, 1.0 - f_tex_coord.t);
 }

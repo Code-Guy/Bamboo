@@ -122,9 +122,18 @@ namespace Bamboo
 		submit_info.commandBufferCount = 1;
 		submit_info.pCommandBuffers = &command_buffer;
 
+		VkFenceCreateInfo fence_ci{};
+		fence_ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fence_ci.flags = 0;
+
+		VkFence fence;
+		vkCreateFence(VulkanRHI::get().getDevice(), &fence_ci, nullptr, &fence);
+
 		VkQueue queue = VulkanRHI::get().getGraphicsQueue();
-		vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE);
-		vkQueueWaitIdle(queue);
+		vkQueueSubmit(queue, 1, &submit_info, fence);
+
+		vkWaitForFences(VulkanRHI::get().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX);
+		vkDestroyFence(VulkanRHI::get().getDevice(), fence, nullptr);
 
 		vkFreeCommandBuffers(VulkanRHI::get().getDevice(), VulkanRHI::get().getInstantCommandPool(), 1, &command_buffer);
 	}
@@ -138,14 +147,14 @@ namespace Bamboo
 		buffer_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		buffer_ci.flags = 0;
 
-		VmaAllocationCreateInfo alloc_ci{};
-		alloc_ci.usage = memory_usage;
+		VmaAllocationCreateInfo vma_alloc_ci{};
+		vma_alloc_ci.usage = memory_usage;
 		if (memory_usage == VMA_MEMORY_USAGE_AUTO_PREFER_HOST)
 		{
-			alloc_ci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+			vma_alloc_ci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
 		}
 		
-		vmaCreateBuffer(VulkanRHI::get().getAllocator(), &buffer_ci, &alloc_ci, &buffer.buffer, &buffer.allocation, nullptr);
+		vmaCreateBuffer(VulkanRHI::get().getAllocator(), &buffer_ci, &vma_alloc_ci, &buffer.buffer, &buffer.allocation, nullptr);
 	}
 
 	void VulkanUtil::copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
@@ -230,6 +239,10 @@ namespace Bamboo
 
 		VmaAllocationCreateInfo vma_alloc_ci{};
 		vma_alloc_ci.usage = memory_usage;
+		if (memory_usage == VMA_MEMORY_USAGE_AUTO_PREFER_HOST)
+		{
+			vma_alloc_ci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		}
 
 		VkResult result = vmaCreateImage(VulkanRHI::get().getAllocator(), &image_ci, &vma_alloc_ci, &image.image, &image.allocation, nullptr);
 		CHECK_VULKAN_RESULT(result, "vma create image");

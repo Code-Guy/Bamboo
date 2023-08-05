@@ -28,11 +28,19 @@ namespace Bamboo
 		}
 
 		// init instant render passes
-		std::shared_ptr<BRDFLUTPass> brdf_pass = std::make_shared<BRDFLUTPass>();
-		brdf_pass->init();
-		brdf_pass->createResizableObjects(2048, 2048);
-		brdf_pass->render();
-		brdf_pass->destroy();
+		const auto& as = g_runtime_context.assetManager();
+		if (g_runtime_context.fileSystem()->exists(BRDF_TEX_URL))
+		{
+			
+		}
+		else
+		{
+			std::shared_ptr<BRDFLUTPass> brdf_pass = std::make_shared<BRDFLUTPass>();
+			brdf_pass->init();
+			brdf_pass->createResizableObjects(2048, 2048);
+			brdf_pass->render();
+			brdf_pass->destroy();
+		}
 
 		// set vulkan rhi callback functions
 		g_runtime_context.eventSystem()->addListener(EventType::RenderCreateSwapchainObjects, 
@@ -43,7 +51,7 @@ namespace Bamboo
 			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1));
 
 		// get dummy texture2d
-		m_dummy_texture = g_runtime_context.assetManager()->loadAsset<Texture2D>("asset/engine/texture/material/tex_dummy.tex");
+		m_dummy_texture = as->loadAsset<Texture2D>("asset/engine/texture/material/tex_dummy.tex");
 	}
 
 	void RenderSystem::tick(float delta_time)
