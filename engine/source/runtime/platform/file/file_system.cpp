@@ -207,24 +207,23 @@ namespace Bamboo
 		return std::filesystem::remove(path);
 	}
 
-	std::vector<char> FileSystem::loadBinary(const std::string& filename)
+	bool FileSystem::loadBinary(const std::string& filename, std::vector<uint8_t>& data)
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 		if (!file.is_open())
 		{
 			LOG_FATAL("failed to load shader {}", filename);
-			return {};
+			return false;
 		}
 
-		std::vector<char> buffer;
-		size_t fileSize = (size_t)file.tellg();
-		buffer.resize(fileSize);
+		size_t file_size = (size_t)file.tellg();
+		data.resize(file_size);
 
 		file.seekg(0);
-		file.read(buffer.data(), fileSize);
+		file.read((char*)data.data(), file_size);
 		file.close();
 
-		return buffer;
+		return true;
 	}
 
 }

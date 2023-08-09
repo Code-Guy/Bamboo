@@ -15,7 +15,11 @@ namespace Bamboo
 
 	void RenderPass::destroy()
 	{
-		vkDestroyRenderPass(VulkanRHI::get().getDevice(), m_render_pass, nullptr);
+		if (m_render_pass)
+		{
+			vkDestroyRenderPass(VulkanRHI::get().getDevice(), m_render_pass, nullptr);
+		}
+		
 		if (m_descriptor_pool)
 		{
 			vkDestroyDescriptorPool(VulkanRHI::get().getDevice(), m_descriptor_pool, nullptr);
@@ -123,7 +127,10 @@ namespace Bamboo
 
 	void RenderPass::destroyResizableObjects()
 	{
-		vkDestroyFramebuffer(VulkanRHI::get().getDevice(), m_framebuffer, nullptr);
+		if (m_framebuffer)
+		{
+			vkDestroyFramebuffer(VulkanRHI::get().getDevice(), m_framebuffer, nullptr);
+		}
 	}
 
 	void RenderPass::onResize(uint32_t width, uint32_t height)

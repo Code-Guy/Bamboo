@@ -72,25 +72,31 @@ namespace Bamboo
 		static void updateBuffer(VmaBuffer& buffer, void* data, size_t size);
 
 		static void createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
-			uint32_t mip_levels, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
+			uint32_t mip_levels, uint32_t layers, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
 			VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler);
 
-		static void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
+		static void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layers, VkSampleCountFlagBits num_samples,
 			VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VkImageAspectFlags aspect_flags, VmaImageView& vma_image_view);
-		static void createImage(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
+		static void createImage(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layers, VkSampleCountFlagBits num_samples,
 			VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VmaImage& vma_image);
-		static VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, uint32_t mip_levels);
+		static VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, uint32_t mip_levels, uint32_t layers);
 		static VkSampler createSampler(VkFilter min_filter, VkFilter mag_filter, uint32_t mip_levels,
 			VkSamplerAddressMode address_mode_u, VkSamplerAddressMode address_mode_v, VkSamplerAddressMode address_mode_w);
 
 		static void createVertexBuffer(uint32_t buffer_size, void* vertex_data, VmaBuffer& vertex_buffer);
 		static void createIndexBuffer(const std::vector<uint32_t>& indices, VmaBuffer& index_buffer);
 
-		static void transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkFormat format = VK_FORMAT_B8G8R8A8_SRGB, uint32_t mip_levels = 1);
+		static void transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, 
+			VkFormat format = VK_FORMAT_B8G8R8A8_SRGB, uint32_t mip_levels = 1, uint32_t layers = 1);
 		static void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 		static void createImageMipmaps(VkImage image, VkFormat image_format, uint32_t width, uint32_t height, uint32_t mip_levels);
 
 		static bool hasStencil(VkFormat format);
-		static uint32_t getFormatSize(VkFormat format);
+		static uint32_t calcFormatSize(VkFormat format);
+		static uint32_t calcMipLevel(uint32_t width, uint32_t height = 0);
+		static void extractImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
+			VkImageLayout initial_layout, std::vector<uint8_t>& image_data, VkImageLayout final_layout = VK_IMAGE_LAYOUT_UNDEFINED);
+		static void saveImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
+			VkImageLayout initial_layout, const std::string& filename, VkImageLayout final_layout = VK_IMAGE_LAYOUT_UNDEFINED);
 	};
 }

@@ -6,8 +6,10 @@
 
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/pass/brdf_lut_pass.h"
+#include "runtime/function/render/pass/filter_cube_pass.h"
 #include "runtime/function/render/pass/base_pass.h"
 #include "runtime/function/render/pass/ui_pass.h"
+
 #include "runtime/function/framework/component/camera_component.h"
 #include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/static_mesh_component.h"
@@ -41,6 +43,12 @@ namespace Bamboo
 			brdf_pass->render();
 			brdf_pass->destroy();
 		}
+
+		std::shared_ptr<FilterCubePass> filter_cube_pass = std::make_shared<FilterCubePass>();
+		filter_cube_pass->init();
+		filter_cube_pass->createResizableObjects(0, 0);
+		filter_cube_pass->render();
+		filter_cube_pass->destroy();
 
 		// set vulkan rhi callback functions
 		g_runtime_context.eventSystem()->addListener(EventType::RenderCreateSwapchainObjects, 

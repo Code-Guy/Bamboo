@@ -1,6 +1,7 @@
 #include "asset_manager.h"
 
 #include "runtime/resource/asset/texture_2d.h"
+#include "runtime/resource/asset/texture_cube.h"
 #include "runtime/function/framework/world/world.h"
 
 #include "importer/gltf_importer.h"
@@ -82,6 +83,24 @@ namespace Bamboo
 		return true;
 	}
 
+	bool AssetManager::importTextureCube(const std::string& filename, const URL& folder)
+	{
+		std::shared_ptr<TextureCube> texture_cube = std::make_shared<TextureCube>();
+		std::string asset_name = getAssetName(filename, EAssetType::TextureCube);
+		URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
+		texture_cube->setURL(url);
+
+		texture_cube->setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+		texture_cube->m_texture_type = ETextureType::Cube;
+		texture_cube->m_pixel_type = EPixelType::RGBA16;
+		g_runtime_context.fileSystem()->loadBinary(filename, texture_cube->m_image_data);
+
+		texture_cube->inflate();
+		serializeAsset(texture_cube);
+
+		return true;
+	}
+
 	bool AssetManager::isGltfFile(const std::string& filename)
 	{
 		std::string extension = g_runtime_context.fileSystem()->extension(filename);
@@ -92,6 +111,12 @@ namespace Bamboo
 	{
 		std::string extension = g_runtime_context.fileSystem()->extension(filename);
 		return extension == "png" || extension == "jpg";
+	}
+
+	bool AssetManager::isTextureCubeFile(const std::string& filename)
+	{
+		std::string extension = g_runtime_context.fileSystem()->extension(filename);
+		return extension == "ktx";
 	}
 
 	EAssetType AssetManager::getAssetType(const URL& url)

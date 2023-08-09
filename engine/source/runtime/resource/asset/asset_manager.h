@@ -18,9 +18,11 @@ namespace Bamboo
 
 		bool importGltf(const std::string& filename, const URL& folder, const GltfImportOption& option);
 		bool importTexture2D(const std::string& filename, const URL& folder);
+		bool importTextureCube(const std::string& filename, const URL& folder);
 
 		bool isGltfFile(const std::string& filename);
 		bool isTexture2DFile(const std::string& filename);
+		bool isTextureCubeFile(const std::string& filename);
 
 		EAssetType getAssetType(const URL& url);
 

@@ -1,13 +1,11 @@
 #include "brdf_lut_pass.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
-#include "runtime/core/base/macro.h"
 #include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/texture_2d.h"
 
 #include <array>
-#include <fstream>
 
 namespace Bamboo
 {
@@ -56,75 +54,21 @@ namespace Bamboo
 
 		VulkanUtil::endInstantCommands(command_buffer);
 
-		// save to texture2d
-		// create staging image
-		VulkanUtil::createImage(m_width, m_height, 1, VK_SAMPLE_COUNT_1_BIT, m_format, VK_IMAGE_TILING_LINEAR,
-			VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, m_staging_image);
-
-		// copy to staging image
-		VkImageCopy image_copy{};
-		image_copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_copy.srcSubresource.layerCount = 1;
-		image_copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_copy.dstSubresource.layerCount = 1;
-		image_copy.extent.width = m_width;
-		image_copy.extent.height = m_height;
-		image_copy.extent.depth = 1;
-
-		// transition image layouts
-		VulkanUtil::transitionImageLayout(m_color_image_view.image(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		VulkanUtil::transitionImageLayout(m_staging_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-		command_buffer = VulkanUtil::beginInstantCommands();
-
-		// copy image
-		vkCmdCopyImage(
-			command_buffer,
-			m_color_image_view.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			m_staging_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1,
-			&image_copy);
-
-		VulkanUtil::endInstantCommands(command_buffer);
-
-		// reset image layouts
-		VulkanUtil::transitionImageLayout(m_color_image_view.image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-		LOG_INFO("generate brdf lut time: {}ms", stop_watch.stop());
-
-		// get staging image layout
-		VkImageSubresource sub_res{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 };
-		VkSubresourceLayout sub_res_layout;
-		vkGetImageSubresourceLayout(VulkanRHI::get().getDevice(), m_staging_image.image, &sub_res, &sub_res_layout);
-		size_t size = sub_res_layout.size;
-
-		// mapping data
-		void* mapped_data = nullptr;
-		vmaMapMemory(VulkanRHI::get().getAllocator(), m_staging_image.allocation, &mapped_data);
-
-		// write to file
-// 		std::ofstream ofs("D:/Test/brdf_lut.bin", std::ios::binary);
-// 		ofs.write((const char*)mapped_data, size);
-// 		ofs.close();
-
 		// write to texture2d
 		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
 		texture->setURL(BRDF_TEX_URL);
 
 		texture->m_width = m_width;
 		texture->m_height = m_height;
-		texture->m_address_mode_u = texture->m_address_mode_v = texture->m_address_mode_w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		texture->m_texture_type = ETextureType::IBL;
+		texture->setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+		texture->m_texture_type = ETextureType::Cube;
 		texture->m_pixel_type = EPixelType::RG16;
 
-		size_t image_size = m_width * m_height * 4;
-		texture->m_image_data.resize(image_size);
-		memcpy(texture->m_image_data.data(), mapped_data, image_size);
+		VulkanUtil::extractImage(m_image_view.image(), m_width, m_height, m_format, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, texture->m_image_data);
+		//VulkanUtil::saveImage(m_image_view.image(), m_width, m_height, m_format, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, "D:/Test/brdf_lut.bin");
 
 		texture->inflate();
 		g_runtime_context.assetManager()->serializeAsset(texture);
-
-		vmaUnmapMemory(VulkanRHI::get().getAllocator(), m_staging_image.allocation);
 	}
 
 	void BRDFLUTPass::createRenderPass()
@@ -234,17 +178,17 @@ namespace Bamboo
 	void BRDFLUTPass::createFramebuffer()
 	{
 		// 1.create color images and view
-		VulkanUtil::createImageAndView(m_width, m_height, 1, VK_SAMPLE_COUNT_1_BIT, m_format,
+		VulkanUtil::createImageAndView(m_width, m_height, 1, 1, VK_SAMPLE_COUNT_1_BIT, m_format,
 			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
 			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-			VK_IMAGE_ASPECT_COLOR_BIT, m_color_image_view);
+			VK_IMAGE_ASPECT_COLOR_BIT, m_image_view);
 
 		// 2.create framebuffer
 		VkFramebufferCreateInfo framebuffer_ci{};
 		framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebuffer_ci.renderPass = m_render_pass;
 		framebuffer_ci.attachmentCount = 1;
-		framebuffer_ci.pAttachments = &m_color_image_view.view;
+		framebuffer_ci.pAttachments = &m_image_view.view;
 		framebuffer_ci.width = m_width;
 		framebuffer_ci.height = m_height;
 		framebuffer_ci.layers = 1;
@@ -255,8 +199,7 @@ namespace Bamboo
 
 	void BRDFLUTPass::destroyResizableObjects()
 	{
-		m_color_image_view.destroy();
-		m_staging_image.destroy();
+		m_image_view.destroy();
 
 		RenderPass::destroyResizableObjects();
 	}

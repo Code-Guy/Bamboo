@@ -31,7 +31,7 @@ namespace Bamboo
 
 	protected:
 		// vulkan objects
-		VkRenderPass m_render_pass;
+		VkRenderPass m_render_pass = VK_NULL_HANDLE;
 		VkDescriptorPool m_descriptor_pool = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSetLayout> m_desc_set_layouts;
 		std::vector<VkPushConstantRange> m_push_constant_ranges;
@@ -51,7 +51,7 @@ namespace Bamboo
 		VkPipelineDynamicStateCreateInfo m_dynamic_state_ci{};
 
 		std::vector<VkPipeline> m_pipelines;
-		VkFramebuffer m_framebuffer;
+		VkFramebuffer m_framebuffer = VK_NULL_HANDLE;
 
 		// render dependent data
 		std::vector<std::shared_ptr<RenderData>> m_render_datas;

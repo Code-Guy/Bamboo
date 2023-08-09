@@ -268,7 +268,7 @@ namespace Bamboo
 		m_swapchain_image_views.resize(m_swapchain_image_count);
 		for (uint32_t i = 0; i < m_swapchain_image_count; ++i)
 		{
-			m_swapchain_image_views[i] = VulkanUtil::createImageView(swapchain_images[i], m_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+			m_swapchain_image_views[i] = VulkanUtil::createImageView(swapchain_images[i], m_surface_format.format, VK_IMAGE_ASPECT_COLOR_BIT, 1, 1);
 		}
 
 		// 2.create render passes' swapchain related objects

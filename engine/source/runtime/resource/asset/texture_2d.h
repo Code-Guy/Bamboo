@@ -10,15 +10,12 @@ namespace Bamboo
 	public:
 		virtual void inflate() override;
 
-		std::vector<uint8_t> m_image_data;
-
 	private:
 		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
 			ar(cereal::make_nvp("texture", cereal::base_class<Texture>(this)));
-			ar(cereal::make_nvp("image_data", m_image_data));
 		}
 	};
 }

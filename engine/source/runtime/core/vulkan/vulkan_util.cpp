@@ -2,6 +2,8 @@
 #include "vulkan_util.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 
+#include <fstream>
+
 namespace Bamboo
 {
 	const char* vkErrorString(VkResult result)
@@ -177,48 +179,51 @@ namespace Bamboo
 	}
 
 	void VulkanUtil::createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
-		uint32_t mip_levels, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
+		uint32_t mip_levels, uint32_t layers, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
 		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler)
 	{
-		size_t image_size = width * height * getFormatSize(format);
-		VmaBuffer staging_buffer;
-		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
-
-		// copy image pixel data to staging buffer
-		updateBuffer(staging_buffer, image_data, image_size);
-
 		// create Image
-		createImage(width, height, mip_levels, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL, 
+		createImage(width, height, mip_levels, layers, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 
 			vma_image_view_sampler.vma_image);
 
 		VkImage image = vma_image_view_sampler.image();
-		vma_image_view_sampler.view = createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels);
-
-		// transition image to DST_OPT state for copy into
-		transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, format, mip_levels);
-
-		// copy staging buffer to image
-		copyBufferToImage(staging_buffer.buffer, image, width, height);
-
-		// clear staging buffer
-		vmaDestroyBuffer(VulkanRHI::get().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
-
-		// generate image mipmaps, and transition image to READ_ONLY_OPT state for shader reading
-		createImageMipmaps(image, format, width, height, mip_levels);
+		vma_image_view_sampler.view = createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels, layers);
 
 		// create VkSampler
 		vma_image_view_sampler.sampler = createSampler(min_filter, mag_filter, mip_levels, address_mode, address_mode, address_mode);
+
+		if (image_data)
+		{
+			size_t image_size = width * height * calcFormatSize(format);
+			VmaBuffer staging_buffer;
+			createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
+
+			// copy image pixel data to staging buffer
+			updateBuffer(staging_buffer, image_data, image_size);
+
+			// transition image to DST_OPT state for copy into
+			transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, format, mip_levels);
+
+			// copy staging buffer to image
+			copyBufferToImage(staging_buffer.buffer, image, width, height);
+
+			// clear staging buffer
+			vmaDestroyBuffer(VulkanRHI::get().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
+
+			// generate image mipmaps, and transition image to READ_ONLY_OPT state for shader reading
+			createImageMipmaps(image, format, width, height, mip_levels);
+		}
 	}
 
-	void VulkanUtil::createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
+	void VulkanUtil::createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layers, VkSampleCountFlagBits num_samples,
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VkImageAspectFlags aspect_flags, VmaImageView& vma_image_view)
 	{
-		createImage(width, height, mip_levels, num_samples, format, tiling, image_usage, memory_usage, vma_image_view.vma_image);
-		vma_image_view.view = createImageView(vma_image_view.vma_image.image, format, aspect_flags, mip_levels);
+		createImage(width, height, mip_levels, layers, num_samples, format, tiling, image_usage, memory_usage, vma_image_view.vma_image);
+		vma_image_view.view = createImageView(vma_image_view.vma_image.image, format, aspect_flags, mip_levels, layers);
 	}
 
-	void VulkanUtil::createImage(uint32_t width, uint32_t height, uint32_t mip_levels, VkSampleCountFlagBits num_samples,
+	void VulkanUtil::createImage(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layers, VkSampleCountFlagBits num_samples,
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VmaImage& image)
 	{
 		VkImageCreateInfo image_ci{};
@@ -228,14 +233,14 @@ namespace Bamboo
 		image_ci.extent.height = height;
 		image_ci.extent.depth = 1;
 		image_ci.mipLevels = mip_levels;
-		image_ci.arrayLayers = 1;
+		image_ci.arrayLayers = layers;
 		image_ci.format = format;
 		image_ci.tiling = tiling;
 		image_ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		image_ci.usage = image_usage;
 		image_ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		image_ci.samples = num_samples;
-		image_ci.flags = 0;
+		image_ci.flags = layers == 6 ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
 
 		VmaAllocationCreateInfo vma_alloc_ci{};
 		vma_alloc_ci.usage = memory_usage;
@@ -248,19 +253,19 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "vma create image");
 	}
 
-	VkImageView VulkanUtil::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, uint32_t mip_levels)
+	VkImageView VulkanUtil::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, uint32_t mip_levels, uint32_t layers)
 	{
 		VkImageViewCreateInfo image_view_ci{};
 		image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		image_view_ci.image = image;
-		image_view_ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		image_view_ci.viewType = layers == 6 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
 		image_view_ci.format = format;
 
 		image_view_ci.subresourceRange.aspectMask = aspect_flags;
 		image_view_ci.subresourceRange.baseMipLevel = 0;
 		image_view_ci.subresourceRange.levelCount = mip_levels;
 		image_view_ci.subresourceRange.baseArrayLayer = 0;
-		image_view_ci.subresourceRange.layerCount = 1;
+		image_view_ci.subresourceRange.layerCount = layers;
 
 		VkImageView image_view;
 		vkCreateImageView(VulkanRHI::get().getDevice(), &image_view_ci, nullptr, &image_view);
@@ -383,8 +388,13 @@ namespace Bamboo
 		}
 	}
 
-	void VulkanUtil::transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkFormat format, uint32_t mip_levels)
+	void VulkanUtil::transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, VkFormat format, uint32_t mip_levels, uint32_t layers)
 	{
+		if (old_layout == new_layout)
+		{
+			return;
+		}
+
 		VkCommandBuffer command_buffer = beginInstantCommands();
 
 		// init image memory barrier
@@ -415,7 +425,7 @@ namespace Bamboo
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = mip_levels;
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
+		barrier.subresourceRange.layerCount = layers;
 
 		VkPipelineStageFlags src_stage = pipelineStageForLayout(old_layout);
 		VkPipelineStageFlags dst_stage = pipelineStageForLayout(new_layout);
@@ -542,7 +552,7 @@ namespace Bamboo
 		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}
 
-	uint32_t VulkanUtil::getFormatSize(VkFormat format)
+	uint32_t VulkanUtil::calcFormatSize(VkFormat format)
 	{
 		switch (format)
 		{
@@ -561,6 +571,84 @@ namespace Bamboo
 			LOG_FATAL("unsupported format: {}", format);
 			return 0;
 		}
+	}
+
+	uint32_t VulkanUtil::calcMipLevel(uint32_t width, uint32_t height /*= 0*/)
+	{
+		if (height == 0)
+		{
+			height = width;
+		}
+		return static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
+	}
+
+	void VulkanUtil::extractImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
+		VkImageLayout initial_layout, std::vector<uint8_t>& image_data, VkImageLayout final_layout)
+	{
+		// create staging image
+		VmaImage staging_image;
+		VulkanUtil::createImage(width, height, 1, 1, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_LINEAR,
+			VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_image);
+
+		// copy to staging image
+		VkImageCopy image_copy{};
+		image_copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		image_copy.srcSubresource.layerCount = 1;
+		image_copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		image_copy.dstSubresource.layerCount = 1;
+		image_copy.extent.width = width;
+		image_copy.extent.height = height;
+		image_copy.extent.depth = 1;
+
+		// transition image layouts
+		if (final_layout == VK_IMAGE_LAYOUT_UNDEFINED)
+		{
+			final_layout = initial_layout;
+		}
+		VulkanUtil::transitionImageLayout(image, initial_layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		VulkanUtil::transitionImageLayout(staging_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
+
+		// copy image
+		vkCmdCopyImage(
+			command_buffer,
+			image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			staging_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&image_copy);
+
+		VulkanUtil::endInstantCommands(command_buffer);
+
+		// reset image layouts
+		VulkanUtil::transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, final_layout);
+
+		// get staging image layout
+		VkImageSubresource sub_res{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 };
+		VkSubresourceLayout sub_res_layout;
+		vkGetImageSubresourceLayout(VulkanRHI::get().getDevice(), staging_image.image, &sub_res, &sub_res_layout);
+		size_t size = sub_res_layout.size;
+		size_t image_size = width * height * calcFormatSize(format);
+		ASSERT(size >= image_size, "SubresourceLayout's size is small than image size");
+
+		// mapping data
+		void* mapped_data = nullptr;
+		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_image.allocation, &mapped_data);
+		image_data.resize(image_size);
+		memcpy(image_data.data(), mapped_data, image_size);
+		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_image.allocation);
+		staging_image.destroy();
+	}
+
+	void VulkanUtil::saveImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
+		VkImageLayout initial_layout, const std::string& filename, VkImageLayout final_layout)
+	{
+		std::vector<uint8_t> image_data;
+		extractImage(image, width, height, format, initial_layout, image_data, final_layout);
+
+		std::ofstream ofs(filename, std::ios::binary);
+		ofs.write((const char*)image_data.data(), image_data.size());
+		ofs.close();
 	}
 
 }

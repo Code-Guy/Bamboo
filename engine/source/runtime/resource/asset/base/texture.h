@@ -5,7 +5,7 @@
 
 enum class ETextureType
 {
-	Invalid, BaseColor, MetallicRoughness, Normal, Occlusion, Emissive, IBL, UI, Data
+	Invalid, BaseColor, MetallicRoughness, Normal, Occlusion, Emissive, Cube, UI, Data
 };
 
 enum class EPixelType
@@ -28,7 +28,12 @@ namespace Bamboo
 		EPixelType m_pixel_type;
 
 		uint32_t m_mip_levels;
+		uint32_t m_layers;
 		VmaImageViewSampler m_image_view_sampler;
+
+		std::vector<uint8_t> m_image_data;
+
+		void setAddressMode(VkSamplerAddressMode address_mode);
 
 	protected:
 		bool isSRGB();
@@ -48,6 +53,7 @@ namespace Bamboo
 			ar(cereal::make_nvp("address_mode_w", m_address_mode_w));
 			ar(cereal::make_nvp("texture_type", m_texture_type));
 			ar(cereal::make_nvp("pixel_type", m_pixel_type));
+			ar(cereal::make_nvp("image_data", m_image_data));
 		}
 	};
 }

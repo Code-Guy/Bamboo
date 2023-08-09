@@ -98,7 +98,8 @@ namespace Bamboo
 		else
 		{
 			// load spv binary data
-			std::vector<char> code = g_runtime_context.fileSystem()->loadBinary(m_shader_filenames[name]);
+			std::vector<uint8_t> code;
+			g_runtime_context.fileSystem()->loadBinary(m_shader_filenames[name], code);
 
 			// create shader module
 			VkShaderModuleCreateInfo shader_module_ci{};

@@ -22,7 +22,6 @@ namespace Bamboo
 
 	private:
 		VkFormat m_format;
-		VmaImageView m_color_image_view;
-		VmaImage m_staging_image;
+		VmaImageView m_image_view;
 	};
 }
