@@ -1,9 +1,9 @@
 #version 450
 
-layout (location = 0) in vec3 f_uvw;
-layout (location = 0) out vec4 f_color;
+layout(location = 0) in vec3 f_uvw;
+layout(location = 0) out vec4 o_color;
 
-layout (binding = 0) uniform samplerCube env_tex;
+layout(binding = 0) uniform samplerCube env_tex;
 
 layout(push_constant) uniform PCO 
 {
@@ -101,5 +101,5 @@ vec3 prefilterEnvMap(vec3 R, float roughness)
 void main()
 {		
 	vec3 n = normalize(f_uvw);
-	f_color = vec4(prefilterEnvMap(n, pco.roughness), 1.0);
+	o_color = vec4(prefilterEnvMap(n, pco.roughness), 1.0);
 }

@@ -26,7 +26,7 @@ namespace Bamboo
 		std::vector<VmaImageViewSampler> textures;
 
 		TransformPCO transform_pco;
-		std::vector<MaterialPCO> material_pcos;
+		std::vector<MaterialUBO> material_pcos;
 	};
 
 	struct SkeletalRenderData : public MeshRenderData

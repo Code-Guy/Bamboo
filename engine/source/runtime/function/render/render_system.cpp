@@ -223,7 +223,7 @@ namespace Bamboo
 						mesh_render_data->index_counts.push_back(sub_mesh.m_index_count);
 						mesh_render_data->index_offsets.push_back(sub_mesh.m_index_offset);
 
-						MaterialPCO material_pco;
+						MaterialUBO material_pco;
 						material_pco.base_color_factor = sub_mesh.m_material->m_base_color_factor;
 						material_pco.has_base_color_texture = sub_mesh.m_material->m_base_color_texure != nullptr;
 						material_pco.emissive_factor = sub_mesh.m_material->m_emissive_factor;

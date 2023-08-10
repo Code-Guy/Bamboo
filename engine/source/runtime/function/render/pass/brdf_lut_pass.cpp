@@ -158,7 +158,7 @@ namespace Bamboo
 		// shader stages
 		const auto& shader_manager = g_runtime_context.shaderManager();
 		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = {
-			shader_manager->getShaderStageCI("brdf_lut.vert", VK_SHADER_STAGE_VERTEX_BIT),
+			shader_manager->getShaderStageCI("screen.vert", VK_SHADER_STAGE_VERTEX_BIT),
 			shader_manager->getShaderStageCI("brdf_lut.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 		

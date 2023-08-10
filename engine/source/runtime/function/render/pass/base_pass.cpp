@@ -253,7 +253,7 @@ namespace Bamboo
 		m_push_constant_ranges =
 		{
 			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO) },
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TransformPCO), sizeof(MaterialPCO) }
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TransformPCO), sizeof(MaterialUBO) }
 		};
 
 		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());

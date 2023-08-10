@@ -3,7 +3,7 @@
 
 #include "host_device.h"
 
-layout(push_constant) uniform _MaterialPCO { layout(offset = 192) MaterialPCO material_pco; };
+layout(push_constant) uniform _MaterialUBO { layout(offset = 192) MaterialUBO material_pco; };
 
 layout(set = 0, binding = 1) uniform _LightingUBO { LightingUBO lighting_ubo; };
 layout(set = 0, binding = 2) uniform sampler2D base_color_texture_sampler;
@@ -12,12 +12,12 @@ layout(location = 0) in vec3 f_position;
 layout(location = 1) in vec2 f_tex_coord;
 layout(location = 2) in vec3 f_normal;
 
-layout(location = 0) out vec4 f_color;
+layout(location = 0) out vec4 o_color;
 
 void main()
 {
 	vec3 base_color = bool(material_pco.has_base_color_texture) ? 
-		texture(base_color_texture_sampler, f_tex_coord).rgb : material_pco.base_color_factor;
+		texture(base_color_texture_sampler, f_tex_coord).xyz : material_pco.base_color_factor.xyz;
 
 	// ambient
 	float ambient = 0.05;
@@ -34,5 +34,5 @@ void main()
 	vec3 halfway_dir = normalize(-lighting_ubo.light_dir + f_normal);
 	float specular = pow(max(dot(halfway_dir, f_normal), 0.0), shininess);
 
-	f_color = vec4(base_color * ambient + base_color * light_color * diffuse + light_color * specular, 1.0);
+	o_color = vec4(base_color * ambient + base_color * light_color * diffuse + light_color * specular, 1.0);
 }

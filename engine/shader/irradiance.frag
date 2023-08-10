@@ -2,9 +2,9 @@
 
 #version 450
 
-layout (location = 0) in vec3 f_uvw;
-layout (location = 0) out vec4 f_color;
-layout (binding = 0) uniform samplerCube env_tex;
+layout(location = 0) in vec3 f_uvw;
+layout(location = 0) out vec4 o_color;
+layout(binding = 0) uniform samplerCube env_tex;
 
 layout(push_constant) uniform PCO 
 {
@@ -36,5 +36,5 @@ void main()
 		}
 	}
 
-	f_color = vec4(PI * color / float(samples), 1.0);
+	o_color = vec4(PI * color / float(samples), 1.0);
 }
