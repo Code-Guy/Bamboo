@@ -25,11 +25,11 @@ void main()
 	}
 
 	vec4 local_position = blend_bone_matrix * vec4(position, 1.0);
-	vec4 local_normal = blend_bone_matrix * vec4(normal, 0.0);
+	vec3 local_normal = mat3(blend_bone_matrix) * normal;
 	
 	f_position = (transform_pco.m * local_position).xyz;
 	f_tex_coord = tex_coord;
-	f_normal = (transform_pco.m * local_normal).xyz;
+	f_normal = normalize(mat3(transform_pco.nm) * local_normal);
 
 	gl_Position = transform_pco.mvp * local_position;
 }

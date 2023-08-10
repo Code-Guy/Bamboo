@@ -213,9 +213,8 @@ namespace Bamboo
 					// update push constants
 					mesh_render_data->transform_pco.m = transform_component->getGlobalMatrix();
 					mesh_render_data->transform_pco.nm = glm::transpose(glm::inverse(glm::mat3(mesh_render_data->transform_pco.m)));
-					mesh_render_data->transform_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->getGlobalMatrix();
+					mesh_render_data->transform_pco.mvp = camera_component->getViewPerspectiveMatrix() * mesh_render_data->transform_pco.m;
 
-					
 					// traverse all sub meshes
 					for (size_t i = 0; i < mesh->m_sub_meshes.size(); ++i)
 					{

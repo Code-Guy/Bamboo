@@ -17,7 +17,7 @@ void main()
 {	
 	f_position = (transform_pco.m * vec4(position, 1.0)).xyz;
 	f_tex_coord = tex_coord;
-	f_normal = (transform_pco.m * vec4(normal, 0.0)).xyz;
+	f_normal = normalize(mat3(transform_pco.nm) * normal);
 
 	gl_Position = transform_pco.mvp * vec4(position, 1.0);
 }
