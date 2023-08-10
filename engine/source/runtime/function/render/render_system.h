@@ -27,5 +27,7 @@ namespace Bamboo
 		std::shared_ptr<class Texture2D> m_dummy_texture;
 		std::shared_ptr<class UIPass> m_ui_pass;
 		std::map<ERenderPassType, std::shared_ptr<RenderPass>> m_render_passes;
+
+		std::vector<VmaBuffer> m_lighting_ubs;
 	};
 }

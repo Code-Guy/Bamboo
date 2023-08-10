@@ -103,13 +103,13 @@ namespace Bamboo
 		m_skeleton_inst.update();
 		for (size_t i = 0; i < m_skeleton_inst.m_bones.size(); ++i)
 		{
-			m_skeletal_mesh_ubo.bone_matrices[i] = m_skeleton_inst.m_bones[i].matrix();
+			m_bone_ubo.bone_matrices[i] = m_skeleton_inst.m_bones[i].matrix();
 		}
 
 		// update uniform buffers
 		for (VmaBuffer& uniform_buffer : skeletal_mesh->m_uniform_buffers)
 		{
-			VulkanUtil::updateBuffer(uniform_buffer, (void*)&m_skeletal_mesh_ubo, sizeof(SkeletalMeshUBO));
+			VulkanUtil::updateBuffer(uniform_buffer, (void*)&m_bone_ubo, sizeof(BoneUBO));
 		}
 	}
 

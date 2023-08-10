@@ -14,7 +14,7 @@ namespace Bamboo
 		m_uniform_buffers.resize(MAX_FRAMES_IN_FLIGHT);
 		for (VmaBuffer& uniform_buffer : m_uniform_buffers)
 		{
-			VulkanUtil::createBuffer(sizeof(SkeletalMeshUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer);
+			VulkanUtil::createBuffer(sizeof(BoneUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer);
 		}
 	}
 

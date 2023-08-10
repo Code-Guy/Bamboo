@@ -34,7 +34,7 @@ namespace Bamboo
 
 		std::shared_ptr<class AnimationComponent> m_animation_component;
 		std::shared_ptr<class SkeletalMeshComponent> m_skeletal_mesh_component;
-		SkeletalMeshUBO m_skeletal_mesh_ubo;
+		BoneUBO m_bone_ubo;
 
 		float m_time = 0.0f;
 		bool m_loop = true;

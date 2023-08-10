@@ -1,11 +1,10 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
 
 #include "host_device.h"
 
-layout(binding = 0) uniform _SkeletalMeshUBO { SkeletalMeshUBO ubo; };
-layout(push_constant) uniform _VertPCO { VertPCO v_pco; };
+layout(set = 0, binding = 0) uniform _BoneUBO { BoneUBO bone_ubo; };
+layout(push_constant) uniform _TransformPCO { TransformPCO transform_pco; };
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 tex_coord;
@@ -22,15 +21,15 @@ void main()
 	mat4 blend_bone_matrix = mat4(0.0);
 	for (int i = 0; i < BONE_NUM_PER_VERTEX; ++i)
 	{
-		blend_bone_matrix += ubo.bone_matrices[bones[i]] * weights[i];
+		blend_bone_matrix += bone_ubo.bone_matrices[bones[i]] * weights[i];
 	}
 
 	vec4 local_position = blend_bone_matrix * vec4(position, 1.0);
 	vec4 local_normal = blend_bone_matrix * vec4(normal, 0.0);
 	
-	f_position = (v_pco.m * local_position).xyz;
+	f_position = (transform_pco.m * local_position).xyz;
 	f_tex_coord = tex_coord;
-	f_normal = (v_pco.m * local_normal).xyz;
+	f_normal = (transform_pco.m * local_normal).xyz;
 
-	gl_Position = v_pco.mvp * local_position;
+	gl_Position = transform_pco.mvp * local_position;
 }

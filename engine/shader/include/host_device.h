@@ -14,30 +14,30 @@ using uint = unsigned int;
 
 #include "shader_constants.h"
 
-struct StaticMeshUBO
-{
-	mat4 padding;
-};
-
-struct SkeletalMeshUBO
+struct BoneUBO
 {
 	mat4 bone_matrices[MAX_BONE_NUM];
 };
 
-struct VertPCO
+struct TransformPCO
 {
     mat4 m;
+    mat4 nm;
     mat4 mvp;
 };
 
-struct FragPCO
+struct MaterialPCO
 {
-    vec3 camera_pos; float padding0;
-    vec3 light_dir; float padding1;
     vec3 base_color_factor; int has_base_color_texture;
     vec3 emissive_factor; int has_emissive_texture;
     float m_metallic_factor;
     float m_roughness_factor;
+};
+
+struct LightingUBO
+{
+    vec3 camera_pos; float padding0;
+    vec3 light_dir; float padding1;
 };
 
 #endif

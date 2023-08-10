@@ -205,8 +205,8 @@ namespace Bamboo
 					VulkanUtil::endInstantCommands(command_buffer);
 
 					// save framebuffer texture data to file
-					VulkanUtil::saveImage(color_image, static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height), 
-						m_formats[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, StringUtil::format("D:/Test/filter_cube_%d_%d_%d.bin", i, f, m));
+// 					VulkanUtil::saveImage(color_image, static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height), 
+// 						m_formats[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, StringUtil::format("D:/Test/filter_cube_%d_%d_%d.bin", i, f, m));
 
 					// transition framebuffer texture to color attachment optimal
 					VulkanUtil::transitionImageLayout(color_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);

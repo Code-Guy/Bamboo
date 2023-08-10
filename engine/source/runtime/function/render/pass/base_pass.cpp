@@ -48,9 +48,15 @@ namespace Bamboo
 		// 3.bind states and render
 		for (auto& render_data : m_render_datas)
 		{
+			std::shared_ptr<SkeletalRenderData> skeletal_mesh_render_data = nullptr;
 			std::shared_ptr<MeshRenderData> mesh_render_data = std::static_pointer_cast<MeshRenderData>(render_data);
 			EMeshType mesh_type = mesh_render_data->mesh_type;
-			
+			if (mesh_type == EMeshType::Skeletal)
+			{
+				skeletal_mesh_render_data = std::static_pointer_cast<SkeletalRenderData>(render_data);
+			}
+			VkPipelineLayout pipeline_layout = m_pipeline_layouts[(uint32_t)mesh_type];
+
 			// bind pipeline
 			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[(uint32_t)mesh_type]);
 
@@ -67,44 +73,67 @@ namespace Bamboo
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
 				// push constants
-				const void* pcos[] = { &mesh_render_data->vert_pco, &mesh_render_data->frag_pcos[i]};
+				const void* pcos[] = { &mesh_render_data->transform_pco, &mesh_render_data->material_pcos[i]};
 				for (size_t i = 0; i < m_push_constant_ranges.size(); ++i)
 				{
 					const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[i];
-					vkCmdPushConstants(command_buffer, m_pipeline_layouts[0], pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[i]);
+					vkCmdPushConstants(command_buffer, pipeline_layout, pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[i]);
 				}
 
 				// update(push) sub mesh descriptors
-				std::vector<VkWriteDescriptorSet> desc_writes(2, VkWriteDescriptorSet{});
+				std::vector<VkWriteDescriptorSet> desc_writes;
+				VkWriteDescriptorSet desc_write{};
+				
+				// bone matrix ubo
+				if (mesh_type == EMeshType::Skeletal)
+				{
+					VkDescriptorBufferInfo desc_buffer_info{};
+					desc_buffer_info.buffer = skeletal_mesh_render_data->bone_ubs[flight_index].buffer;
+					desc_buffer_info.offset = 0;
+					desc_buffer_info.range = sizeof(BoneUBO);
 
+					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					desc_write.dstSet = 0;
+					desc_write.dstBinding = 0;
+					desc_write.dstArrayElement = 0;
+					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					desc_write.descriptorCount = 1;
+					desc_write.pBufferInfo = &desc_buffer_info;
+					desc_writes.push_back(desc_write);
+				}
+
+				// lighting ubo
 				VkDescriptorBufferInfo desc_buffer_info{};
-				desc_buffer_info.buffer = mesh_render_data->uniform_buffers[flight_index].buffer;
+				desc_buffer_info.buffer = mesh_render_data->lighting_ubs[flight_index].buffer;
 				desc_buffer_info.offset = 0;
-				desc_buffer_info.range = mesh_type == EMeshType::Static ? sizeof(StaticMeshUBO) : sizeof(SkeletalMeshUBO);
+				desc_buffer_info.range = sizeof(LightingUBO);
 
-				desc_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				desc_writes[0].dstSet = 0;
-				desc_writes[0].dstBinding = 0;
-				desc_writes[0].dstArrayElement = 0;
-				desc_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				desc_writes[0].descriptorCount = 1;
-				desc_writes[0].pBufferInfo = &desc_buffer_info;
+				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				desc_write.dstSet = 0;
+				desc_write.dstBinding = 1;
+				desc_write.dstArrayElement = 0;
+				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				desc_write.descriptorCount = 1;
+				desc_write.pBufferInfo = &desc_buffer_info;
+				desc_writes.push_back(desc_write);
 
+				// image sampler
 				VkDescriptorImageInfo desc_image_info{};
 				desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				desc_image_info.imageView = mesh_render_data->textures[i].view;
 				desc_image_info.sampler = mesh_render_data->textures[i].sampler;
 
-				desc_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				desc_writes[1].dstSet = 0;
-				desc_writes[1].dstBinding = 1;
-				desc_writes[1].dstArrayElement = 0;
-				desc_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				desc_writes[1].descriptorCount = 1;
-				desc_writes[1].pImageInfo = &desc_image_info;
+				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				desc_write.dstSet = 0;
+				desc_write.dstBinding = 2;
+				desc_write.dstArrayElement = 0;
+				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				desc_write.descriptorCount = 1;
+				desc_write.pImageInfo = &desc_image_info;
+				desc_writes.push_back(desc_write);
 
 				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-					m_pipeline_layouts[0], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+					pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 
 				// render sub mesh
 				vkCmdDrawIndexed(command_buffer, index_counts[i], 1, index_offsets[i], 0, 0);
@@ -193,8 +222,8 @@ namespace Bamboo
 	void BasePass::createDescriptorSetLayouts()
 	{
 		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}
 		};
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
@@ -203,8 +232,13 @@ namespace Bamboo
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 
-		m_desc_set_layouts.resize(1);
+		m_desc_set_layouts.resize(2);
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
+
+		desc_set_layout_bindings.insert(desc_set_layout_bindings.begin(), { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr });
+		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
+		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
+		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);
 		CHECK_VULKAN_RESULT(result, "create descriptor set layout");
 	}
 
@@ -218,15 +252,18 @@ namespace Bamboo
 		// set push constant range
 		m_push_constant_ranges =
 		{
-			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VertPCO) },
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(VertPCO), sizeof(FragPCO) }
+			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO) },
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TransformPCO), sizeof(MaterialPCO) }
 		};
 
 		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
 		pipeline_layout_ci.pPushConstantRanges = m_push_constant_ranges.data();
 
-		m_pipeline_layouts.resize(1);
+		m_pipeline_layouts.resize(2);
 		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[0]);
+
+		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[1];
+		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[1]);
 		CHECK_VULKAN_RESULT(result, "create pipeline layout");
 	}
 
@@ -306,6 +343,7 @@ namespace Bamboo
 		vertex_input_ci.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attribute_descriptions.size());
 		vertex_input_ci.pVertexAttributeDescriptions = vertex_input_attribute_descriptions.data();
 
+		m_pipeline_ci.layout = m_pipeline_layouts[1];
 		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[1]);
 		CHECK_VULKAN_RESULT(result, "create skeletal mesh graphics pipeline");
 	}

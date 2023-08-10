@@ -22,10 +22,15 @@ namespace Bamboo
 	{
 		EMeshType mesh_type;
 
-		std::vector<VmaBuffer> uniform_buffers;
+		std::vector<VmaBuffer> lighting_ubs;
 		std::vector<VmaImageViewSampler> textures;
 
-		VertPCO vert_pco;
-		std::vector<FragPCO> frag_pcos;
+		TransformPCO transform_pco;
+		std::vector<MaterialPCO> material_pcos;
+	};
+
+	struct SkeletalRenderData : public MeshRenderData
+	{
+		std::vector<VmaBuffer> bone_ubs;
 	};
 }

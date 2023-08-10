@@ -60,6 +60,13 @@ namespace Bamboo
 
 		// get dummy texture2d
 		m_dummy_texture = as->loadAsset<Texture2D>("asset/engine/texture/material/tex_dummy.tex");
+
+		// create lighting uniform buffers
+		m_lighting_ubs.resize(MAX_FRAMES_IN_FLIGHT);
+		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
+		{
+			VulkanUtil::createBuffer(sizeof(LightingUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer);
+		}
 	}
 
 	void RenderSystem::tick(float delta_time)
@@ -77,6 +84,11 @@ namespace Bamboo
 		{
 			render_pass.second->destroy();
 		}
+		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
+		{
+			uniform_buffer.destroy();
+		}
+
 		m_dummy_texture.reset();
 	}
 
@@ -129,6 +141,15 @@ namespace Bamboo
 		auto camera_transform_component = camera_entity->getComponent(TransformComponent);
 		auto camera_component = camera_entity->getComponent(CameraComponent);
 
+		// update lighting uniform buffers
+		LightingUBO lighting_ubo;
+		lighting_ubo.camera_pos = camera_transform_component->m_position;
+		lighting_ubo.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
+		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
+		{
+			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
+		}
+
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
 		for (const auto& iter : entities)
@@ -157,43 +178,67 @@ namespace Bamboo
 				if (mesh)
 				{
 					// create mesh render data
-					std::shared_ptr<MeshRenderData> render_data = std::make_shared<MeshRenderData>();
-					render_data->mesh_type = static_mesh_component ? EMeshType::Static : EMeshType::Skeletal;
+					EMeshType mesh_type = static_mesh_component ? EMeshType::Static : EMeshType::Skeletal;
+					std::shared_ptr<MeshRenderData> mesh_render_data = nullptr;
+					std::shared_ptr<SkeletalRenderData> skeletal_mesh_render_data = nullptr;
 
-					render_data->vertex_buffer = mesh->m_vertex_buffer;
-					render_data->index_buffer = mesh->m_index_buffer;
-					render_data->uniform_buffers = mesh->m_uniform_buffers;
+					switch (mesh_type)
+					{
+					case EMeshType::Static:
+					{
+						mesh_render_data = std::make_shared<MeshRenderData>();
+					}
+						break;
+					case EMeshType::Skeletal:
+					{
+						skeletal_mesh_render_data = std::make_shared<SkeletalRenderData>();
+						mesh_render_data = skeletal_mesh_render_data;
+					}
+						break;
+					default:
+						break;
+					}
+					
+					mesh_render_data->mesh_type = mesh_type;
+					mesh_render_data->vertex_buffer = mesh->m_vertex_buffer;
+					mesh_render_data->index_buffer = mesh->m_index_buffer;
 
-					// set push constants
-					render_data->vert_pco.m = transform_component->getGlobalMatrix();
-					render_data->vert_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->getGlobalMatrix();
+					// update uniform buffers
+					mesh_render_data->lighting_ubs = m_lighting_ubs;
+					if (mesh_type == EMeshType::Skeletal)
+					{
+						skeletal_mesh_render_data->bone_ubs = mesh->m_uniform_buffers;
+					}
 
-					FragPCO frag_pco;
-					frag_pco.camera_pos = camera_transform_component->m_position;
-					frag_pco.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
+					// update push constants
+					mesh_render_data->transform_pco.m = transform_component->getGlobalMatrix();
+					mesh_render_data->transform_pco.nm = glm::transpose(glm::inverse(glm::mat3(mesh_render_data->transform_pco.m)));
+					mesh_render_data->transform_pco.mvp = camera_component->getViewPerspectiveMatrix() * transform_component->getGlobalMatrix();
+
 					
 					// traverse all sub meshes
 					for (size_t i = 0; i < mesh->m_sub_meshes.size(); ++i)
 					{
 						const auto& sub_mesh = mesh->m_sub_meshes[i];
 
-						render_data->index_counts.push_back(sub_mesh.m_index_count);
-						render_data->index_offsets.push_back(sub_mesh.m_index_offset);
+						mesh_render_data->index_counts.push_back(sub_mesh.m_index_count);
+						mesh_render_data->index_offsets.push_back(sub_mesh.m_index_offset);
 
-						frag_pco.base_color_factor = sub_mesh.m_material->m_base_color_factor;
-						frag_pco.has_base_color_texture = sub_mesh.m_material->m_base_color_texure != nullptr;
-						frag_pco.emissive_factor = sub_mesh.m_material->m_emissive_factor;
-						frag_pco.has_emissive_texture = sub_mesh.m_material->m_emissive_texure != nullptr;
-						frag_pco.m_metallic_factor = sub_mesh.m_material->m_metallic_factor;
-						frag_pco.m_roughness_factor = sub_mesh.m_material->m_roughness_factor;
-						render_data->frag_pcos.push_back(frag_pco);
+						MaterialPCO material_pco;
+						material_pco.base_color_factor = sub_mesh.m_material->m_base_color_factor;
+						material_pco.has_base_color_texture = sub_mesh.m_material->m_base_color_texure != nullptr;
+						material_pco.emissive_factor = sub_mesh.m_material->m_emissive_factor;
+						material_pco.has_emissive_texture = sub_mesh.m_material->m_emissive_texure != nullptr;
+						material_pco.m_metallic_factor = sub_mesh.m_material->m_metallic_factor;
+						material_pco.m_roughness_factor = sub_mesh.m_material->m_roughness_factor;
+						mesh_render_data->material_pcos.push_back(material_pco);
 
 						std::shared_ptr<Texture2D> base_color_texture = sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure : m_dummy_texture;
 						std::shared_ptr<Texture2D> emissive_texture = sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure : m_dummy_texture;
-						render_data->textures.push_back(base_color_texture->m_image_view_sampler);
+						mesh_render_data->textures.push_back(base_color_texture->m_image_view_sampler);
 					}
 
-					mesh_render_datas.push_back(render_data);
+					mesh_render_datas.push_back(mesh_render_data);
 				}
 			}
 		}
