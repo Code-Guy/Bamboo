@@ -1,4 +1,4 @@
-#include "brdf_lut_pass.h"
+#include "deferred_lighting_pass.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
@@ -10,13 +10,16 @@
 namespace Bamboo
 {
 
-	BRDFLUTPass::BRDFLUTPass()
+	DeferredLightingPass::DeferredLightingPass()
 	{
 		m_format = VK_FORMAT_R16G16_SFLOAT;
 	}
 
-	void BRDFLUTPass::render()
+	void DeferredLightingPass::render()
 	{
+		StopWatch stop_watch;
+		stop_watch.start();
+
 		// render to framebuffer
 		VkClearValue clear_values[1];
 		clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
@@ -50,25 +53,9 @@ namespace Bamboo
 		vkCmdEndRenderPass(command_buffer);
 
 		VulkanUtil::endInstantCommands(command_buffer);
-
-		// write to texture2d
-		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
-		texture->setURL(BRDF_TEX_URL);
-
-		texture->m_width = m_width;
-		texture->m_height = m_height;
-		texture->setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-		texture->m_texture_type = ETextureType::Cube;
-		texture->m_pixel_type = EPixelType::RG16;
-
-		VulkanUtil::extractImage(m_image_view.image(), m_width, m_height, m_format, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, texture->m_image_data);
-		//VulkanUtil::saveImage(m_image_view.image(), m_width, m_height, m_format, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, "D:/Test/brdf_lut.bin");
-
-		texture->inflate();
-		g_runtime_context.assetManager()->serializeAsset(texture);
 	}
 
-	void BRDFLUTPass::createRenderPass()
+	void DeferredLightingPass::createRenderPass()
 	{
 		// color attachment
 		VkAttachmentDescription color_attachment{};
@@ -119,7 +106,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create render pass");
 	}
 
-	void BRDFLUTPass::createDescriptorSetLayouts()
+	void DeferredLightingPass::createDescriptorSetLayouts()
 	{
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
 		desc_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -129,7 +116,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create descriptor set layout");
 	}
 
-	void BRDFLUTPass::createPipelineLayouts()
+	void DeferredLightingPass::createPipelineLayouts()
 	{
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
 		pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -141,7 +128,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create pipeline layout");
 	}
 
-	void BRDFLUTPass::createPipelines()
+	void DeferredLightingPass::createPipelines()
 	{
 		// disable culling and depth testing
 		m_rasterize_state_ci.cullMode = VK_CULL_MODE_NONE;
@@ -172,7 +159,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create brdf lut graphics pipeline");
 	}
 
-	void BRDFLUTPass::createFramebuffer()
+	void DeferredLightingPass::createFramebuffer()
 	{
 		// 1.create color images and view
 		VulkanUtil::createImageAndView(m_width, m_height, 1, 1, VK_SAMPLE_COUNT_1_BIT, m_format,
@@ -194,7 +181,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create brdf lut graphics pipeline");
 	}
 
-	void BRDFLUTPass::destroyResizableObjects()
+	void DeferredLightingPass::destroyResizableObjects()
 	{
 		m_image_view.destroy();
 

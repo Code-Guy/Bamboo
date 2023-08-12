@@ -82,12 +82,14 @@ namespace Bamboo
 		m_depth_stencil_ci.depthBoundsTestEnable = VK_FALSE;
 
 		// color blending
-		m_color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		m_color_blend_attachment.blendEnable = VK_FALSE;
+		VkPipelineColorBlendAttachmentState color_blend_attachment{};
+		color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		color_blend_attachment.blendEnable = VK_FALSE;
+		m_color_blend_attachments.push_back(color_blend_attachment);
 
 		m_color_blend_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		m_color_blend_ci.attachmentCount = 1;
-		m_color_blend_ci.pAttachments = &m_color_blend_attachment;
+		m_color_blend_ci.attachmentCount = static_cast<uint32_t>(m_color_blend_attachments.size());
+		m_color_blend_ci.pAttachments = m_color_blend_attachments.data();
 
 		// viewport
 		m_viewport_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

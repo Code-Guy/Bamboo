@@ -1,18 +1,44 @@
-#include "base_pass.h"
+#include "gbuffer_pass.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
-#include "runtime/core/base/macro.h"
 #include "runtime/resource/shader/shader_manager.h"
+#include "runtime/resource/asset/asset_manager.h"
+#include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/base/mesh.h"
 #include "runtime/function/render/render_data.h"
+
 #include <array>
 
 namespace Bamboo
 {
 
-	void BasePass::render()
+	GBufferPass::GBufferPass()
 	{
-		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
-		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
+		m_formats = {
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VK_FORMAT_R8G8B8A8_SRGB,
+			VK_FORMAT_R8G8B8A8_SRGB,
+			VK_FORMAT_R8G8B8A8_UNORM,
+			VulkanRHI::get().getDepthFormat()
+		};
+	}
+
+	void GBufferPass::render()
+	{
+		static bool is_rendered = false;
+		if (is_rendered)
+		{
+			return;
+		}
+		is_rendered = true;
+		StopWatch stop_watch;
+		stop_watch.start();
+
+// 		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
+// 		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
+
+		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
+		uint32_t flight_index = 0;
 
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -21,9 +47,13 @@ namespace Bamboo
 		render_pass_bi.renderArea.offset = { 0, 0 };
 		render_pass_bi.renderArea.extent = { m_width, m_height };
 
-		std::array<VkClearValue, 2> clear_values{};
-		clear_values[0].color = { {0.0f, 0.3f, 0.0f, 1.0f} };
-		clear_values[1].depthStencil = { 1.0f, 0 };
+		std::array<VkClearValue, 6> clear_values{};
+		clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clear_values[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clear_values[2].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clear_values[3].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clear_values[4].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		clear_values[5].depthStencil = { 1.0f, 0 };
 		render_pass_bi.clearValueCount = static_cast<uint32_t>(clear_values.size());
 		render_pass_bi.pClearValues = clear_values.data();
 
@@ -55,10 +85,12 @@ namespace Bamboo
 			{
 				skeletal_mesh_render_data = std::static_pointer_cast<SkeletalMeshRenderData>(render_data);
 			}
+
+			VkPipeline pipeline = m_pipelines[(uint32_t)mesh_type];
 			VkPipelineLayout pipeline_layout = m_pipeline_layouts[(uint32_t)mesh_type];
 
 			// bind pipeline
-			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[(uint32_t)mesh_type]);
+			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 			// bind vertex and index buffer
 			VkBuffer vertexBuffers[] = { mesh_render_data->vertex_buffer.buffer };
@@ -73,7 +105,7 @@ namespace Bamboo
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
 				// push constants
-				const void* pcos[] = { &mesh_render_data->transform_pco, &mesh_render_data->material_pcos[i]};
+				const void* pcos[] = { &mesh_render_data->transform_pco, &mesh_render_data->material_pcos[i] };
 				for (size_t c = 0; c < m_push_constant_ranges.size(); ++c)
 				{
 					const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[c];
@@ -82,8 +114,7 @@ namespace Bamboo
 
 				// update(push) sub mesh descriptors
 				std::vector<VkWriteDescriptorSet> desc_writes;
-				VkWriteDescriptorSet desc_write{};
-				
+
 				// bone matrix ubo
 				if (mesh_type == EMeshType::Skeletal)
 				{
@@ -92,6 +123,7 @@ namespace Bamboo
 					desc_buffer_info.offset = 0;
 					desc_buffer_info.range = sizeof(BoneUBO);
 
+					VkWriteDescriptorSet desc_write{};
 					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					desc_write.dstSet = 0;
 					desc_write.dstBinding = 0;
@@ -102,35 +134,31 @@ namespace Bamboo
 					desc_writes.push_back(desc_write);
 				}
 
-				// lighting ubo
-				VkDescriptorBufferInfo desc_buffer_info{};
-				desc_buffer_info.buffer = mesh_render_data->lighting_ubs[flight_index].buffer;
-				desc_buffer_info.offset = 0;
-				desc_buffer_info.range = sizeof(LightingUBO);
-
-				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				desc_write.dstSet = 0;
-				desc_write.dstBinding = 1;
-				desc_write.dstArrayElement = 0;
-				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				desc_write.descriptorCount = 1;
-				desc_write.pBufferInfo = &desc_buffer_info;
-				desc_writes.push_back(desc_write);
-
 				// image sampler
-				VkDescriptorImageInfo desc_image_info{};
-				desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				desc_image_info.imageView = mesh_render_data->pbr_textures[i].base_color_texure.view;
-				desc_image_info.sampler = mesh_render_data->pbr_textures[i].base_color_texure.sampler;
+				std::vector<VmaImageViewSampler> pbr_textures = {
+					mesh_render_data->pbr_textures[i].base_color_texure,
+					mesh_render_data->pbr_textures[i].metallic_roughness_texure,
+					mesh_render_data->pbr_textures[i].normal_texure,
+					mesh_render_data->pbr_textures[i].occlusion_texure,
+					mesh_render_data->pbr_textures[i].emissive_texure,
+				};
+				std::vector<VkDescriptorImageInfo> desc_image_infos(pbr_textures.size(), VkDescriptorImageInfo{});
+				for (size_t t = 0; t < pbr_textures.size(); ++t)
+				{
+					desc_image_infos[t].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					desc_image_infos[t].imageView = pbr_textures[t].view;
+					desc_image_infos[t].sampler = pbr_textures[t].sampler;
 
-				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				desc_write.dstSet = 0;
-				desc_write.dstBinding = 2;
-				desc_write.dstArrayElement = 0;
-				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				desc_write.descriptorCount = 1;
-				desc_write.pImageInfo = &desc_image_info;
-				desc_writes.push_back(desc_write);
+					VkWriteDescriptorSet desc_write{};
+					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					desc_write.dstSet = 0;
+					desc_write.dstBinding = static_cast<uint32_t>(t + 1);
+					desc_write.dstArrayElement = 0;
+					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					desc_write.descriptorCount = 1;
+					desc_write.pImageInfo = &desc_image_infos[t];
+					desc_writes.push_back(desc_write);
+				}
 
 				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 					pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
@@ -141,68 +169,68 @@ namespace Bamboo
 		}
 
 		vkCmdEndRenderPass(command_buffer);
+		VulkanUtil::endInstantCommands(command_buffer);
+
+		// save gbuffer to files
+// 		std::vector<VmaImageViewSampler> texture_samplers = {
+// 			m_position_texture_sampler,
+// 			m_normal_texture_sampler,
+// 			m_base_color_texture_sampler,
+// 			m_emissive_texture_sampler,
+// 			m_metallic_roughness_occlusion_texture_sampler,
+// 			m_depth_stencil_texture_sampler
+// 		};
+// 
+// 		for (size_t i = 0; i < texture_samplers.size(); ++i)
+// 		{
+// 			VulkanUtil::saveImage(texture_samplers[i].image(), m_width, m_height, m_formats[i], 
+// 				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, StringUtil::format("D:/Test/gbuffer_%d.bin", i));
+// 		}
+		LOG_INFO("gbuffer pass elapsed time: {}ms", stop_watch.stop());
 	}
 
-	void BasePass::createRenderPass()
+	void GBufferPass::createRenderPass()
 	{
-		std::array<VkAttachmentDescription, 2> attachments{};
+		// attachments
+		std::array<VkAttachmentDescription, 6> attachments = {};
+		std::array<VkAttachmentReference, 6> references = {};
+		for (uint32_t i = 0; i < 6; ++i)
+		{
+			attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
+			attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			attachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			attachments[i].format = m_formats[i];
 
-		// color attachment
-		attachments[0].format = VulkanRHI::get().getColorFormat();
-		attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		// depth attachment
-		attachments[1].format = VulkanRHI::get().getDepthFormat();
-		attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference color_reference{};
-		color_reference.attachment = 0;
-		color_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference depth_reference{};
-		depth_reference.attachment = 1;
-		depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			references[i].attachment = i;
+			references[i].layout = i == 5 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		}
 
 		// subpass
 		VkSubpassDescription subpass_desc{};
 		subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass_desc.colorAttachmentCount = 1;
-		subpass_desc.pColorAttachments = &color_reference;
-		subpass_desc.pDepthStencilAttachment = &depth_reference;
-		subpass_desc.inputAttachmentCount = 0;
-		subpass_desc.pInputAttachments = nullptr;
-		subpass_desc.preserveAttachmentCount = 0;
-		subpass_desc.pPreserveAttachments = nullptr;
-		subpass_desc.pResolveAttachments = nullptr;
+		subpass_desc.colorAttachmentCount = static_cast<uint32_t>(references.size() - 1);
+		subpass_desc.pColorAttachments = references.data();
+		subpass_desc.pDepthStencilAttachment = &references[references.size() - 1];
 
 		// subpass dependencies
 		std::array<VkSubpassDependency, 2> dependencies;
 		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass = 0;
-		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
 		dependencies[1].srcSubpass = 0;
 		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
 		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 		// create render pass
@@ -219,11 +247,14 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create render pass");
 	}
 
-	void BasePass::createDescriptorSetLayouts()
+	void GBufferPass::createDescriptorSetLayouts()
 	{
 		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
-			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
@@ -242,14 +273,13 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create descriptor set layout");
 	}
 
-	void BasePass::createPipelineLayouts()
+	void GBufferPass::createPipelineLayouts()
 	{
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
 		pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_ci.setLayoutCount = 1;
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[0];
 
-		// set push constant range
 		m_push_constant_ranges =
 		{
 			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO) },
@@ -261,14 +291,22 @@ namespace Bamboo
 
 		m_pipeline_layouts.resize(2);
 		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[0]);
-
+		
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[1];
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[1]);
 		CHECK_VULKAN_RESULT(result, "create pipeline layout");
 	}
 
-	void BasePass::createPipelines()
+	void GBufferPass::createPipelines()
 	{
+		// color blending
+		for (int i = 0; i < 4; ++i)
+		{
+			m_color_blend_attachments.push_back(m_color_blend_attachments.front());
+		}
+		m_color_blend_ci.attachmentCount = static_cast<uint32_t>(m_color_blend_attachments.size());
+		m_color_blend_ci.pAttachments = m_color_blend_attachments.data();
+
 		// vertex input
 		// vertex bindings
 		std::vector<VkVertexInputBindingDescription> vertex_input_binding_descriptions;
@@ -305,9 +343,9 @@ namespace Bamboo
 
 		// shader stages
 		const auto& shader_manager = g_runtime_context.shaderManager();
-		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = { 
-			shader_manager->getShaderStageCI("blinn_phong_static_mesh.vert", VK_SHADER_STAGE_VERTEX_BIT), 
-			shader_manager->getShaderStageCI("blinn_phong_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = {
+			shader_manager->getShaderStageCI("blinn_phong_static_mesh.vert", VK_SHADER_STAGE_VERTEX_BIT),
+			shader_manager->getShaderStageCI("gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
 		// create graphics pipeline
@@ -348,22 +386,32 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create skeletal mesh graphics pipeline");
 	}
 
-	void BasePass::createFramebuffer()
+	void GBufferPass::createFramebuffer()
 	{
-		// 1.create depth stencil image and view
-		VulkanUtil::createImageAndView(m_width, m_height, 1, 1, VK_SAMPLE_COUNT_1_BIT, VulkanRHI::get().getDepthFormat(),
-			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_ASPECT_DEPTH_BIT, m_depth_stencil_image_view);
+		// 1.create color images and view
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[0], VK_FILTER_NEAREST, VK_FILTER_NEAREST, 
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_position_texture_sampler, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[1], VK_FILTER_NEAREST, VK_FILTER_NEAREST, 
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_normal_texture_sampler, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[2], VK_FILTER_NEAREST, VK_FILTER_NEAREST, 
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_base_color_texture_sampler, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[3], VK_FILTER_NEAREST, VK_FILTER_NEAREST, 
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_emissive_texture_sampler, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[4], VK_FILTER_NEAREST, VK_FILTER_NEAREST, 
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_metallic_roughness_occlusion_texture_sampler, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[5], VK_FILTER_NEAREST, VK_FILTER_NEAREST, 
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_depth_stencil_texture_sampler,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-		// 2.create color images and view
-		VulkanUtil::createImageAndView(m_width, m_height, 1, 1, VK_SAMPLE_COUNT_1_BIT, VulkanRHI::get().getColorFormat(),
-			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-			VK_IMAGE_ASPECT_COLOR_BIT, m_color_image_view);
-
-		// 3.create framebuffer
-		std::array<VkImageView, 2> attachments{};
-		attachments[0] = m_color_image_view.view;
-		attachments[1] = m_depth_stencil_image_view.view;
+		// 2.create framebuffer
+		std::array<VkImageView, 6> attachments = {
+			m_position_texture_sampler.view,
+			m_normal_texture_sampler.view,
+			m_base_color_texture_sampler.view,
+			m_emissive_texture_sampler.view,
+			m_metallic_roughness_occlusion_texture_sampler.view,
+			m_depth_stencil_texture_sampler.view
+		};
 
 		VkFramebufferCreateInfo framebuffer_ci{};
 		framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -374,16 +422,18 @@ namespace Bamboo
 		framebuffer_ci.height = m_height;
 		framebuffer_ci.layers = 1;
 
-		vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffer);
+		VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffer);
+		CHECK_VULKAN_RESULT(result, "create brdf lut graphics pipeline");
 	}
 
-	void BasePass::destroyResizableObjects()
+	void GBufferPass::destroyResizableObjects()
 	{
-		// 1.destroy depth stencil image and view
-		m_depth_stencil_image_view.destroy();
-
-		// 2.destroy color image and view
-		m_color_image_view.destroy();
+		m_position_texture_sampler.destroy();
+		m_normal_texture_sampler.destroy();
+		m_base_color_texture_sampler.destroy();
+		m_emissive_texture_sampler.destroy();
+		m_metallic_roughness_occlusion_texture_sampler.destroy();
+		m_depth_stencil_texture_sampler.destroy();
 
 		RenderPass::destroyResizableObjects();
 	}

@@ -18,18 +18,27 @@ namespace Bamboo
 		std::vector<uint32_t> index_offsets;
 	};
 
+	struct PBRTexture
+	{
+		VmaImageViewSampler base_color_texure;
+		VmaImageViewSampler metallic_roughness_texure;
+		VmaImageViewSampler normal_texure;
+		VmaImageViewSampler occlusion_texure;
+		VmaImageViewSampler emissive_texure;
+	};
+
 	struct MeshRenderData : public RenderData
 	{
 		EMeshType mesh_type;
 
 		std::vector<VmaBuffer> lighting_ubs;
-		std::vector<VmaImageViewSampler> textures;
+		std::vector<PBRTexture> pbr_textures;
 
 		TransformPCO transform_pco;
-		std::vector<MaterialUBO> material_pcos;
+		std::vector<MaterialPCO> material_pcos;
 	};
 
-	struct SkeletalRenderData : public MeshRenderData
+	struct SkeletalMeshRenderData : public MeshRenderData
 	{
 		std::vector<VmaBuffer> bone_ubs;
 	};

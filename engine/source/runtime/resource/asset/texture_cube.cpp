@@ -57,7 +57,8 @@ namespace Bamboo
 		// create vulkan texture cube
 		VkFormat format = getFormat();
 		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, m_mip_levels, m_layers, getFormat(),
-			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_image_view_sampler);
+			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_image_view_sampler,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		// transition texture cube to transfer dst optimal
 		VkImage cube_image = m_image_view_sampler.image();

@@ -2,6 +2,7 @@
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/render_system.h"
 #include "runtime/function/render/pass/base_pass.h"
+#include "runtime/function/render/pass/gbuffer_pass.h"
 
 #include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/asset_manager.h"
@@ -73,9 +74,10 @@ namespace Bamboo
 		g_runtime_context.worldManager()->getCameraComponent()->setContentRegion(m_content_region);
 
 		// resize render pass
-		std::shared_ptr<RenderPass> render_pass = g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Base);
-		std::shared_ptr<BasePass> base_pass = std::dynamic_pointer_cast<BasePass>(render_pass);
+		std::shared_ptr<BasePass> base_pass = std::dynamic_pointer_cast<BasePass>(g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Base));
+		std::shared_ptr<GBufferPass> gbuffer_pass = std::dynamic_pointer_cast<GBufferPass>(g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Gbuffer));
 		base_pass->onResize(m_content_region.z, m_content_region.w);
+		gbuffer_pass->onResize(m_content_region.z, m_content_region.w);
 
 		// recreate color image and view
 		if (m_color_texture_desc_set != VK_NULL_HANDLE)

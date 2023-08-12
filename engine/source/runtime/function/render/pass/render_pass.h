@@ -6,7 +6,7 @@ namespace Bamboo
 {
 	enum class ERenderPassType
 	{
-		Base, UI
+		BRDFLut, FilterCube, Gbuffer, DeferredLighting, Base, UI
 	};
 
 	class RenderPass
@@ -44,7 +44,7 @@ namespace Bamboo
 		VkPipelineRasterizationStateCreateInfo m_rasterize_state_ci{};
 		VkPipelineMultisampleStateCreateInfo m_multisampling_ci{};
 		VkPipelineDepthStencilStateCreateInfo m_depth_stencil_ci{};
-		VkPipelineColorBlendAttachmentState m_color_blend_attachment{};
+		std::vector<VkPipelineColorBlendAttachmentState> m_color_blend_attachments;
 		VkPipelineColorBlendStateCreateInfo m_color_blend_ci{};
 		VkPipelineViewportStateCreateInfo m_viewport_ci{};
 		std::vector<VkDynamicState> m_dynamic_states;

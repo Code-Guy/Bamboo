@@ -180,15 +180,24 @@ namespace Bamboo
 
 	void VulkanUtil::createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
 		uint32_t mip_levels, uint32_t layers, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
-		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler)
+		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler, VkImageUsageFlags ext_use_flags)
 	{
 		// create Image
+		VkImageUsageFlags image_usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		if (image_data)
+		{
+			image_usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		}
+		if (ext_use_flags)
+		{
+			image_usage |= ext_use_flags;
+		}
+
 		createImage(width, height, mip_levels, layers, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 
-			vma_image_view_sampler.vma_image);
+			image_usage, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, vma_image_view_sampler.vma_image);
 
 		VkImage image = vma_image_view_sampler.image();
-		vma_image_view_sampler.view = createImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, mip_levels, layers);
+		vma_image_view_sampler.view = createImageView(image, format, calcImageAspectFlags(format), mip_levels, layers);
 
 		// create VkSampler
 		vma_image_view_sampler.sampler = createSampler(min_filter, mag_filter, mip_levels, address_mode, address_mode, address_mode);
@@ -406,22 +415,7 @@ namespace Bamboo
 		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		barrier.image = image;
 
-		// set image aspect
-		if (new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-		{
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-			// check has stencil component
-			if (hasStencil(format))
-			{
-				barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-			}
-		}
-		else
-		{
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		}
-
+		barrier.subresourceRange.aspectMask = calcImageAspectFlags(format);
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = mip_levels;
 		barrier.subresourceRange.baseArrayLayer = 0;
@@ -552,6 +546,26 @@ namespace Bamboo
 		return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 	}
 
+	bool VulkanUtil::hasDepth(VkFormat format)
+	{
+		return format == VK_FORMAT_D32_SFLOAT || format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+	}
+
+	VkImageAspectFlags VulkanUtil::calcImageAspectFlags(VkFormat format)
+	{
+		VkImageAspectFlags flags = 0;
+		if (hasDepth(format))
+		{
+			flags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+		}
+		if (hasStencil(format))
+		{
+			flags |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+
+		return flags ? flags : VK_IMAGE_ASPECT_COLOR_BIT;
+	}
+
 	uint32_t VulkanUtil::calcFormatSize(VkFormat format)
 	{
 		switch (format)
@@ -561,6 +575,7 @@ namespace Bamboo
 		case VK_FORMAT_R8G8B8A8_SRGB:
 		case VK_FORMAT_R8G8B8A8_UNORM:
 		case VK_FORMAT_R32_SFLOAT:
+		case VK_FORMAT_D32_SFLOAT:
 		case VK_FORMAT_R16G16_SFLOAT:
 			return 4;
 		case VK_FORMAT_R16G16B16A16_SFLOAT:
@@ -585,59 +600,53 @@ namespace Bamboo
 	void VulkanUtil::extractImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
 		VkImageLayout initial_layout, std::vector<uint8_t>& image_data, VkImageLayout final_layout)
 	{
-		// create staging image
-		VmaImage staging_image;
-		VulkanUtil::createImage(width, height, 1, 1, VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_LINEAR,
-			VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_image);
+		// create staging buffer
+		VmaBuffer staging_buffer;
+		size_t image_size = width * height * calcFormatSize(format);
+		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
 
-		// copy to staging image
-		VkImageCopy image_copy{};
-		image_copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_copy.srcSubresource.layerCount = 1;
-		image_copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_copy.dstSubresource.layerCount = 1;
-		image_copy.extent.width = width;
-		image_copy.extent.height = height;
-		image_copy.extent.depth = 1;
+		// copy to staging buffer
+		VkBufferImageCopy region = {};
+		region.bufferOffset = 0;
+		region.bufferImageHeight = 0;
+		region.bufferRowLength = 0;
+		region.imageSubresource.aspectMask = calcImageAspectFlags(format);
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageOffset = { 0, 0, 0 };
+		region.imageExtent = { width, height, 1 };
 
 		// transition image layouts
 		if (final_layout == VK_IMAGE_LAYOUT_UNDEFINED)
 		{
 			final_layout = initial_layout;
 		}
-		VulkanUtil::transitionImageLayout(image, initial_layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		VulkanUtil::transitionImageLayout(staging_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		VulkanUtil::transitionImageLayout(image, initial_layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, format);
 
 		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
 
-		// copy image
-		vkCmdCopyImage(
+		// copy image to buffer
+		vkCmdCopyImageToBuffer(
 			command_buffer,
 			image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			staging_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			staging_buffer.buffer,
 			1,
-			&image_copy);
+			&region
+		);
 
 		VulkanUtil::endInstantCommands(command_buffer);
 
 		// reset image layouts
-		VulkanUtil::transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, final_layout);
-
-		// get staging image layout
-		VkImageSubresource sub_res{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 };
-		VkSubresourceLayout sub_res_layout;
-		vkGetImageSubresourceLayout(VulkanRHI::get().getDevice(), staging_image.image, &sub_res, &sub_res_layout);
-		size_t size = sub_res_layout.size;
-		size_t image_size = width * height * calcFormatSize(format);
-		ASSERT(size >= image_size, "SubresourceLayout's size is small than image size");
+		VulkanUtil::transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, final_layout, format);
 
 		// mapping data
 		void* mapped_data = nullptr;
-		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_image.allocation, &mapped_data);
+		vmaMapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation, &mapped_data);
 		image_data.resize(image_size);
 		memcpy(image_data.data(), mapped_data, image_size);
-		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_image.allocation);
-		staging_image.destroy();
+		vmaUnmapMemory(VulkanRHI::get().getAllocator(), staging_buffer.allocation);
+		staging_buffer.destroy();
 	}
 
 	void VulkanUtil::saveImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 

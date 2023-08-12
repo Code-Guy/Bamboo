@@ -73,7 +73,7 @@ namespace Bamboo
 
 		static void createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
 			uint32_t mip_levels, uint32_t layers, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
-			VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler);
+			VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler, VkImageUsageFlags ext_use_flags = 0);
 
 		static void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layers, VkSampleCountFlagBits num_samples,
 			VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VkImageAspectFlags aspect_flags, VmaImageView& vma_image_view);
@@ -92,6 +92,8 @@ namespace Bamboo
 		static void createImageMipmaps(VkImage image, VkFormat image_format, uint32_t width, uint32_t height, uint32_t mip_levels);
 
 		static bool hasStencil(VkFormat format);
+		static bool hasDepth(VkFormat format);
+		static VkImageAspectFlags calcImageAspectFlags(VkFormat format);
 		static uint32_t calcFormatSize(VkFormat format);
 		static uint32_t calcMipLevel(uint32_t width, uint32_t height = 0);
 		static void extractImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 

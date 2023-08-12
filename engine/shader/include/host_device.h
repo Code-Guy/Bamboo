@@ -26,7 +26,7 @@ struct TransformPCO
     mat4 mvp;
 };
 
-struct MaterialUBO
+struct MaterialPCO
 {
     vec4 base_color_factor;
     vec4 emissive_factor;

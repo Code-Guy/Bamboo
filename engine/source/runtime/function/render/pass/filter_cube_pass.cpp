@@ -48,6 +48,9 @@ namespace Bamboo
 
 	void FilterCubePass::render()
 	{
+		StopWatch stop_watch;
+		stop_watch.start();
+
 		for (uint32_t i = 0; i < 2; ++i)
 		{
 			EFilterType FilterType = (EFilterType)i;
@@ -216,6 +219,8 @@ namespace Bamboo
 			// transition cube image to read only optimal
 			VulkanUtil::transitionImageLayout(cube_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_formats[i], m_mip_levels[i], 6);
 		}
+	
+		LOG_INFO("filter cube pass elapsed time: {}ms", stop_watch.stop());
 	}
 
 	void FilterCubePass::destroy()
@@ -416,7 +421,8 @@ namespace Bamboo
 			
 			// 2.create cubemap images and views
 			VulkanUtil::createImageViewSampler(width, height, nullptr, m_mip_levels[i], 6, m_formats[i],
-				VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_cube_image_view_samplers[i]);
+				VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_cube_image_view_samplers[i],
+				VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 			// 3.create framebuffer
 			VkFramebufferCreateInfo framebuffer_ci{};
