@@ -10,14 +10,6 @@ namespace Bamboo
 		Static, Skeletal
 	};
 
-	struct RenderData
-	{
-		VmaBuffer vertex_buffer;
-		VmaBuffer index_buffer;
-		std::vector<uint32_t> index_counts;
-		std::vector<uint32_t> index_offsets;
-	};
-
 	struct PBRTexture
 	{
 		VmaImageViewSampler base_color_texure;
@@ -27,7 +19,25 @@ namespace Bamboo
 		VmaImageViewSampler emissive_texure;
 	};
 
+	struct RenderData
+	{
+
+	};
+
+	struct DeferredLightingRenderData : public RenderData
+	{
+		std::vector<VmaBuffer> lighting_ubs;
+	};
+
 	struct MeshRenderData : public RenderData
+	{
+		VmaBuffer vertex_buffer;
+		VmaBuffer index_buffer;
+		std::vector<uint32_t> index_counts;
+		std::vector<uint32_t> index_offsets;
+	};
+
+	struct StaticMeshRenderData : public MeshRenderData
 	{
 		EMeshType mesh_type;
 
@@ -38,7 +48,7 @@ namespace Bamboo
 		std::vector<MaterialPCO> material_pcos;
 	};
 
-	struct SkeletalMeshRenderData : public MeshRenderData
+	struct SkeletalMeshRenderData : public StaticMeshRenderData
 	{
 		std::vector<VmaBuffer> bone_ubs;
 	};

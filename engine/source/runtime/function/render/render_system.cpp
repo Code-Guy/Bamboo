@@ -134,6 +134,7 @@ namespace Bamboo
 	{
 		// mesh render datas
 		std::vector<std::shared_ptr<RenderData>> mesh_render_datas;
+		std::vector<std::shared_ptr<RenderData>> deferred_lighting_render_datas;
 
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
@@ -151,6 +152,9 @@ namespace Bamboo
 		{
 			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
 		}
+		std::shared_ptr<DeferredLightingRenderData> deferred_lighting_render_data = std::make_shared<DeferredLightingRenderData>();
+		deferred_lighting_render_data->lighting_ubs = m_lighting_ubs;
+		deferred_lighting_render_datas.push_back(std::static_pointer_cast<RenderData>(deferred_lighting_render_data));
 
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
@@ -181,49 +185,49 @@ namespace Bamboo
 				{
 					// create mesh render data
 					EMeshType mesh_type = static_mesh_component ? EMeshType::Static : EMeshType::Skeletal;
-					std::shared_ptr<MeshRenderData> mesh_render_data = nullptr;
+					std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = nullptr;
 					std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
 
 					switch (mesh_type)
 					{
 					case EMeshType::Static:
 					{
-						mesh_render_data = std::make_shared<MeshRenderData>();
+						static_mesh_render_data = std::make_shared<StaticMeshRenderData>();
 					}
 						break;
 					case EMeshType::Skeletal:
 					{
 						skeletal_mesh_render_data = std::make_shared<SkeletalMeshRenderData>();
-						mesh_render_data = skeletal_mesh_render_data;
+						static_mesh_render_data = skeletal_mesh_render_data;
 					}
 						break;
 					default:
 						break;
 					}
 					
-					mesh_render_data->mesh_type = mesh_type;
-					mesh_render_data->vertex_buffer = mesh->m_vertex_buffer;
-					mesh_render_data->index_buffer = mesh->m_index_buffer;
+					static_mesh_render_data->mesh_type = mesh_type;
+					static_mesh_render_data->vertex_buffer = mesh->m_vertex_buffer;
+					static_mesh_render_data->index_buffer = mesh->m_index_buffer;
 
 					// update uniform buffers
-					mesh_render_data->lighting_ubs = m_lighting_ubs;
+					static_mesh_render_data->lighting_ubs = m_lighting_ubs;
 					if (mesh_type == EMeshType::Skeletal)
 					{
 						skeletal_mesh_render_data->bone_ubs = mesh->m_uniform_buffers;
 					}
 
 					// update push constants
-					mesh_render_data->transform_pco.m = transform_component->getGlobalMatrix();
-					mesh_render_data->transform_pco.nm = glm::transpose(glm::inverse(glm::mat3(mesh_render_data->transform_pco.m)));
-					mesh_render_data->transform_pco.mvp = camera_component->getViewPerspectiveMatrix() * mesh_render_data->transform_pco.m;
+					static_mesh_render_data->transform_pco.m = transform_component->getGlobalMatrix();
+					static_mesh_render_data->transform_pco.nm = glm::transpose(glm::inverse(glm::mat3(static_mesh_render_data->transform_pco.m)));
+					static_mesh_render_data->transform_pco.mvp = camera_component->getViewPerspectiveMatrix() * static_mesh_render_data->transform_pco.m;
 
 					// traverse all sub meshes
 					for (size_t i = 0; i < mesh->m_sub_meshes.size(); ++i)
 					{
 						const auto& sub_mesh = mesh->m_sub_meshes[i];
 
-						mesh_render_data->index_counts.push_back(sub_mesh.m_index_count);
-						mesh_render_data->index_offsets.push_back(sub_mesh.m_index_offset);
+						static_mesh_render_data->index_counts.push_back(sub_mesh.m_index_count);
+						static_mesh_render_data->index_offsets.push_back(sub_mesh.m_index_offset);
 
 						MaterialPCO material_pco;
 						material_pco.base_color_factor = sub_mesh.m_material->m_base_color_factor;
@@ -235,14 +239,14 @@ namespace Bamboo
 						material_pco.has_metallic_roughness_texture = sub_mesh.m_material->m_metallic_roughness_texure != nullptr;
 						material_pco.has_normal_texture = sub_mesh.m_material->m_normal_texure != nullptr;
 						material_pco.has_occlusion_texture = sub_mesh.m_material->m_occlusion_texure != nullptr;
-						mesh_render_data->material_pcos.push_back(material_pco);
+						static_mesh_render_data->material_pcos.push_back(material_pco);
 
 						std::shared_ptr<Texture2D> base_color_texture = sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure : m_dummy_texture;
 						std::shared_ptr<Texture2D> metallic_roughness_texure = sub_mesh.m_material->m_metallic_roughness_texure ? sub_mesh.m_material->m_metallic_roughness_texure : m_dummy_texture;
 						std::shared_ptr<Texture2D> normal_texure = sub_mesh.m_material->m_normal_texure ? sub_mesh.m_material->m_normal_texure : m_dummy_texture;
 						std::shared_ptr<Texture2D> occlusion_texure = sub_mesh.m_material->m_occlusion_texure ? sub_mesh.m_material->m_occlusion_texure : m_dummy_texture;
 						std::shared_ptr<Texture2D> emissive_texture = sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure : m_dummy_texture;
-						mesh_render_data->pbr_textures.push_back({
+						static_mesh_render_data->pbr_textures.push_back({
 							base_color_texture->m_image_view_sampler,
 							metallic_roughness_texure->m_image_view_sampler,
 							normal_texure->m_image_view_sampler,
@@ -251,13 +255,14 @@ namespace Bamboo
 						});
 					}
 
-					mesh_render_datas.push_back(mesh_render_data);
+					mesh_render_datas.push_back(static_mesh_render_data);
 				}
 			}
 		}
 
 		// set render datas
 		m_render_passes[ERenderPassType::Gbuffer]->setRenderDatas(mesh_render_datas);
+		//m_render_passes[ERenderPassType::DeferredLighting]->setRenderDatas(deferred_lighting_render_datas);
 		m_render_passes[ERenderPassType::Base]->setRenderDatas(mesh_render_datas);
 	}
 

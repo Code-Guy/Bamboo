@@ -49,8 +49,8 @@ namespace Bamboo
 		for (auto& render_data : m_render_datas)
 		{
 			std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
-			std::shared_ptr<MeshRenderData> mesh_render_data = std::static_pointer_cast<MeshRenderData>(render_data);
-			EMeshType mesh_type = mesh_render_data->mesh_type;
+			std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = std::static_pointer_cast<StaticMeshRenderData>(render_data);
+			EMeshType mesh_type = static_mesh_render_data->mesh_type;
 			if (mesh_type == EMeshType::Skeletal)
 			{
 				skeletal_mesh_render_data = std::static_pointer_cast<SkeletalMeshRenderData>(render_data);
@@ -61,19 +61,19 @@ namespace Bamboo
 			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[(uint32_t)mesh_type]);
 
 			// bind vertex and index buffer
-			VkBuffer vertexBuffers[] = { mesh_render_data->vertex_buffer.buffer };
+			VkBuffer vertexBuffers[] = { static_mesh_render_data->vertex_buffer.buffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(command_buffer, mesh_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindIndexBuffer(command_buffer, static_mesh_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 			// render all sub meshes
-			std::vector<uint32_t>& index_counts = mesh_render_data->index_counts;
-			std::vector<uint32_t>& index_offsets = mesh_render_data->index_offsets;
+			std::vector<uint32_t>& index_counts = static_mesh_render_data->index_counts;
+			std::vector<uint32_t>& index_offsets = static_mesh_render_data->index_offsets;
 			size_t sub_mesh_count = index_counts.size();
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
 				// push constants
-				const void* pcos[] = { &mesh_render_data->transform_pco, &mesh_render_data->material_pcos[i]};
+				const void* pcos[] = { &static_mesh_render_data->transform_pco, &static_mesh_render_data->material_pcos[i]};
 				for (size_t c = 0; c < m_push_constant_ranges.size(); ++c)
 				{
 					const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[c];
@@ -104,7 +104,7 @@ namespace Bamboo
 
 				// lighting ubo
 				VkDescriptorBufferInfo desc_buffer_info{};
-				desc_buffer_info.buffer = mesh_render_data->lighting_ubs[flight_index].buffer;
+				desc_buffer_info.buffer = static_mesh_render_data->lighting_ubs[flight_index].buffer;
 				desc_buffer_info.offset = 0;
 				desc_buffer_info.range = sizeof(LightingUBO);
 
@@ -120,8 +120,8 @@ namespace Bamboo
 				// image sampler
 				VkDescriptorImageInfo desc_image_info{};
 				desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				desc_image_info.imageView = mesh_render_data->pbr_textures[i].base_color_texure.view;
-				desc_image_info.sampler = mesh_render_data->pbr_textures[i].base_color_texure.sampler;
+				desc_image_info.imageView = static_mesh_render_data->pbr_textures[i].base_color_texure.view;
+				desc_image_info.sampler = static_mesh_render_data->pbr_textures[i].base_color_texure.sampler;
 
 				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				desc_write.dstSet = 0;

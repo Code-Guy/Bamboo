@@ -12,13 +12,16 @@ namespace Bamboo
 
 	DeferredLightingPass::DeferredLightingPass()
 	{
-		m_format = VK_FORMAT_R16G16_SFLOAT;
+		m_format = VK_FORMAT_R8G8B8A8_SRGB;
 	}
 
 	void DeferredLightingPass::render()
 	{
 		StopWatch stop_watch;
 		stop_watch.start();
+
+		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
+		uint32_t flight_index = 0;
 
 		// render to framebuffer
 		VkClearValue clear_values[1];
@@ -33,7 +36,6 @@ namespace Bamboo
 		render_pass_bi.pClearValues = clear_values;
 		render_pass_bi.framebuffer = m_framebuffer;
 
-		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
 		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkViewport viewport{};
@@ -49,7 +51,30 @@ namespace Bamboo
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[0]);
+
+		// bind lighting uniform buffer
+		std::shared_ptr<DeferredLightingRenderData> render_data = std::static_pointer_cast<DeferredLightingRenderData>(m_render_datas[0]);
+		VkDescriptorBufferInfo desc_buffer_info{};
+		desc_buffer_info.buffer = render_data->lighting_ubs[flight_index].buffer;
+		desc_buffer_info.offset = 0;
+		desc_buffer_info.range = sizeof(LightingUBO);
+
+		std::vector<VkWriteDescriptorSet> desc_writes;
+		VkWriteDescriptorSet desc_write{};
+		desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		desc_write.dstSet = 0;
+		desc_write.dstBinding = 1;
+		desc_write.dstArrayElement = 0;
+		desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		desc_write.descriptorCount = 1;
+		desc_write.pBufferInfo = &desc_buffer_info;
+		desc_writes.push_back(desc_write);
+
+		VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+			m_pipeline_layouts[0], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+
 		vkCmdDraw(command_buffer, 3, 1, 0, 0);
+
 		vkCmdEndRenderPass(command_buffer);
 
 		VulkanUtil::endInstantCommands(command_buffer);
@@ -108,8 +133,20 @@ namespace Bamboo
 
 	void DeferredLightingPass::createDescriptorSetLayouts()
 	{
+		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
+			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+		};
+
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
 		desc_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		desc_set_layout_ci.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
+		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
+		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 
 		m_desc_set_layouts.resize(1);
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
@@ -143,7 +180,7 @@ namespace Bamboo
 		const auto& shader_manager = g_runtime_context.shaderManager();
 		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = {
 			shader_manager->getShaderStageCI("screen.vert", VK_SHADER_STAGE_VERTEX_BIT),
-			shader_manager->getShaderStageCI("brdf_lut.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+			shader_manager->getShaderStageCI("deferred_lighting.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 		
 		// create graphics pipeline
