@@ -6,7 +6,7 @@ namespace Bamboo
 {
 	enum class ERenderPassType
 	{
-		BRDFLut, FilterCube, Gbuffer, DeferredLighting, Base, UI
+		BRDFLut, FilterCube, Main, UI
 	};
 
 	class RenderPass

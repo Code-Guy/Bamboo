@@ -606,7 +606,7 @@ namespace Bamboo
 		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
 
 		// copy to staging buffer
-		VkBufferImageCopy region = {};
+		VkBufferImageCopy region{};
 		region.bufferOffset = 0;
 		region.bufferImageHeight = 0;
 		region.bufferRowLength = 0;

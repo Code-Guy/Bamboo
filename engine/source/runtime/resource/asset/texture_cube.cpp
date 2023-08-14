@@ -40,7 +40,7 @@ namespace Bamboo
 				KTX_error_code result = ktxTexture_GetImageOffset(ktx_texture, m, 0, f, &offset);
 				ASSERT(result == KTX_SUCCESS, "failed to get ktx image offset");
 
-				VkBufferImageCopy buffer_image_copy = {};
+				VkBufferImageCopy buffer_image_copy{};
 				buffer_image_copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 				buffer_image_copy.imageSubresource.mipLevel = m;
 				buffer_image_copy.imageSubresource.baseArrayLayer = f;

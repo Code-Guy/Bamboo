@@ -258,7 +258,7 @@ namespace Bamboo
 			subpass_desc.pColorAttachments = &color_reference;
 
 			// subpass dependencies
-			std::array<VkSubpassDependency, 2> dependencies;
+			std::array<VkSubpassDependency, 2> dependencies{};
 			dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
 			dependencies[0].dstSubpass = 0;
 			dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;

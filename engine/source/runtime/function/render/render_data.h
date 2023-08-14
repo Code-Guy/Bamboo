@@ -21,12 +21,7 @@ namespace Bamboo
 
 	struct RenderData
 	{
-
-	};
-
-	struct DeferredLightingRenderData : public RenderData
-	{
-		std::vector<VmaBuffer> lighting_ubs;
+		// empty content for base render data
 	};
 
 	struct MeshRenderData : public RenderData

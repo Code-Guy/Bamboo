@@ -1,8 +1,7 @@
 #include "simulation_ui.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/render_system.h"
-#include "runtime/function/render/pass/base_pass.h"
-#include "runtime/function/render/pass/gbuffer_pass.h"
+#include "runtime/function/render/pass/main_pass.h"
 
 #include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/asset_manager.h"
@@ -74,17 +73,15 @@ namespace Bamboo
 		g_runtime_context.worldManager()->getCameraComponent()->setContentRegion(m_content_region);
 
 		// resize render pass
-		std::shared_ptr<BasePass> base_pass = std::dynamic_pointer_cast<BasePass>(g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Base));
-		std::shared_ptr<GBufferPass> gbuffer_pass = std::dynamic_pointer_cast<GBufferPass>(g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Gbuffer));
-		base_pass->onResize(m_content_region.z, m_content_region.w);
-		gbuffer_pass->onResize(m_content_region.z, m_content_region.w);
+		std::shared_ptr<MainPass> main_pass = std::dynamic_pointer_cast<MainPass>(g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Main));
+		main_pass->onResize(m_content_region.z, m_content_region.w);
 
 		// recreate color image and view
 		if (m_color_texture_desc_set != VK_NULL_HANDLE)
 		{
 			ImGui_ImplVulkan_RemoveTexture(m_color_texture_desc_set);
 		}
-		m_color_texture_desc_set = ImGui_ImplVulkan_AddTexture(m_color_texture_sampler, base_pass->getColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		m_color_texture_desc_set = ImGui_ImplVulkan_AddTexture(m_color_texture_sampler, main_pass->getColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	void SimulationUI::onWindowRepos()

@@ -313,7 +313,7 @@ namespace Bamboo
 
 	void VulkanRHI::createCommandPools()
 	{
-		VkCommandPoolCreateInfo command_pool_ci = {};
+		VkCommandPoolCreateInfo command_pool_ci{};
 		command_pool_ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_ci.queueFamilyIndex = m_queue_family_indices.graphics;
 		command_pool_ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;

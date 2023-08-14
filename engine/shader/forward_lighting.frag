@@ -5,8 +5,12 @@
 
 layout(push_constant) uniform _MaterialPCO { layout(offset = 192) MaterialPCO material_pco; };
 
-layout(set = 0, binding = 1) uniform _LightingUBO { LightingUBO lighting_ubo; };
-layout(set = 0, binding = 2) uniform sampler2D base_color_texture_sampler;
+layout(set = 0, binding = 1) uniform sampler2D base_color_texture_sampler;
+layout(set = 0, binding = 2) uniform sampler2D metallic_roughness_texture_sampler;
+layout(set = 0, binding = 3) uniform sampler2D normal_texture_sampler;
+layout(set = 0, binding = 4) uniform sampler2D occlusion_texture_sampler;
+layout(set = 0, binding = 5) uniform sampler2D emissive_texture_sampler;
+layout(set = 0, binding = 6) uniform _LightingUBO { LightingUBO lighting_ubo; };
 
 layout(location = 0) in vec3 f_position;
 layout(location = 1) in vec2 f_tex_coord;

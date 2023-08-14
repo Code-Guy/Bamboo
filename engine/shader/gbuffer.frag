@@ -23,6 +23,7 @@ layout(location = 4) out vec4 o_metallic_roughness_occlusion;
 
 vec3 calc_normal()
 {
+	return f_normal;
 	if (!bool(material_pco.has_normal_texture))
 	{
 		return f_normal;

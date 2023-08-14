@@ -7,8 +7,7 @@
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/pass/brdf_lut_pass.h"
 #include "runtime/function/render/pass/filter_cube_pass.h"
-#include "runtime/function/render/pass/gbuffer_pass.h"
-#include "runtime/function/render/pass/base_pass.h"
+#include "runtime/function/render/pass/main_pass.h"
 #include "runtime/function/render/pass/ui_pass.h"
 
 #include "runtime/function/framework/component/camera_component.h"
@@ -22,8 +21,7 @@ namespace Bamboo
 	void RenderSystem::init()
 	{		
 		// init persistent render passes
-		m_render_passes[ERenderPassType::Gbuffer] = std::make_shared<GBufferPass>();
-		m_render_passes[ERenderPassType::Base] = std::make_shared<BasePass>();
+		m_render_passes[ERenderPassType::Main] = std::make_shared<MainPass>();
 		m_ui_pass = std::make_shared<UIPass>();
 		m_render_passes[ERenderPassType::UI] = m_ui_pass;
 		for (auto& render_pass : m_render_passes)
@@ -134,7 +132,6 @@ namespace Bamboo
 	{
 		// mesh render datas
 		std::vector<std::shared_ptr<RenderData>> mesh_render_datas;
-		std::vector<std::shared_ptr<RenderData>> deferred_lighting_render_datas;
 
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
@@ -152,9 +149,6 @@ namespace Bamboo
 		{
 			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
 		}
-		std::shared_ptr<DeferredLightingRenderData> deferred_lighting_render_data = std::make_shared<DeferredLightingRenderData>();
-		deferred_lighting_render_data->lighting_ubs = m_lighting_ubs;
-		deferred_lighting_render_datas.push_back(std::static_pointer_cast<RenderData>(deferred_lighting_render_data));
 
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
@@ -261,9 +255,7 @@ namespace Bamboo
 		}
 
 		// set render datas
-		m_render_passes[ERenderPassType::Gbuffer]->setRenderDatas(mesh_render_datas);
-		//m_render_passes[ERenderPassType::DeferredLighting]->setRenderDatas(deferred_lighting_render_datas);
-		m_render_passes[ERenderPassType::Base]->setRenderDatas(mesh_render_datas);
+		m_render_passes[ERenderPassType::Main]->setRenderDatas(mesh_render_datas);
 	}
 
 }
