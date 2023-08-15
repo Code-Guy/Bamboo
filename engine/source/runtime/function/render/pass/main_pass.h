@@ -34,7 +34,6 @@ namespace Bamboo
 		VmaImageView m_color_image_view;
 
 		// gbuffer attachment
-		VmaImageViewSampler m_position_texture_sampler;
 		VmaImageViewSampler m_normal_texture_sampler;
 		VmaImageViewSampler m_base_color_texture_sampler;
 		VmaImageViewSampler m_emissive_texture_sampler;

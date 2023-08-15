@@ -145,6 +145,7 @@ namespace Bamboo
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
 		lighting_ubo.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
+		lighting_ubo.inv_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
 		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
 		{
 			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));

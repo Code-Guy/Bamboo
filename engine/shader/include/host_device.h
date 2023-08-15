@@ -44,6 +44,7 @@ struct LightingUBO
 {
     vec3 camera_pos; float padding0;
     vec3 light_dir; float padding1;
+    mat4 inv_view_proj;
 };
 
 #endif

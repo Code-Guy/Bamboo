@@ -16,7 +16,6 @@ namespace Bamboo
 		m_formats = {
 			VK_FORMAT_R8G8B8A8_SRGB,
 			VK_FORMAT_R16G16B16A16_SFLOAT,
-			VK_FORMAT_R16G16B16A16_SFLOAT,
 			VK_FORMAT_R8G8B8A8_SRGB,
 			VK_FORMAT_R8G8B8A8_SRGB,
 			VK_FORMAT_R8G8B8A8_UNORM,
@@ -33,14 +32,13 @@ namespace Bamboo
 		render_pass_bi.renderArea.offset = { 0, 0 };
 		render_pass_bi.renderArea.extent = { m_width, m_height };
 
-		std::array<VkClearValue, 7> clear_values{};
+		std::array<VkClearValue, 6> clear_values{};
 		clear_values[0].color = { { 0.0f, 0.3f, 0.0f, 1.0f } };
 		clear_values[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 		clear_values[2].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 		clear_values[3].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 		clear_values[4].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clear_values[5].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-		clear_values[6].depthStencil = { 1.0f, 0 };
+		clear_values[5].depthStencil = { 1.0f, 0 };
 		render_pass_bi.clearValueCount = static_cast<uint32_t>(clear_values.size());
 		render_pass_bi.pClearValues = clear_values.data();
 
@@ -91,11 +89,11 @@ namespace Bamboo
 
 		// input attachments
 		std::vector<VmaImageViewSampler> input_attachments = {
-			m_position_texture_sampler,
 			m_normal_texture_sampler,
 			m_base_color_texture_sampler,
 			m_emissive_texture_sampler,
-			m_metallic_roughness_occlusion_texture_sampler
+			m_metallic_roughness_occlusion_texture_sampler,
+			m_depth_stencil_texture_sampler
 		};
 
 		std::vector<VkDescriptorImageInfo> desc_image_infos(input_attachments.size(), VkDescriptorImageInfo{});
@@ -129,23 +127,23 @@ namespace Bamboo
 	void MainPass::createRenderPass()
 	{
 		// attachments
-		std::array<VkAttachmentDescription, 7> attachments{};
-		std::array<VkAttachmentReference, 7> references{};
+		std::array<VkAttachmentDescription, 6> attachments{};
+		std::array<VkAttachmentReference, 6> references{};
 		std::array<VkAttachmentReference, 5> input_references{};
-		for (uint32_t i = 0; i < 7; ++i)
+		for (uint32_t i = 0; i < 6; ++i)
 		{
 			attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
 			attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			attachments[i].storeOp = (i == 0 || i == 6) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[i].storeOp = (i == 0 || i == 5) ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachments[i].finalLayout = i == 0 ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : (
-				i == 6 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+				i == 5 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 			attachments[i].format = m_formats[i];
 
 			references[i].attachment = i;
-			references[i].layout = i == 6 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			references[i].layout = i == 5 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 
 		for (uint32_t i = 0; i < 5; ++i)
@@ -159,9 +157,9 @@ namespace Bamboo
 
 		// gbuffer subpass
 		subpass_descs[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass_descs[0].colorAttachmentCount = 5;
+		subpass_descs[0].colorAttachmentCount = 4;
 		subpass_descs[0].pColorAttachments = &references[1];
-		subpass_descs[0].pDepthStencilAttachment = &references[6];
+		subpass_descs[0].pDepthStencilAttachment = &references[5];
 
 		// composition subpass
 		subpass_descs[1].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -169,13 +167,12 @@ namespace Bamboo
 		subpass_descs[1].pColorAttachments = &references[0];
 		subpass_descs[1].inputAttachmentCount = 5;
 		subpass_descs[1].pInputAttachments = &input_references[0];
-		subpass_descs[1].pDepthStencilAttachment = &references[6];
 
 		// transparency subpass
 		subpass_descs[2].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass_descs[2].colorAttachmentCount = 1;
 		subpass_descs[2].pColorAttachments = &references[0];
-		subpass_descs[2].pDepthStencilAttachment = &references[6];
+		subpass_descs[2].pDepthStencilAttachment = &references[5];
 
 		// subpass dependencies
 		std::array<VkSubpassDependency, 5> dependencies{};
@@ -348,7 +345,7 @@ namespace Bamboo
 	void MainPass::createPipelines()
 	{
 		// color blending
-		for (int i = 0; i < 4; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			m_color_blend_attachments.push_back(m_color_blend_attachments.front());
 		}
@@ -488,28 +485,24 @@ namespace Bamboo
 			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
 			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_ASPECT_COLOR_BIT, m_color_image_view);
 		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[1], 
-			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_position_texture_sampler, 
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[2], 
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_normal_texture_sampler, 
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[3], 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[2], 
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_base_color_texture_sampler, 
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[4], 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[3], 
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_emissive_texture_sampler, 
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[5], 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[4], 
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_metallic_roughness_occlusion_texture_sampler, 
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[6], 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[5], 
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_depth_stencil_texture_sampler,
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 
 		// 2.create framebuffer
 		std::vector<VkImageView> attachments = {
 			m_color_image_view.view,
-			m_position_texture_sampler.view,
 			m_normal_texture_sampler.view,
 			m_base_color_texture_sampler.view,
 			m_emissive_texture_sampler.view,
@@ -533,7 +526,6 @@ namespace Bamboo
 	void MainPass::destroyResizableObjects()
 	{
 		m_color_image_view.destroy();
-		m_position_texture_sampler.destroy();
 		m_normal_texture_sampler.destroy();
 		m_base_color_texture_sampler.destroy();
 		m_emissive_texture_sampler.destroy();

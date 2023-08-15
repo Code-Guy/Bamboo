@@ -15,15 +15,13 @@ layout(location = 0) in vec3 f_position;
 layout(location = 1) in vec2 f_tex_coord;
 layout(location = 2) in vec3 f_normal;
 
-layout(location = 0) out vec4 o_position;
-layout(location = 1) out vec4 o_normal;
-layout(location = 2) out vec4 o_base_color;
-layout(location = 3) out vec4 o_emissive_color;
-layout(location = 4) out vec4 o_metallic_roughness_occlusion;
+layout(location = 0) out vec4 o_normal;
+layout(location = 1) out vec4 o_base_color;
+layout(location = 2) out vec4 o_emissive_color;
+layout(location = 3) out vec4 o_metallic_roughness_occlusion;
 
 vec3 calc_normal()
 {
-	return f_normal;
 	if (!bool(material_pco.has_normal_texture))
 	{
 		return f_normal;
@@ -47,9 +45,6 @@ vec3 calc_normal()
 
 void main()
 {
-	// position
-	o_position = vec4(f_position, 1.0);
-
 	// normal
 	o_normal = vec4(calc_normal(), 0.0);
 
