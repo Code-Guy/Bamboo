@@ -393,16 +393,11 @@ namespace Bamboo
 			sub_mesh->m_bounding_box = BoundingBox{ min_position, max_position };
 			sub_mesh->m_bounding_box.transform(matrix);
 
-			// if submesh doesn't have material, create a default material and assign to it
+			// if submesh doesn't have material, use default material
 			std::shared_ptr<Material> material;
 			if (primitive.material == INVALID_INDEX)
 			{
-				material = std::make_shared<Material>();
-				std::string asset_name = as->getAssetName("", EAssetType::Material, dummy_material_index++, bare_name);
-				URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
-				material->setURL(url);
-
-				as->serializeAsset(material);
+				material = as->loadAsset<Material>(DEFAULT_MATERIAL_URL);
 			}
 			else
 			{

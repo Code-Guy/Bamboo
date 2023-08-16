@@ -1,0 +1,28 @@
+{
+    "mat": {
+        "polymorphic_id": 2147483649,
+        "polymorphic_name": "Bamboo::Material",
+        "ptr_wrapper": {
+            "id": 2147483649,
+            "data": {
+                "asset_ref": {
+                    "ref_urls": []
+                },
+                "base_color_factor": {
+                    "x": 0.5,
+                    "y": 0.5,
+                    "z": 0.5,
+                    "w": 0.5
+                },
+                "emissive_factor": {
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0,
+                    "w": 1.0
+                },
+                "metallic_factor": 1.0,
+                "roughness_factor": 1.0
+            }
+        }
+    }
+}

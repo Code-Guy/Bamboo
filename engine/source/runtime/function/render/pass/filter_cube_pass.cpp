@@ -31,7 +31,7 @@ namespace Bamboo
 		uint32_t samples;
 	};
 
-	FilterCubePass::FilterCubePass()
+	FilterCubePass::FilterCubePass(std::shared_ptr<class TextureCube>& skybox_texture_cube)
 	{
 		m_formats[0] = VK_FORMAT_R32G32B32A32_SFLOAT;
 		m_formats[1] = VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -43,8 +43,16 @@ namespace Bamboo
 			m_mip_levels[i] = VulkanUtil::calcMipLevel(m_sizes[i]);
 		}
 
-		m_skybox_texture_cube = g_runtime_context.assetManager()->loadAsset<TextureCube>("asset/engine/texture/ibl/texc_skybox.texc");
-		m_skybox_mesh = g_runtime_context.assetManager()->loadAsset<StaticMesh>("asset/engine/mesh/primitive/sm_box.sm");
+		m_skybox_texture_cube = skybox_texture_cube;
+		m_skybox_mesh = g_runtime_context.assetManager()->loadAsset<StaticMesh>("asset/engine/mesh/primitive/sm_cube.sm");
+	}
+
+	void FilterCubePass::init()
+	{
+		RenderPass::init();
+
+		const uint32_t kSize = 2048;
+		createResizableObjects(kSize, kSize);
 	}
 
 	void FilterCubePass::render()
@@ -445,7 +453,6 @@ namespace Bamboo
 		for (int i = 0; i < 2; ++i)
 		{
 			m_color_image_views[i].destroy();
-			m_cube_image_view_samplers[i].destroy();
 		}
 
 		for (int i = 0; i < 2; ++i)

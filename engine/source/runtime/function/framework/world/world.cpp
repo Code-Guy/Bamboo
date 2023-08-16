@@ -8,6 +8,8 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::World)
 
 namespace Bamboo
 {
+	// empty entity
+	static std::shared_ptr<Entity> null_entity = nullptr;
 
 	World::~World()
 	{
@@ -44,14 +46,24 @@ namespace Bamboo
 
 	const std::shared_ptr<Entity>& World::getEntity(uint32_t id)
 	{
-		static std::shared_ptr<Entity> null_entity = nullptr;
-
 		const auto& iter = m_entities.find(id);
 		if (iter != m_entities.end())
 		{
 			return iter->second;
 		}
 
+		return null_entity;
+	}
+
+	const std::shared_ptr<Bamboo::Entity>& World::getEntity(const std::string& name)
+	{
+		for (const auto& entity : m_entities)
+		{
+			if (name == entity.second->getName())
+			{
+				return entity.second;
+			}
+		}
 		return null_entity;
 	}
 

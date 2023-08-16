@@ -25,6 +25,9 @@ namespace Bamboo
 
 	void MainPass::render()
 	{
+		// get lighting render data, which is the first element of render datas
+		m_lighting_render_data = std::static_pointer_cast<LightingRenderData>(m_render_datas.front());
+
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		render_pass_bi.renderPass = m_render_pass;
@@ -61,7 +64,7 @@ namespace Bamboo
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
 		// 1.deferred subpass
-		for (size_t i = 0; i < m_render_datas.size() - 1; ++i)
+		for (size_t i = 1; i < m_render_datas.size() - 1; ++i)
 		{
 			render_mesh(m_render_datas[i], ERendererType::Deferred);
 		}
@@ -72,7 +75,7 @@ namespace Bamboo
 
 		// lighting uniform buffer
 		VkDescriptorBufferInfo desc_buffer_info{};
-		desc_buffer_info.buffer = std::static_pointer_cast<StaticMeshRenderData>(m_render_datas.front())->lighting_ubs[flight_index].buffer;
+		desc_buffer_info.buffer = m_lighting_render_data->lighting_ubs[flight_index].buffer;
 		desc_buffer_info.offset = 0;
 		desc_buffer_info.range = sizeof(LightingUBO);
 
@@ -80,47 +83,54 @@ namespace Bamboo
 		VkWriteDescriptorSet desc_write{};
 		desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		desc_write.dstSet = 0;
-		desc_write.dstBinding = 5;
+		desc_write.dstBinding = 8;
 		desc_write.dstArrayElement = 0;
 		desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		desc_write.descriptorCount = 1;
 		desc_write.pBufferInfo = &desc_buffer_info;
 		desc_writes.push_back(desc_write);
 
-		// input attachments
-		std::vector<VmaImageViewSampler> input_attachments = {
+		// input attachments and ibl textures
+		std::vector<VmaImageViewSampler> textures = {
 			m_normal_texture_sampler,
 			m_base_color_texture_sampler,
 			m_emissive_texture_sampler,
 			m_metallic_roughness_occlusion_texture_sampler,
-			m_depth_stencil_texture_sampler
+			m_depth_stencil_texture_sampler,
+			m_lighting_render_data->m_irradiance_texture,
+			m_lighting_render_data->m_prefilter_texture,
+			m_lighting_render_data->m_brdf_lut_texture,
 		};
 
-		std::vector<VkDescriptorImageInfo> desc_image_infos(input_attachments.size(), VkDescriptorImageInfo{});
-		for (size_t i = 0; i < input_attachments.size(); ++i)
+		std::vector<VkDescriptorImageInfo> desc_image_infos(textures.size(), VkDescriptorImageInfo{});
+		for (size_t i = 0; i < textures.size(); ++i)
 		{
 			desc_image_infos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			desc_image_infos[i].imageView = input_attachments[i].view;
-			desc_image_infos[i].sampler = input_attachments[i].sampler;
+			desc_image_infos[i].imageView = textures[i].view;
+			desc_image_infos[i].sampler = textures[i].sampler;
 
 			VkWriteDescriptorSet desc_write{};
 			desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			desc_write.dstSet = 0;
 			desc_write.dstBinding = i;
 			desc_write.dstArrayElement = 0;
-			desc_write.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+			desc_write.descriptorType = i < 5 ? VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT : VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			desc_write.descriptorCount = 1;
 			desc_write.pImageInfo = &desc_image_infos[i];
 			desc_writes.push_back(desc_write);
 		}
+
 		VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 			m_pipeline_layouts[2], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 		vkCmdDraw(command_buffer, 3, 1, 0, 0);
 
 		// 3.transparency subpass
 		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
-		render_mesh(m_render_datas[m_render_datas.size() - 1], ERendererType::Forward);
-
+		if (m_render_datas.size() > 1)
+		{
+			render_mesh(m_render_datas[m_render_datas.size() - 1], ERendererType::Forward);
+		}
+		
 		vkCmdEndRenderPass(command_buffer);
 	}
 
@@ -268,7 +278,10 @@ namespace Bamboo
 			{2, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{3, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{4, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{8, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -601,7 +614,7 @@ namespace Bamboo
 			if (renderer_type == ERendererType::Forward)
 			{
 				VkDescriptorBufferInfo desc_buffer_info{};
-				desc_buffer_info.buffer = static_mesh_render_data->lighting_ubs[flight_index].buffer;
+				desc_buffer_info.buffer = m_lighting_render_data->lighting_ubs[flight_index].buffer;
 				desc_buffer_info.offset = 0;
 				desc_buffer_info.range = sizeof(LightingUBO);
 

@@ -3,6 +3,9 @@
 #include "runtime/resource/asset/base/asset.h"
 #include "importer/import_option.h"
 
+#define DEFAULT_MATERIAL_URL "asset/engine/material/mat_default.mat"
+#define DEFAULT_TEXTURE_URL "asset/engine/texture/material/tex_dummy.tex"
+
 namespace Bamboo
 {
 	enum class EArchiveType

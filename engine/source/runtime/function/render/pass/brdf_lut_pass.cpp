@@ -15,6 +15,13 @@ namespace Bamboo
 		m_format = VK_FORMAT_R16G16_SFLOAT;
 	}
 
+	void BRDFLUTPass::init()
+	{
+		RenderPass::init();
+
+		createFramebuffer();
+	}
+
 	void BRDFLUTPass::render()
 	{
 		// render to framebuffer
@@ -53,7 +60,7 @@ namespace Bamboo
 
 		// write to texture2d
 		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
-		texture->setURL(BRDF_TEX_URL);
+		texture->setURL(BRDF_TEXTURE_URL);
 
 		texture->m_width = m_width;
 		texture->m_height = m_height;

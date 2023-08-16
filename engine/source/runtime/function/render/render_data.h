@@ -24,8 +24,18 @@ namespace Bamboo
 		// empty content for base render data
 	};
 
+	struct LightingRenderData : public RenderData
+	{
+		std::vector<VmaBuffer> lighting_ubs;
+
+		VmaImageViewSampler m_irradiance_texture;
+		VmaImageViewSampler m_prefilter_texture;
+		VmaImageViewSampler m_brdf_lut_texture;
+	};
+
 	struct MeshRenderData : public RenderData
 	{
+		EMeshType mesh_type;
 		VmaBuffer vertex_buffer;
 		VmaBuffer index_buffer;
 		std::vector<uint32_t> index_counts;
@@ -34,13 +44,9 @@ namespace Bamboo
 
 	struct StaticMeshRenderData : public MeshRenderData
 	{
-		EMeshType mesh_type;
-
-		std::vector<VmaBuffer> lighting_ubs;
-		std::vector<PBRTexture> pbr_textures;
-
 		TransformPCO transform_pco;
 		std::vector<MaterialPCO> material_pcos;
+		std::vector<PBRTexture> pbr_textures;
 	};
 
 	struct SkeletalMeshRenderData : public StaticMeshRenderData

@@ -2,7 +2,7 @@
 
 #include "render_pass.h"
 
-#define BRDF_TEX_URL "asset/engine/texture/ibl/tex_brdf_lut.tex"
+#define BRDF_TEXTURE_URL "asset/engine/texture/ibl/tex_brdf_lut.tex"
 
 namespace Bamboo
 {
@@ -11,6 +11,7 @@ namespace Bamboo
 	public:
 		BRDFLUTPass();
 
+		virtual void init() override;
 		virtual void render() override;
 
 		virtual void createRenderPass() override;

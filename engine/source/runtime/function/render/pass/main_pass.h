@@ -41,5 +41,8 @@ namespace Bamboo
 
 		// depth stencil attachment
 		VmaImageViewSampler m_depth_stencil_texture_sampler;
+
+		// lighting render data
+		std::shared_ptr<LightingRenderData> m_lighting_render_data;
 	};
 }

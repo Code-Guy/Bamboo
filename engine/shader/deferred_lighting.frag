@@ -9,7 +9,11 @@ layout(input_attachment_index = 2, set = 0, binding = 2) uniform subpassInput em
 layout(input_attachment_index = 3, set = 0, binding = 3) uniform subpassInput metallic_roughness_occlusion_texture_sampler;
 layout(input_attachment_index = 4, set = 0, binding = 4) uniform subpassInput depth_stencil_texture_sampler;
 
-layout(set = 0, binding = 5) uniform _LightingUBO { LightingUBO lighting_ubo; };
+layout(set = 0, binding = 5) uniform samplerCube irradiance_texture_sampler;
+layout(set = 0, binding = 6) uniform samplerCube prefilter_texture_sampler;
+layout(set = 0, binding = 7) uniform samplerCube brdf_lut_texture_sampler;
+
+layout(set = 0, binding = 8) uniform _LightingUBO { LightingUBO lighting_ubo; };
 
 layout(location = 0) in vec2 f_tex_coord;
 layout(location = 0) out vec4 o_color;
@@ -42,4 +46,5 @@ void main()
 	specular = 0.0;
 
 	o_color = vec4(base_color * ambient + base_color * light_color * diffuse + light_color * specular, 1.0);
+	o_color = vec4(textureLod(irradiance_texture_sampler, normalize(position), 7).xyz, 1.0);
 }

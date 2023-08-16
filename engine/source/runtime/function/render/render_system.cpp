@@ -5,8 +5,6 @@
 #include "runtime/resource/asset/asset_manager.h"
 
 #include "runtime/core/vulkan/vulkan_rhi.h"
-#include "runtime/function/render/pass/brdf_lut_pass.h"
-#include "runtime/function/render/pass/filter_cube_pass.h"
 #include "runtime/function/render/pass/main_pass.h"
 #include "runtime/function/render/pass/ui_pass.h"
 
@@ -14,13 +12,13 @@
 #include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/static_mesh_component.h"
 #include "runtime/function/framework/component/skeletal_mesh_component.h"
+#include "runtime/function/framework/component/sky_light_component.h"
 
 namespace Bamboo
 {
 
 	void RenderSystem::init()
 	{		
-		// init persistent render passes
 		m_render_passes[ERenderPassType::Main] = std::make_shared<MainPass>();
 		m_ui_pass = std::make_shared<UIPass>();
 		m_render_passes[ERenderPassType::UI] = m_ui_pass;
@@ -28,27 +26,6 @@ namespace Bamboo
 		{
 			render_pass.second->init();
 		}
-
-		// init instant render passes
-		const auto& as = g_runtime_context.assetManager();
-		if (g_runtime_context.fileSystem()->exists(BRDF_TEX_URL))
-		{
-			
-		}
-		else
-		{
-			std::shared_ptr<BRDFLUTPass> brdf_pass = std::make_shared<BRDFLUTPass>();
-			brdf_pass->init();
-			brdf_pass->createResizableObjects(2048, 2048);
-			brdf_pass->render();
-			brdf_pass->destroy();
-		}
-
-		std::shared_ptr<FilterCubePass> filter_cube_pass = std::make_shared<FilterCubePass>();
-		filter_cube_pass->init();
-		filter_cube_pass->createResizableObjects(0, 0);
-		filter_cube_pass->render();
-		filter_cube_pass->destroy();
 
 		// set vulkan rhi callback functions
 		g_runtime_context.eventSystem()->addListener(EventType::RenderCreateSwapchainObjects, 
@@ -59,7 +36,8 @@ namespace Bamboo
 			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1));
 
 		// get dummy texture2d
-		m_dummy_texture = as->loadAsset<Texture2D>("asset/engine/texture/material/tex_dummy.tex");
+		const auto& as = g_runtime_context.assetManager();
+		m_dummy_texture = as->loadAsset<Texture2D>(DEFAULT_TEXTURE_URL);
 
 		// create lighting uniform buffers
 		m_lighting_ubs.resize(MAX_FRAMES_IN_FLIGHT);
@@ -205,7 +183,6 @@ namespace Bamboo
 					static_mesh_render_data->index_buffer = mesh->m_index_buffer;
 
 					// update uniform buffers
-					static_mesh_render_data->lighting_ubs = m_lighting_ubs;
 					if (mesh_type == EMeshType::Skeletal)
 					{
 						skeletal_mesh_render_data->bone_ubs = mesh->m_uniform_buffers;
@@ -256,7 +233,18 @@ namespace Bamboo
 		}
 
 		// set render datas
-		m_render_passes[ERenderPassType::Main]->setRenderDatas(mesh_render_datas);
+		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();
+		lighting_render_data->lighting_ubs = m_lighting_ubs;
+
+		const auto& sky_light_entity = current_world->getEntity("sky_light");
+		auto sky_light_component = sky_light_entity->getComponent(SkyLightComponent);
+		lighting_render_data->m_brdf_lut_texture = sky_light_component->m_brdf_lut_texture_sampler;
+		lighting_render_data->m_irradiance_texture = sky_light_component->m_irradiance_texture_sampler;
+		lighting_render_data->m_prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
+		mesh_render_datas.insert(mesh_render_datas.begin(), lighting_render_data);
+
+		//m_render_passes[ERenderPassType::Main]->setRenderDatas(mesh_render_datas);
+		m_render_passes[ERenderPassType::Main]->setRenderDatas({ lighting_render_data });
 	}
 
 }

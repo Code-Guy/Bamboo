@@ -12,8 +12,9 @@ namespace Bamboo
 	class FilterCubePass : public RenderPass
 	{
 	public:
-		FilterCubePass();
+		FilterCubePass(std::shared_ptr<class TextureCube>& skybox_texture_cube);
 
+		virtual void init() override;
 		virtual void render() override;
 		virtual void destroy() override;
 
@@ -23,6 +24,9 @@ namespace Bamboo
 		virtual void createPipelines() override;
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
+
+		VmaImageViewSampler getIrradianceTextureSampler() { return m_cube_image_view_samplers[0]; }
+		VmaImageViewSampler getPrefilterTextureSampler() { return m_cube_image_view_samplers[1]; }
 
 	private:
 		VkFormat m_formats[2];
