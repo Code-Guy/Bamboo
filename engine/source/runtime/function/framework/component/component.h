@@ -71,3 +71,7 @@ namespace Bamboo
 	RTTR_REGISTRATION_FRIEND \
 	RTTR_ENABLE(Bamboo::##parent_class) \
 	friend class cereal::access;
+
+#define POLYMORPHIC_DECLARATION virtual void inflate() override;
+#define POLYMORPHIC_DEFINITION(class_name) void class_name::inflate() {}
+	
