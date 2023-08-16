@@ -19,6 +19,8 @@ namespace Bamboo
 		std::shared_ptr<class CameraComponent> getCameraComponent();
 
 	private:
+		void scriptWorld();
+
 		std::string m_current_world_url;
 		std::string m_current_world_name;
 		std::shared_ptr<World> m_current_world;

@@ -10,7 +10,7 @@ namespace Bamboo
 	{
 		switch (result)
 		{
-#define STR(r) case VK_ ##r: return #r
+#define STR(r) case VK_##r: return #r
 			STR(NOT_READY);
 			STR(TIMEOUT);
 			STR(EVENT_SET);
@@ -45,7 +45,7 @@ namespace Bamboo
 	{
 		switch (type)
 		{
-#define STR(r) case VK_PHYSICAL_DEVICE_TYPE_ ##r: return #r
+#define STR(r) case VK_PHYSICAL_DEVICE_TYPE_##r: return #r
 			STR(OTHER);
 			STR(INTEGRATED_GPU);
 			STR(DISCRETE_GPU);

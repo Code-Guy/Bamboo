@@ -17,18 +17,14 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Material)
 
 namespace Bamboo
 {
+
 	void Material::bindRefs()
 	{
-		if (m_base_color_texure)
-		{
-			return;
-		}
-
-		for (const auto& iter : m_ref_urls)
-		{
-			std::shared_ptr<Texture2D> texture = g_runtime_context.assetManager()->loadAsset<Texture2D>(iter.second);
-			rttr::type::get(*this).get_property(iter.first).set_value(*this, texture);
-		}
+		BIND_ASSET(m_base_color_texure, Texture2D)
+		BIND_ASSET(m_metallic_roughness_texure, Texture2D)
+		BIND_ASSET(m_normal_texure, Texture2D)
+		BIND_ASSET(m_occlusion_texure, Texture2D)
+		BIND_ASSET(m_emissive_texure, Texture2D)
 	}
 
 }

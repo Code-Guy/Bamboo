@@ -15,9 +15,6 @@ namespace Bamboo
 		std::shared_ptr<Material> m_material;
 		BoundingBox m_bounding_box;
 
-	protected:
-		virtual void bindRefs() override;
-
 	private:
 		friend class cereal::access;
 		template<class Archive>
@@ -29,5 +26,7 @@ namespace Bamboo
 			ar(cereal::make_nvp("vertex_count", m_vertex_count));
 			ar(cereal::make_nvp("bounding_box", m_bounding_box));
 		}
+
+		virtual void bindRefs() override;
 	};
 }

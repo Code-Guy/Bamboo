@@ -4,6 +4,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <rttr/registration>
+#include <rttr/registration_friend.h>
+
 // register all user defined serialization
 namespace cereal
 {

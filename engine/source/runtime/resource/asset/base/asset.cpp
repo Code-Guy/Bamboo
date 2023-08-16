@@ -2,6 +2,16 @@
 #include "runtime/core/base/macro.h"
 #include "runtime/resource/asset/asset_manager.h"
 
+// include all asset classes
+#include "runtime/resource/asset/texture_2d.h"
+#include "runtime/resource/asset/texture_cube.h"
+#include "runtime/resource/asset/material.h"
+#include "runtime/resource/asset/static_mesh.h"
+#include "runtime/resource/asset/skeletal_mesh.h"
+#include "runtime/resource/asset/skeleton.h"
+#include "runtime/resource/asset/animation.h"
+#include "runtime/function/framework/world/world.h"
+
 namespace Bamboo
 {
 	void Asset::setURL(const URL& url)

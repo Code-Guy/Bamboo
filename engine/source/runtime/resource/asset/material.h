@@ -18,9 +18,6 @@ namespace Bamboo
 		float m_metallic_factor = 1.0f;
 		float m_roughness_factor = 1.0f;
 
-	protected:
-		virtual void bindRefs() override;
-
 	private:
 		friend class cereal::access;
 		template<class Archive>
@@ -32,5 +29,7 @@ namespace Bamboo
 			ar(cereal::make_nvp("metallic_factor", m_metallic_factor));
 			ar(cereal::make_nvp("roughness_factor", m_roughness_factor));
 		}
+
+		virtual void bindRefs() override;
 	};
 }

@@ -1,13 +1,15 @@
 #include "world_manager.h"
 #include "runtime/core/base/macro.h"
-#include "runtime/function/global/runtime_context.h"
 #include "runtime/core/config/config_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/resource/asset/skeletal_mesh.h"
 #include "runtime/resource/asset/texture_2d.h"
+#include "runtime/resource/asset/texture_cube.h"
 #include "runtime/resource/asset/animation.h"
 #include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/camera_component.h"
+#include "runtime/function/framework/component/directional_light_component.h"
+#include "runtime/function/framework/component/sky_light_component.h"
 
 namespace Bamboo
 {
@@ -18,6 +20,7 @@ namespace Bamboo
 
 		//m_current_world = createWorld(default_world_url);
 		loadWorld(default_world_url);
+		//scriptWorld();
 	}
 
 	void WorldManager::destroy()
@@ -78,6 +81,34 @@ namespace Bamboo
 	std::shared_ptr<CameraComponent> WorldManager::getCameraComponent()
 	{
 		return m_current_world->getCameraEntity()->getComponent(CameraComponent);
+	}
+
+	void WorldManager::scriptWorld()
+	{
+		// add directional light
+		std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
+		transform_component->m_position = glm::vec3(0.0f, 5.0f, 0.0f);
+		transform_component->m_rotation = glm::vec3(0.0f, -150.0f, -20.0f);
+
+		std::shared_ptr<DirectionalLightComponent> directional_light_component = std::make_shared<DirectionalLightComponent>();
+		directional_light_component->m_intensity = 0.5f;
+
+		std::shared_ptr<Entity> directional_light_entity = m_current_world->createEntity("directional_light");
+		directional_light_entity->addComponent(transform_component);
+		directional_light_entity->addComponent(directional_light_component);
+
+		// add sky light
+		transform_component = std::make_shared<TransformComponent>();
+
+		std::shared_ptr<SkyLightComponent> sky_light_component = std::make_shared<SkyLightComponent>();
+		sky_light_component->m_intensity = 1.0f;
+
+		auto sky_texture_cube = g_runtime_context.assetManager()->loadAsset<TextureCube>("asset/engine/texture/ibl/texc_skybox.texc");
+		sky_light_component->setTextureCube(sky_texture_cube);
+
+		std::shared_ptr<Entity> sky_light_entity = m_current_world->createEntity("sky_light");
+		sky_light_entity->addComponent(transform_component);
+		sky_light_entity->addComponent(sky_light_component);
 	}
 
 }

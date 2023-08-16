@@ -15,20 +15,12 @@ namespace Bamboo
 {
 	void StaticMeshComponent::setStaticMesh(std::shared_ptr<StaticMesh>& static_mesh)
 	{
-		m_static_mesh = static_mesh;
-		m_ref_urls["m_static_mesh"] = m_static_mesh->getURL();
+		REF_ASSET(m_static_mesh, static_mesh)
 	}
 
 	void StaticMeshComponent::bindRefs()
 	{
-		if (m_static_mesh)
-		{
-			return;
-		}
-
-		const auto& iter = m_ref_urls.begin();
-		std::shared_ptr<StaticMesh> static_mesh = g_runtime_context.assetManager()->loadAsset<StaticMesh>(iter->second);
-		rttr::type::get(*this).get_property(iter->first).set_value(*this, static_mesh);
+		BIND_ASSET(m_static_mesh, StaticMesh)
 	}
 
 }

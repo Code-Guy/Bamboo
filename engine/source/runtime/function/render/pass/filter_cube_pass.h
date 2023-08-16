@@ -6,7 +6,7 @@ namespace Bamboo
 {
 	enum class EFilterType
 	{
-		Irradiance, PrefilterEnv
+		Irradiance, Prefilter
 	};
 
 	class FilterCubePass : public RenderPass

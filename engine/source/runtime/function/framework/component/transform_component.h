@@ -17,7 +17,7 @@ namespace Bamboo
 		const glm::mat4& getGlobalMatrix();
 
 	private:
-		REGISTER_COMPONENT
+		REGISTER_REFLECTION(Component)
 
 		template<class Archive>
 		void serialize(Archive& ar)

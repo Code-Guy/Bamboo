@@ -18,9 +18,8 @@ namespace Bamboo
 {
 	void AnimatorComponent::setSkeleton(std::shared_ptr<Skeleton>& skeleton)
 	{
-		m_skeleton = skeleton;
-		m_skeleton_inst = *m_skeleton;
-		m_ref_urls["m_skeleton"] = m_skeleton->getURL();
+		m_skeleton_inst = *skeleton;
+		REF_ASSET(m_skeleton, skeleton)
 	}
 
 	void AnimatorComponent::tick(float delta_time)
@@ -122,15 +121,8 @@ namespace Bamboo
 
 	void AnimatorComponent::bindRefs()
 	{
-		if (m_skeleton)
-		{
-			return;
-		}
-
-		const auto& iter = m_ref_urls.begin();
-		std::shared_ptr<Skeleton> skeleton = g_runtime_context.assetManager()->loadAsset<Skeleton>(iter->second);
-		rttr::type::get(*this).get_property(iter->first).set_value(*this, skeleton);
-		m_skeleton_inst = *skeleton;
+		BIND_ASSET(m_skeleton, Skeleton)
+		m_skeleton_inst = *m_skeleton;
 	}
 
 }

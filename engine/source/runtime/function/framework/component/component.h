@@ -67,7 +67,7 @@ namespace Bamboo
 	};
 }
 
-#define REGISTER_COMPONENT \
+#define REGISTER_REFLECTION(parent_class) \
 	RTTR_REGISTRATION_FRIEND \
-	RTTR_ENABLE(Bamboo::Component) \
+	RTTR_ENABLE(Bamboo::##parent_class) \
 	friend class cereal::access;

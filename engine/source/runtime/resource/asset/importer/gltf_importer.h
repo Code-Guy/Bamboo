@@ -9,10 +9,6 @@
 #include "runtime/resource/asset/skeleton.h"
 #include "runtime/resource/asset/animation.h"
 
-#define REFERENCE_ASSET(object, prop_name, ref_asset) \
-	object-> ##prop_name = ref_asset; \
-	object->m_ref_urls[#prop_name] = ref_asset->getURL()
-
 namespace Bamboo
 {
 	class GltfImporter

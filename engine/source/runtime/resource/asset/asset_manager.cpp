@@ -22,8 +22,7 @@ namespace Bamboo
 			{ EAssetType::StaticMesh, "sm"}, 
 			{ EAssetType::SkeletalMesh, "skm" }, 
 			{ EAssetType::Animation, "anim" },
-			{ EAssetType::World, "world" },
-			{ EAssetType::Font, "ttf" }
+			{ EAssetType::World, "world" }
 		};
 
 		m_asset_archive_types = {

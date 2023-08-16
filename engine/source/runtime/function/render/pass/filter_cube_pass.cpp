@@ -11,6 +11,7 @@
 #include <array>
 #include <fstream>
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define PI 3.1415926f
 
 namespace Bamboo
@@ -23,7 +24,7 @@ namespace Bamboo
 		float delta_theta;
 	};
 
-	struct PrefilterEnvPCO
+	struct PrefilterPCO
 	{
 		glm::mat4 mvp;
 		float roughness;
@@ -124,15 +125,15 @@ namespace Bamboo
 							0, sizeof(IrradiancePCO), &irradiance_pco);
 					}
 						break;
-					case EFilterType::PrefilterEnv:
+					case EFilterType::Prefilter:
 					{
-						PrefilterEnvPCO prefilter_env_pco;
-						prefilter_env_pco.mvp = mvp;
-						prefilter_env_pco.roughness = (float)m / (float)(m_mip_levels[i] - 1);
-						prefilter_env_pco.samples = 32;
+						PrefilterPCO prefilter_pco;
+						prefilter_pco.mvp = mvp;
+						prefilter_pco.roughness = (float)m / (float)(m_mip_levels[i] - 1);
+						prefilter_pco.samples = 32;
 						vkCmdPushConstants(command_buffer, m_pipeline_layouts[i], 
 							VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 
-							0, sizeof(PrefilterEnvPCO), &prefilter_env_pco);
+							0, sizeof(PrefilterPCO), &prefilter_pco);
 					}
 						break;
 					default:
@@ -208,8 +209,8 @@ namespace Bamboo
 					VulkanUtil::endInstantCommands(command_buffer);
 
 					// save framebuffer texture data to file
-// 					VulkanUtil::saveImage(color_image, static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height), 
-// 						m_formats[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, StringUtil::format("D:/Test/filter_cube_%d_%d_%d.bin", i, f, m));
+					VulkanUtil::saveImage(color_image, static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height), 
+						m_formats[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, StringUtil::format("D:/Test/ibl/filter_cube_%d_%d_%d.bin", i, f, m));
 
 					// transition framebuffer texture to color attachment optimal
 					VulkanUtil::transitionImageLayout(color_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
@@ -326,8 +327,8 @@ namespace Bamboo
 			case EFilterType::Irradiance:
 				push_constant_range.size = sizeof(IrradiancePCO);
 				break;
-			case EFilterType::PrefilterEnv:
-				push_constant_range.size = sizeof(PrefilterEnvPCO);
+			case EFilterType::Prefilter:
+				push_constant_range.size = sizeof(PrefilterPCO);
 				break;
 			default:
 				break;
@@ -387,7 +388,7 @@ namespace Bamboo
 			std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = {
 				shader_manager->getShaderStageCI("filter_cube.vert", VK_SHADER_STAGE_VERTEX_BIT),
 				shader_manager->getShaderStageCI(
-					FilterType == EFilterType::Irradiance ? "irradiance.frag" : "prefilter_env.frag",
+					FilterType == EFilterType::Irradiance ? "irradiance.frag" : "prefilter.frag",
 					VK_SHADER_STAGE_FRAGMENT_BIT)
 			};
 

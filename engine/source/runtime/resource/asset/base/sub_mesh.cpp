@@ -10,16 +10,10 @@ rttr::registration::class_<Bamboo::SubMesh>("SubMesh")
 
 namespace Bamboo
 {
+
 	void SubMesh::bindRefs()
 	{
-		if (m_material)
-		{
-			return;
-		}
-
-		const auto& iter = m_ref_urls.begin();
-		std::shared_ptr<Material> material = g_runtime_context.assetManager()->loadAsset<Material>(iter->second);
-		rttr::type::get(*this).get_property(iter->first).set_value(*this, material);
+		BIND_ASSET(m_material, Material)
 	}
 
 }

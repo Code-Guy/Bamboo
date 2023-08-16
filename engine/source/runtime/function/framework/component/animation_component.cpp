@@ -15,21 +15,18 @@ namespace Bamboo
 {
 	void AnimationComponent::addAnimation(std::shared_ptr<Animation>& animation)
 	{
-		m_ref_urls[std::to_string(m_animations.size())] = animation->getURL();
-		m_animations.push_back(animation);
+		m_animations.push_back({});
+		uint32_t index = m_animations.size() - 1;
+		REF_ASSET_ELEM(m_animations[index], std::to_string(index), animation)
 	}
 
 	void AnimationComponent::bindRefs()
 	{
-		if (!m_animations.empty())
-		{
-			return;
-		}
-
 		for (auto iter : m_ref_urls)
 		{
-			std::shared_ptr<Animation> animation = g_runtime_context.assetManager()->loadAsset<Animation>(iter.second);
-			m_animations.push_back(animation);
+			m_animations.push_back({});
+			uint32_t index = m_animations.size() - 1;
+			BIND_ASSET_ELEM(m_animations[index], std::to_string(index), Animation)
 		}
 	}
 
