@@ -12,7 +12,7 @@ namespace Bamboo
 {
 	enum class EPropertyValueType
 	{
-		Bool, Integar, Float, String, Vec2, Vec3, Vec4, Asset
+		Bool, Integar, Float, String, Vec2, Vec3, Vec4, Color3, Color4, Asset
 	};
 
 	enum class EPropertyContainerType
@@ -41,7 +41,11 @@ namespace Bamboo
 		void constructPropertyVec2(const std::string& name, rttr::variant& variant);
 		void constructPropertyVec3(const std::string& name, rttr::variant& variant);
 		void constructPropertyVec4(const std::string& name, rttr::variant& variant);
+		void constructPropertyColor3(const std::string& name, rttr::variant& variant);
+		void constructPropertyColor4(const std::string& name, rttr::variant& variant);
 		void constructPropertyAsset(const std::string& name, rttr::variant& variant);
+
+		void addPropertyNameText(const std::string& name);
 
 		EPropertyType getPropertyType(const rttr::type& type);
 

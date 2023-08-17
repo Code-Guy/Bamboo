@@ -11,12 +11,12 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::CameraComponent>("CameraComponent")
-	 .property("m_fovy", &Bamboo::CameraComponent::m_fovy)
-	 .property("m_near", &Bamboo::CameraComponent::m_near)
-	 .property("m_far", &Bamboo::CameraComponent::m_far)
-	 .property("m_move_speed", &Bamboo::CameraComponent::m_move_speed)
-	 .property("m_turn_speed", &Bamboo::CameraComponent::m_turn_speed)
-	 .property("m_zoom_speed", &Bamboo::CameraComponent::m_zoom_speed);
+	 .property("fovy", &Bamboo::CameraComponent::m_fovy)
+	 .property("near", &Bamboo::CameraComponent::m_near)
+	 .property("far", &Bamboo::CameraComponent::m_far)
+	 .property("move_speed", &Bamboo::CameraComponent::m_move_speed)
+	 .property("turn_speed", &Bamboo::CameraComponent::m_turn_speed)
+	 .property("zoom_speed", &Bamboo::CameraComponent::m_zoom_speed);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::CameraComponent)
@@ -169,7 +169,7 @@ namespace Bamboo
 
 		float& yaw = m_transform_component->m_rotation.y;
 		float& pitch = m_transform_component->m_rotation.z;
-		yaw -= xoffset;
+		yaw += xoffset;
 		pitch -= yoffset;
 		pitch = std::clamp(pitch, -89.0f, 89.0f);
 
@@ -203,15 +203,9 @@ namespace Bamboo
 
 	void CameraComponent::updatePose()
 	{
-		float& yaw = m_transform_component->m_rotation.y;
-		float& pitch = m_transform_component->m_rotation.z;
-		m_forward.x = std::cos(glm::radians(yaw)) * std::cos(glm::radians(pitch));
-		m_forward.y = std::sin(glm::radians(pitch));
-		m_forward.z = -std::sin(glm::radians(yaw)) * std::cos(glm::radians(pitch));
-		m_forward = glm::normalize(m_forward);
-
-		m_right = glm::normalize(glm::cross(m_forward, k_up_vector));
-		m_up = glm::normalize(glm::cross(m_right, m_forward));
+		m_forward = m_transform_component->getForwardVector();
+		m_right = glm::cross(m_forward, k_up_vector);
+		m_up = glm::cross(m_right, m_forward);
 	}
 
 	bool CameraComponent::isInContentRegion(double xpos, double ypos)

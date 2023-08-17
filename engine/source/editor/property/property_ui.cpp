@@ -2,6 +2,7 @@
 #include "runtime/core/event/event_system.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/framework/world/world_manager.h"
+#include "runtime/core/color/color.h"
 
 namespace Bamboo
 {
@@ -17,6 +18,8 @@ namespace Bamboo
 			{ EPropertyValueType::Vec2, std::bind(&PropertyUI::constructPropertyVec2, this, std::placeholders::_1, std::placeholders::_2) },
 			{ EPropertyValueType::Vec3, std::bind(&PropertyUI::constructPropertyVec3, this, std::placeholders::_1, std::placeholders::_2) },
 			{ EPropertyValueType::Vec4, std::bind(&PropertyUI::constructPropertyVec4, this, std::placeholders::_1, std::placeholders::_2) },
+			{ EPropertyValueType::Color3, std::bind(&PropertyUI::constructPropertyColor3, this, std::placeholders::_1, std::placeholders::_2) },
+			{ EPropertyValueType::Color4, std::bind(&PropertyUI::constructPropertyColor4, this, std::placeholders::_1, std::placeholders::_2) },
 			{ EPropertyValueType::Asset, std::bind(&PropertyUI::constructPropertyAsset, this, std::placeholders::_1, std::placeholders::_2) },
 		};
 
@@ -118,8 +121,6 @@ namespace Bamboo
 			for (auto& prop : component_type.get_properties())
 			{
 				std::string prop_name = prop.get_name().to_string();
-				StringUtil::remove(prop_name, "m_");
-
 				EPropertyType property_type = getPropertyType(prop.get_type());
 				ASSERT(property_type.second != EPropertyContainerType::Map, "don't support map container property type now");
 
@@ -149,46 +150,36 @@ namespace Bamboo
 
 	void PropertyUI::constructPropertyBool(const std::string& name, rttr::variant& variant)
 	{
-		std::string label = "##" + name;
-		ImGui::TableNextColumn();
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 2.0f));
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("%s", name.c_str());
-		ImGui::PopStyleVar();
+		addPropertyNameText(name);
 
 		ImGui::TableNextColumn();
+		std::string label = "##" + name;
 		ImGui::Checkbox(label.c_str(), &variant.get_value<bool>());
 	}
 
 	void PropertyUI::constructPropertyIntegar(const std::string& name, rttr::variant& variant)
 	{
-		std::string label = "##" + name;
-		ImGui::TableNextColumn();
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("%s", name.c_str());
+		addPropertyNameText(name);
 
 		ImGui::TableNextColumn();
+		std::string label = "##" + name;
 		ImGui::InputInt(label.c_str(), &variant.get_value<int>());
 	}
 
 	void PropertyUI::constructPropertyFloat(const std::string& name, rttr::variant& variant)
 	{
-		std::string label = "##" + name;
-		ImGui::TableNextColumn();
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("%s", name.c_str());
+		addPropertyNameText(name);
 
 		ImGui::TableNextColumn();
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		std::string label = "##" + name;
 		ImGui::InputFloat(label.c_str(), &variant.get_value<float>());
 		ImGui::PopItemWidth();
 	}
 
 	void PropertyUI::constructPropertyString(const std::string& name, rttr::variant& variant)
 	{
-		std::string label = "##" + name;
-		ImGui::TableNextColumn();
-		ImGui::Text("%s", name.c_str());
+		addPropertyNameText(name);
 
 		ImGui::TableNextColumn();
 		ImGui::Text("%s", (*&variant.get_value<std::string>()).c_str());
@@ -196,62 +187,62 @@ namespace Bamboo
 
 	void PropertyUI::constructPropertyVec2(const std::string& name, rttr::variant& variant)
 	{
-		glm::vec2* p_vec2 = &variant.get_value<glm::vec2>();
-		float value[2] = { p_vec2->x, p_vec2->y };
-
-		std::string label = "##" + name;
-		ImGui::TableNextColumn();
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("%s", name.c_str());
+		addPropertyNameText(name);
 
 		ImGui::TableNextColumn();
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		ImGui::DragFloat2(label.c_str(), value);
+		std::string label = "##" + name;
+		glm::vec2& vec2 = variant.get_value<glm::vec2>();
+		ImGui::DragFloat2(label.c_str(), glm::value_ptr(vec2));
 		ImGui::PopItemWidth();
-
-		p_vec2->x = value[0];
-		p_vec2->y = value[1];
 	}
 
 	void PropertyUI::constructPropertyVec3(const std::string& name, rttr::variant& variant)
 	{
-		glm::vec3* p_vec3 = &variant.get_value<glm::vec3>();
-		float value[3] = { p_vec3->x, p_vec3->y, p_vec3->z };
-
-		std::string label = "##" + name;
-		ImGui::TableNextColumn();
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("%s", name.c_str());
+		addPropertyNameText(name);
 
 		ImGui::TableNextColumn();
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		ImGui::DragFloat3(label.c_str(), value);
+		std::string label = "##" + name;
+		glm::vec3& vec3 = variant.get_value<glm::vec3>();
+		ImGui::DragFloat3(label.c_str(), glm::value_ptr(vec3));
 		ImGui::PopItemWidth();
-
-		p_vec3->x = value[0];
-		p_vec3->y = value[1];
-		p_vec3->z = value[2];
 	}
 
 	void PropertyUI::constructPropertyVec4(const std::string& name, rttr::variant& variant)
 	{
-		glm::vec4* p_vec4 = &variant.get_value<glm::vec4>();
-		float value[4] = { p_vec4->x, p_vec4->y, p_vec4->z, p_vec4->w };
-
-		std::string label = "##" + name;
-		ImGui::TableNextColumn();
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("%s", name.c_str());
+		addPropertyNameText(name);
 
 		ImGui::TableNextColumn();
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		ImGui::DragFloat4(label.c_str(), value);
+		std::string label = "##" + name;
+		glm::vec4& vec4 = variant.get_value<glm::vec4>();
+		ImGui::DragFloat4(label.c_str(), glm::value_ptr(vec4));
 		ImGui::PopItemWidth();
+	}
 
-		p_vec4->x = value[0];
-		p_vec4->y = value[1];
-		p_vec4->z = value[2];
-		p_vec4->w = value[3];
+	void PropertyUI::constructPropertyColor3(const std::string& name, rttr::variant& variant)
+	{
+		addPropertyNameText(name);
+
+		ImGui::TableNextColumn();
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		std::string label = "##" + name;
+		Color3& color3 = variant.get_value<Color3>();
+		ImGui::ColorEdit3(label.c_str(), color3.data());
+		ImGui::PopItemWidth();
+	}
+
+	void PropertyUI::constructPropertyColor4(const std::string& name, rttr::variant& variant)
+	{
+		addPropertyNameText(name);
+
+		ImGui::TableNextColumn();
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		std::string label = "##" + name;
+		Color4& color4 = variant.get_value<Color4>();
+		ImGui::ColorEdit3(label.c_str(), color4.data());
+		ImGui::PopItemWidth();
 	}
 
 	void PropertyUI::constructPropertyAsset(const std::string& name, rttr::variant& variant)
@@ -291,6 +282,13 @@ namespace Bamboo
 		}
 	}
 
+	void PropertyUI::addPropertyNameText(const std::string& name)
+	{
+		ImGui::TableNextColumn();
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
+		ImGui::Text("%s", name.c_str());
+	}
+
 	EPropertyType PropertyUI::getPropertyType(const rttr::type& type)
 	{
 		const std::string& type_name = type.get_name().to_string();
@@ -316,6 +314,14 @@ namespace Bamboo
 		else if (type_name.find("glm::vec<4") != std::string::npos)
 		{
 			value_type = EPropertyValueType::Vec4;
+		}
+		else if (type_name.find("Color3") != std::string::npos)
+		{
+			value_type = EPropertyValueType::Color3;
+		}
+		else if (type_name.find("Color4") != std::string::npos)
+		{
+			value_type = EPropertyValueType::Color4;
 		}
 		else if (type_name.find("std::shared_ptr") != std::string::npos)
 		{

@@ -14,6 +14,7 @@
 #include "runtime/function/framework/component/static_mesh_component.h"
 #include "runtime/function/framework/component/skeletal_mesh_component.h"
 #include "runtime/function/framework/component/sky_light_component.h"
+#include "runtime/function/framework/component/directional_light_component.h"
 
 namespace Bamboo
 {
@@ -125,10 +126,27 @@ namespace Bamboo
 		auto camera_transform_component = camera_entity->getComponent(TransformComponent);
 		auto camera_component = camera_entity->getComponent(CameraComponent);
 
+		// get sky light entity and component
+		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();
+		lighting_render_data->lighting_ubs = m_lighting_ubs;
+
+		const auto& sky_light_entity = current_world->getEntity("sky_light");
+		auto sky_light_component = sky_light_entity->getComponent(SkyLightComponent);
+		lighting_render_data->m_brdf_lut_texture = sky_light_component->m_brdf_lut_texture_sampler;
+		lighting_render_data->m_irradiance_texture = sky_light_component->m_irradiance_texture_sampler;
+		lighting_render_data->m_prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
+		mesh_render_datas.push_back(lighting_render_data);
+
+		// get directional light entity and component
+		const auto& directional_light_entity = current_world->getEntity("directional_light");
+		auto directional_light_component = directional_light_entity->getComponent(DirectionalLightComponent);
+		auto directional_light_transform_component = directional_light_entity->getComponent(TransformComponent);
+
 		// update lighting uniform buffers
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
-		lighting_ubo.light_dir = glm::vec3(-1.0f, -1.0f, 1.0f);
+		lighting_ubo.directional_light.direction = directional_light_transform_component->getForwardVector();
+		lighting_ubo.directional_light.color = directional_light_component->getColor();
 		lighting_ubo.inv_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
 		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
 		{
@@ -239,18 +257,7 @@ namespace Bamboo
 		}
 
 		// set render datas
-		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();
-		lighting_render_data->lighting_ubs = m_lighting_ubs;
-
-		const auto& sky_light_entity = current_world->getEntity("sky_light");
-		auto sky_light_component = sky_light_entity->getComponent(SkyLightComponent);
-		lighting_render_data->m_brdf_lut_texture = sky_light_component->m_brdf_lut_texture_sampler;
-		lighting_render_data->m_irradiance_texture = sky_light_component->m_irradiance_texture_sampler;
-		lighting_render_data->m_prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
-		mesh_render_datas.insert(mesh_render_datas.begin(), lighting_render_data);
-
 		m_render_passes[ERenderPassType::Main]->setRenderDatas(mesh_render_datas);
-		//m_render_passes[ERenderPassType::Main]->setRenderDatas({ lighting_render_data });
 	}
 
 }

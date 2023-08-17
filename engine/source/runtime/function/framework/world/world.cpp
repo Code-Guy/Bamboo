@@ -25,6 +25,8 @@ namespace Bamboo
 	{
 		for (const auto& iter : m_entities)
 		{
+			// update entity's own and children transforms
+			iter.second->updateTransforms();
 			iter.second->tickable(delta_time);
 		}
 	}

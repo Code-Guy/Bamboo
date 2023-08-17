@@ -3,8 +3,8 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::PointLightComponent>("PointLightComponent")
-	 .property("m_radius", &Bamboo::PointLightComponent::m_radius)
-	 .property("m_attenuation", &Bamboo::PointLightComponent::m_attenuation);
+	 .property("radius", &Bamboo::PointLightComponent::m_radius)
+	 .property("attenuation", &Bamboo::PointLightComponent::m_attenuation);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::PointLightComponent)

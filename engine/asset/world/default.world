@@ -42,7 +42,7 @@
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
-                                                        "y": -126.5001449584961,
+                                                        "y": 126.5001449584961,
                                                         "z": -16.699987411499025
                                                     },
                                                     "scale": {
@@ -378,8 +378,8 @@
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
-                                                        "y": -150.0,
-                                                        "z": -20.0
+                                                        "y": 135.0,
+                                                        "z": -35.2
                                                     },
                                                     "scale": {
                                                         "x": 1.0,
@@ -402,7 +402,13 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 0.5
+                                                        "intensity": 0.5,
+                                                        "color": {
+                                                            "r": 1.0,
+                                                            "g": 1.0,
+                                                            "b": 1.0
+                                                        },
+                                                        "cast_shadow": true
                                                     }
                                                 }
                                             }
@@ -470,7 +476,13 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 1.0
+                                                        "intensity": 1.0,
+                                                        "color": {
+                                                            "r": 1.0,
+                                                            "g": 1.0,
+                                                            "b": 1.0
+                                                        },
+                                                        "cast_shadow": true
                                                     },
                                                     "asset_ref": {
                                                         "ref_urls": [
@@ -480,150 +492,6 @@
                                                             }
                                                         ]
                                                     }
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "key": 6,
-                        "value": {
-                            "polymorphic_id": 1073741824,
-                            "ptr_wrapper": {
-                                "id": 2147483670,
-                                "data": {
-                                    "tickable": {
-                                        "tick_enabled": false,
-                                        "tick_interval": 0.0
-                                    },
-                                    "name": "point_light",
-                                    "id": 6,
-                                    "parent_id": 4294967295,
-                                    "child_ids": [],
-                                    "components": [
-                                        {
-                                            "polymorphic_id": 2,
-                                            "ptr_wrapper": {
-                                                "id": 2147483671,
-                                                "data": {
-                                                    "component": {
-                                                        "tickable": {
-                                                            "tick_enabled": false,
-                                                            "tick_interval": 0.0
-                                                        }
-                                                    },
-                                                    "position": {
-                                                        "x": 0.0,
-                                                        "y": 0.0,
-                                                        "z": 0.0
-                                                    },
-                                                    "rotation": {
-                                                        "x": 0.0,
-                                                        "y": 0.0,
-                                                        "z": 0.0
-                                                    },
-                                                    "scale": {
-                                                        "x": 1.0,
-                                                        "y": 1.0,
-                                                        "z": 1.0
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "polymorphic_id": 2147483658,
-                                            "polymorphic_name": "Bamboo::PointLightComponent",
-                                            "ptr_wrapper": {
-                                                "id": 2147483672,
-                                                "data": {
-                                                    "light": {
-                                                        "component": {
-                                                            "tickable": {
-                                                                "tick_enabled": false,
-                                                                "tick_interval": 0.0
-                                                            }
-                                                        },
-                                                        "intensity": 1.0
-                                                    },
-                                                    "radius": 0.0,
-                                                    "attenuation": 0.0
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "key": 7,
-                        "value": {
-                            "polymorphic_id": 1073741824,
-                            "ptr_wrapper": {
-                                "id": 2147483673,
-                                "data": {
-                                    "tickable": {
-                                        "tick_enabled": false,
-                                        "tick_interval": 0.0
-                                    },
-                                    "name": "spot_light",
-                                    "id": 7,
-                                    "parent_id": 4294967295,
-                                    "child_ids": [],
-                                    "components": [
-                                        {
-                                            "polymorphic_id": 2,
-                                            "ptr_wrapper": {
-                                                "id": 2147483674,
-                                                "data": {
-                                                    "component": {
-                                                        "tickable": {
-                                                            "tick_enabled": false,
-                                                            "tick_interval": 0.0
-                                                        }
-                                                    },
-                                                    "position": {
-                                                        "x": 0.0,
-                                                        "y": 0.0,
-                                                        "z": 0.0
-                                                    },
-                                                    "rotation": {
-                                                        "x": 0.0,
-                                                        "y": 0.0,
-                                                        "z": 0.0
-                                                    },
-                                                    "scale": {
-                                                        "x": 1.0,
-                                                        "y": 1.0,
-                                                        "z": 1.0
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "polymorphic_id": 2147483659,
-                                            "polymorphic_name": "Bamboo::SpotLightComponent",
-                                            "ptr_wrapper": {
-                                                "id": 2147483675,
-                                                "data": {
-                                                    "point_light": {
-                                                        "light": {
-                                                            "component": {
-                                                                "tickable": {
-                                                                    "tick_enabled": false,
-                                                                    "tick_interval": 0.0
-                                                                }
-                                                            },
-                                                            "intensity": 1.0
-                                                        },
-                                                        "radius": 0.0,
-                                                        "attenuation": 0.0
-                                                    },
-                                                    "inner_cone_angle": 0.0,
-                                                    "outer_cone_angle": 0.0
                                                 }
                                             }
                                         }

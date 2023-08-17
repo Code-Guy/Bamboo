@@ -4,9 +4,9 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::TransformComponent>("TransformComponent")
-	 .property("m_position", &Bamboo::TransformComponent::m_position)
-	 .property("m_rotation", &Bamboo::TransformComponent::m_rotation)
-	 .property("m_scale", &Bamboo::TransformComponent::m_scale);
+	 .property("position", &Bamboo::TransformComponent::m_position)
+	 .property("rotation", &Bamboo::TransformComponent::m_rotation)
+	 .property("scale", &Bamboo::TransformComponent::m_scale);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::TransformComponent)
@@ -59,6 +59,19 @@ namespace Bamboo
 	const glm::mat4& TransformComponent::getGlobalMatrix()
 	{
 		return m_parent.lock()->isRoot() ? m_local_matrix : m_global_matrix;
+	}
+
+	glm::vec3 TransformComponent::getForwardVector()
+	{
+		float yaw = m_rotation.y;
+		float pitch = m_rotation.z;
+
+		glm::vec3 forward_vector;
+		forward_vector.x = std::cos(glm::radians(yaw)) * std::cos(glm::radians(pitch));
+		forward_vector.y = std::sin(glm::radians(pitch));
+		forward_vector.z = std::sin(glm::radians(yaw)) * std::cos(glm::radians(pitch));
+
+		return forward_vector;
 	}
 
 }

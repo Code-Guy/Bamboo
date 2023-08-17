@@ -40,11 +40,20 @@ struct MaterialPCO
     int has_occlusion_texture;
 };
 
+struct DirectionalLight
+{
+	vec3 direction; float padding0;
+	vec3 color; float padding1;
+};
+
 struct LightingUBO
 {
+    // camera
     vec3 camera_pos; float padding0;
-    vec3 light_dir; float padding1;
     mat4 inv_view_proj;
+
+    // lights
+    DirectionalLight directional_light;
 };
 
 #endif

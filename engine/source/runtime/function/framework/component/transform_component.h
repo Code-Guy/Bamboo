@@ -15,6 +15,7 @@ namespace Bamboo
 		bool update(bool is_chain_dirty = false, const glm::mat4& parent_global_matrix = glm::mat4(1.0));
 
 		const glm::mat4& getGlobalMatrix();
+		glm::vec3 getForwardVector();
 
 	private:
 		REGISTER_REFLECTION(Component)

@@ -23,19 +23,21 @@ void main()
 	vec3 base_color = bool(material_pco.has_base_color_texture) ? 
 		texture(base_color_texture_sampler, f_tex_coord).xyz : material_pco.base_color_factor.xyz;
 
+	// get lighting infos
+	vec3 light_dir = lighting_ubo.directional_light.direction;
+	vec3 light_color = lighting_ubo.directional_light.color;
+
 	// ambient
 	float ambient = 0.05;
 
 	// diffuse
-	float diffuse = max(dot(-lighting_ubo.light_dir, f_normal), 0.0);
+	float diffuse = max(dot(-light_dir, f_normal), 0.0);
 
 	// specular
 	float shininess = 64.0;
-	vec3 light_color = vec3(0.5);
-
 	vec3 view_dir = normalize(lighting_ubo.camera_pos - f_position);
-	vec3 reflect_dir = reflect(lighting_ubo.light_dir, f_normal);
-	vec3 halfway_dir = normalize(-lighting_ubo.light_dir + f_normal);
+	vec3 reflect_dir = reflect(light_dir, f_normal);
+	vec3 halfway_dir = normalize(-light_dir + f_normal);
 	float specular = pow(max(dot(halfway_dir, f_normal), 0.0), shininess);
 
 	o_color = vec4(base_color * ambient + base_color * light_color * diffuse + light_color * specular, 1.0);

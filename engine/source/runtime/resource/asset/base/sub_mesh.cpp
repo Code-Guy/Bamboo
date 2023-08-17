@@ -5,7 +5,7 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::SubMesh>("SubMesh")
-	 .property("m_material", &Bamboo::SubMesh::m_material);
+	 .property("material", &Bamboo::SubMesh::m_material);
 }
 
 namespace Bamboo

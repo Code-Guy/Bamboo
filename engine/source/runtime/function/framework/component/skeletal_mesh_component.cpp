@@ -5,7 +5,7 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::SkeletalMeshComponent>("SkeletalMeshComponent")
-	 .property("m_skeletal_mesh", &Bamboo::SkeletalMeshComponent::m_skeletal_mesh);
+	 .property("skeletal_mesh", &Bamboo::SkeletalMeshComponent::m_skeletal_mesh);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::SkeletalMeshComponent)

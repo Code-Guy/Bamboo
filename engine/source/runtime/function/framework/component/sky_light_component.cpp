@@ -7,7 +7,7 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::SkyLightComponent>("SkyLightComponent")
-	 .property("m_texture_cube", &Bamboo::SkyLightComponent::m_texture_cube);
+	 .property("texture_cube", &Bamboo::SkyLightComponent::m_texture_cube);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::SkyLightComponent)

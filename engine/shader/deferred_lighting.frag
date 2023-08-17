@@ -29,19 +29,21 @@ void main()
 	vec3 base_color = subpassLoad(base_color_texture_sampler).xyz;
 	vec3 normal = subpassLoad(normal_texture_sampler).xyz;
 
+	// get lighting infos
+	vec3 light_dir = lighting_ubo.directional_light.direction;
+	vec3 light_color = lighting_ubo.directional_light.color;
+
 	// ambient
 	float ambient = 0.05;
 
 	// diffuse
-	float diffuse = max(dot(-lighting_ubo.light_dir, normal), 0.0);
+	float diffuse = max(dot(-light_dir, normal), 0.0);
 
 	// specular
 	float shininess = 64.0;
-	vec3 light_color = vec3(0.5);
-
 	vec3 view_dir = normalize(lighting_ubo.camera_pos - position);
-	vec3 reflect_dir = reflect(lighting_ubo.light_dir, normal);
-	vec3 halfway_dir = normalize(-lighting_ubo.light_dir + normal);
+	vec3 reflect_dir = reflect(light_dir, normal);
+	vec3 halfway_dir = normalize(-light_dir + normal);
 	float specular = pow(max(dot(halfway_dir, normal), 0.0), shininess);
 	specular = 0.0;
 

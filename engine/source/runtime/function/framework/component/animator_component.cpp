@@ -8,7 +8,7 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::AnimatorComponent>("AnimatorComponent")
-	 .property("m_skeleton", &Bamboo::AnimatorComponent::m_skeleton);
+	 .property("skeleton", &Bamboo::AnimatorComponent::m_skeleton);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::AnimatorComponent)

@@ -5,7 +5,7 @@
 RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::StaticMeshComponent>("StaticMeshComponent")
-	 .property("m_static_mesh", &Bamboo::StaticMeshComponent::m_static_mesh);
+	 .property("static_mesh", &Bamboo::StaticMeshComponent::m_static_mesh);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::StaticMeshComponent)

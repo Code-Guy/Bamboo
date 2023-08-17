@@ -19,9 +19,6 @@ namespace Bamboo
 
 	void Entity::tick(float delta_time)
 	{
-		// update own and children transforms
-		updateTransforms();
-
 		// tick components
 		for (auto& component : m_components)
 		{

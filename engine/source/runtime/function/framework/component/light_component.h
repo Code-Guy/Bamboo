@@ -1,13 +1,20 @@
 #pragma once
 
 #include "component.h"
+#include "runtime/core/color/color.h"
 
 namespace Bamboo
 {
 	class LightComponent : public Component
 	{
 	public:
+		LightComponent();
+
+		glm::vec3 getColor();
+
 		float m_intensity;
+		Color3 m_color;
+		bool m_cast_shadow;
 
 	private:
 		REGISTER_REFLECTION(Component)
@@ -18,6 +25,8 @@ namespace Bamboo
 		{
 			ar(cereal::make_nvp("component", cereal::base_class<Component>(this)));
 			ar(cereal::make_nvp("intensity", m_intensity));
+			ar(cereal::make_nvp("color", m_color));
+			ar(cereal::make_nvp("cast_shadow", m_cast_shadow));
 		}
 	};
 }
