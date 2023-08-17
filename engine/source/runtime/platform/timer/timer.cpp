@@ -57,24 +57,19 @@ namespace Bamboo
 
 	void StopWatch::start()
 	{
-		m_start_time = std::chrono::steady_clock::now();
+		m_start_time = std::chrono::high_resolution_clock::now();
 	}
 
 	long long StopWatch::stop()
 	{
-		m_end_time = std::chrono::steady_clock::now();
-		m_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_start_time).count();
-		return m_elapsed_time_ms;
+		m_end_time = std::chrono::high_resolution_clock::now();
+		return std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_start_time).count();
 	}
 
-	float StopWatch::elapsedTime()
+	float StopWatch::stopHP()
 	{
-		return m_elapsed_time_ms / 1000.0;
-	}
-
-	long long StopWatch::elapsedTimeMs()
-	{
-		return m_elapsed_time_ms;
+		m_end_time = std::chrono::high_resolution_clock::now();
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(m_end_time - m_start_time).count() * 1e-6f;
 	}
 
 	TimeOuter::TimeOuter(float out_time) : out_time(out_time)

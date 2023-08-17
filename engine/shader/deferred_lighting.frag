@@ -46,5 +46,4 @@ void main()
 	specular = 0.0;
 
 	o_color = vec4(base_color * ambient + base_color * light_color * diffuse + light_color * specular, 1.0);
-	o_color = vec4(textureLod(irradiance_texture_sampler, normalize(position), 7).xyz, 1.0);
 }

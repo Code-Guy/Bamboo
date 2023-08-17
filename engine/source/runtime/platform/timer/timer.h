@@ -41,14 +41,11 @@ namespace Bamboo
 	public:
 		void start();
 		long long stop();
-		
-		float elapsedTime();
-		long long elapsedTimeMs();
+		float stopHP();
 
 	private:
-		std::chrono::time_point<std::chrono::steady_clock> m_start_time;
-		std::chrono::time_point<std::chrono::steady_clock> m_end_time;
-		long long m_elapsed_time_ms;
+		std::chrono::time_point<std::chrono::high_resolution_clock> m_start_time;
+		std::chrono::time_point<std::chrono::high_resolution_clock> m_end_time;
 	};
 
 	class TimeOuter

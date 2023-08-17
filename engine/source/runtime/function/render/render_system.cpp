@@ -3,6 +3,7 @@
 #include "runtime/core/event/event_system.h"
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
+#include "runtime/platform/timer/timer.h"
 
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/pass/main_pass.h"
@@ -50,7 +51,12 @@ namespace Bamboo
 	void RenderSystem::tick(float delta_time)
 	{
 		// collect render data from entities of current world
+// 		StopWatch stop_watch;
+// 		stop_watch.start();
+
 		collectRenderDatas();
+
+		//LOG_INFO("collect render datas elapsed time: {}ms", stop_watch.stopHP());
 
 		// vulkan rendering
 		VulkanRHI::get().render();
@@ -243,8 +249,8 @@ namespace Bamboo
 		lighting_render_data->m_prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
 		mesh_render_datas.insert(mesh_render_datas.begin(), lighting_render_data);
 
-		//m_render_passes[ERenderPassType::Main]->setRenderDatas(mesh_render_datas);
-		m_render_passes[ERenderPassType::Main]->setRenderDatas({ lighting_render_data });
+		m_render_passes[ERenderPassType::Main]->setRenderDatas(mesh_render_datas);
+		//m_render_passes[ERenderPassType::Main]->setRenderDatas({ lighting_render_data });
 	}
 
 }
