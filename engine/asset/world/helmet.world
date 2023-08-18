@@ -65,7 +65,7 @@
                                                             "tick_interval": 0.0
                                                         }
                                                     },
-                                                    "fovy": 60.0,
+                                                    "fovy": 45.0,
                                                     "aspect_ratio": 1.5,
                                                     "near": 0.10000000149011612,
                                                     "far": 1000.0,
@@ -108,7 +108,7 @@
                                                         }
                                                     },
                                                     "position": {
-                                                        "x": 0.0,
+                                                        "x": -1.0,
                                                         "y": 0.0,
                                                         "z": 0.0
                                                     },
@@ -141,7 +141,7 @@
                                                         "ref_urls": [
                                                             {
                                                                 "key": "m_static_mesh",
-                                                                "value": "asset\\sponza\\sm_sponza.sm"
+                                                                "value": "asset\\helmet\\sm_mesh_helmet_LP_13930damagedHelmet.sm"
                                                             }
                                                         ]
                                                     }
@@ -158,21 +158,21 @@
                         "value": {
                             "polymorphic_id": 1073741824,
                             "ptr_wrapper": {
-                                "id": 2147483656,
+                                "id": 2147483653,
                                 "data": {
                                     "tickable": {
                                         "tick_enabled": true,
-                                        "tick_interval": 0.016699999570846559
+                                        "tick_interval": 0.0
                                     },
-                                    "name": "cesium_man",
-                                    "id": 2,
+                                    "name": "sponza",
+                                    "id": 1,
                                     "parent_id": 4294967295,
                                     "child_ids": [],
                                     "components": [
                                         {
                                             "polymorphic_id": 2,
                                             "ptr_wrapper": {
-                                                "id": 2147483657,
+                                                "id": 2147483654,
                                                 "data": {
                                                     "component": {
                                                         "tickable": {
@@ -181,9 +181,9 @@
                                                         }
                                                     },
                                                     "position": {
-                                                        "x": -0.5,
+                                                        "x": 1.0,
                                                         "y": 0.0,
-                                                        "z": -1.0
+                                                        "z": 0.0
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
@@ -199,10 +199,10 @@
                                             }
                                         },
                                         {
-                                            "polymorphic_id": 2147483653,
-                                            "polymorphic_name": "Bamboo::SkeletalMeshComponent",
+                                            "polymorphic_id": 2147483652,
+                                            "polymorphic_name": "Bamboo::StaticMeshComponent",
                                             "ptr_wrapper": {
-                                                "id": 2147483658,
+                                                "id": 2147483655,
                                                 "data": {
                                                     "component": {
                                                         "tickable": {
@@ -213,54 +213,8 @@
                                                     "asset_ref": {
                                                         "ref_urls": [
                                                             {
-                                                                "key": "m_skeletal_mesh",
-                                                                "value": "asset\\cesium_man\\skm_Cesium_Man.skm"
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "polymorphic_id": 2147483654,
-                                            "polymorphic_name": "Bamboo::AnimationComponent",
-                                            "ptr_wrapper": {
-                                                "id": 2147483659,
-                                                "data": {
-                                                    "component": {
-                                                        "tickable": {
-                                                            "tick_enabled": false,
-                                                            "tick_interval": 0.0
-                                                        }
-                                                    },
-                                                    "asset_ref": {
-                                                        "ref_urls": [
-                                                            {
-                                                                "key": "0",
-                                                                "value": "asset/cesium_man/anim_Anim_0.anim"
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "polymorphic_id": 2147483655,
-                                            "polymorphic_name": "Bamboo::AnimatorComponent",
-                                            "ptr_wrapper": {
-                                                "id": 2147483660,
-                                                "data": {
-                                                    "component": {
-                                                        "tickable": {
-                                                            "tick_enabled": true,
-                                                            "tick_interval": 0.0
-                                                        }
-                                                    },
-                                                    "asset_ref": {
-                                                        "ref_urls": [
-                                                            {
-                                                                "key": "m_skeleton",
-                                                                "value": "asset/cesium_man/skl_Armature.skl"
+                                                                "key": "m_static_mesh",
+                                                                "value": "asset\\helmet\\sm_mesh_helmet_LP_13930damagedHelmet.sm"
                                                             }
                                                         ]
                                                     }
@@ -274,78 +228,6 @@
                     },
                     {
                         "key": 3,
-                        "value": {
-                            "polymorphic_id": 1073741824,
-                            "ptr_wrapper": {
-                                "id": 2147483661,
-                                "data": {
-                                    "tickable": {
-                                        "tick_enabled": true,
-                                        "tick_interval": 0.0
-                                    },
-                                    "name": "dragon",
-                                    "id": 3,
-                                    "parent_id": 4294967295,
-                                    "child_ids": [],
-                                    "components": [
-                                        {
-                                            "polymorphic_id": 2,
-                                            "ptr_wrapper": {
-                                                "id": 2147483662,
-                                                "data": {
-                                                    "component": {
-                                                        "tickable": {
-                                                            "tick_enabled": false,
-                                                            "tick_interval": 0.0
-                                                        }
-                                                    },
-                                                    "position": {
-                                                        "x": 0.5,
-                                                        "y": 0.0,
-                                                        "z": 0.5
-                                                    },
-                                                    "rotation": {
-                                                        "x": 0.0,
-                                                        "y": -165.0,
-                                                        "z": 0.0
-                                                    },
-                                                    "scale": {
-                                                        "x": 1.0,
-                                                        "y": 1.0,
-                                                        "z": 1.0
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "polymorphic_id": 4,
-                                            "ptr_wrapper": {
-                                                "id": 2147483663,
-                                                "data": {
-                                                    "component": {
-                                                        "tickable": {
-                                                            "tick_enabled": false,
-                                                            "tick_interval": 0.0
-                                                        }
-                                                    },
-                                                    "asset_ref": {
-                                                        "ref_urls": [
-                                                            {
-                                                                "key": "m_static_mesh",
-                                                                "value": "asset\\dragon\\sm_dragon.sm"
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "key": 4,
                         "value": {
                             "polymorphic_id": 1073741824,
                             "ptr_wrapper": {
@@ -402,7 +284,7 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 4,
+                                                        "intensity": 0.5,
                                                         "color": {
                                                             "r": 1.0,
                                                             "g": 1.0,
@@ -419,7 +301,7 @@
                         }
                     },
                     {
-                        "key": 5,
+                        "key": 4,
                         "value": {
                             "polymorphic_id": 1073741824,
                             "ptr_wrapper": {
@@ -476,7 +358,7 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 0.2,
+                                                        "intensity": 1.0,
                                                         "color": {
                                                             "r": 1.0,
                                                             "g": 1.0,
@@ -488,7 +370,7 @@
                                                         "ref_urls": [
                                                             {
                                                                 "key": "m_texture_cube",
-                                                                "value": "asset/engine/texture/ibl/texc_country_road.texc"
+                                                                "value": "asset/engine/texture/ibl/texc_papermill.texc"
                                                             }
                                                         ]
                                                     }

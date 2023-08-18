@@ -474,6 +474,7 @@ namespace Bamboo
 		m_rasterize_state_ci.cullMode = VK_CULL_MODE_NONE;
 		m_depth_stencil_ci.depthTestEnable = VK_FALSE;
 		m_depth_stencil_ci.depthWriteEnable = VK_FALSE;
+		m_color_blend_attachments[0].blendEnable = VK_FALSE;
 
 		// vertex input state
 		vertex_input_ci = {};

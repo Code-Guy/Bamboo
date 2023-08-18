@@ -27,6 +27,7 @@ namespace Bamboo
 
 		VmaImageViewSampler getIrradianceTextureSampler() { return m_cube_image_view_samplers[0]; }
 		VmaImageViewSampler getPrefilterTextureSampler() { return m_cube_image_view_samplers[1]; }
+		uint32_t getPrefilterMipLevels() { return m_mip_levels[1]; }
 
 	private:
 		VkFormat m_formats[2];

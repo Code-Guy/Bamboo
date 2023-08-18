@@ -12,7 +12,6 @@
 #include <fstream>
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define PI 3.1415926f
 
 namespace Bamboo
 {
@@ -83,7 +82,7 @@ namespace Bamboo
 			render_pass_bi.pClearValues = clear_values;
 			render_pass_bi.framebuffer = m_framebuffers[i];
 
-			std::vector<glm::mat4> matrices = 
+			std::vector<glm::mat4> view_matrices = 
 			{
 				glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)), glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
 				glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)), glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
@@ -119,7 +118,7 @@ namespace Bamboo
 					vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 					vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
-					glm::mat4 mvp = glm::perspective(PI / 2.0f, 1.0f, 0.1f, 512.0f) * matrices[f];
+					glm::mat4 mvp = glm::perspective((float)PI / 2.0f, 1.0f, 0.1f, 512.0f) * view_matrices[f];
 					switch (FilterType)
 					{
 					case EFilterType::Irradiance:

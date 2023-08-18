@@ -16,6 +16,12 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::LightComponent, Bamboo::SkyLightCom
 namespace Bamboo
 {
 
+	SkyLightComponent::SkyLightComponent()
+	{
+		m_exposure = 4.5f;
+		m_prefilter_mip_levels = 0;
+	}
+
 	SkyLightComponent::~SkyLightComponent()
 	{
 		m_irradiance_texture_sampler.destroy();
@@ -45,7 +51,6 @@ namespace Bamboo
 			brdf_pass->destroy();
 		}
 		m_brdf_lut_texture_sampler = g_runtime_context.assetManager()->loadAsset<Texture2D>(BRDF_TEXTURE_URL)->m_image_view_sampler;
-		m_brdf_lut_texture_sampler = m_texture_cube->m_image_view_sampler;
 
 		// create ibl textures
 		createIBLTextures();
@@ -62,6 +67,7 @@ namespace Bamboo
 		m_prefilter_texture_sampler.destroy();
 		m_irradiance_texture_sampler = filter_cube_pass->getIrradianceTextureSampler();
 		m_prefilter_texture_sampler = filter_cube_pass->getPrefilterTextureSampler();
+		m_prefilter_mip_levels = filter_cube_pass->getPrefilterMipLevels();
 	}
 
 }

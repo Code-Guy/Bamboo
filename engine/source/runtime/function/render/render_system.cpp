@@ -145,6 +145,9 @@ namespace Bamboo
 		// update lighting uniform buffers
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
+		lighting_ubo.sky_light.color = sky_light_component->getColor();
+		lighting_ubo.sky_light.exposure = sky_light_component->m_exposure;
+		lighting_ubo.sky_light.prefilter_mip_levels = sky_light_component->m_prefilter_mip_levels;
 		lighting_ubo.directional_light.direction = directional_light_transform_component->getForwardVector();
 		lighting_ubo.directional_light.color = directional_light_component->getColor();
 		lighting_ubo.inv_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());

@@ -20,8 +20,11 @@ layout(location = 0) out vec4 o_color;
 
 void main()
 {
-	vec3 base_color = bool(material_pco.has_base_color_texture) ? 
-		texture(base_color_texture_sampler, f_tex_coord).xyz : material_pco.base_color_factor.xyz;
+	vec3 base_color = material_pco.base_color_factor.xyz;
+	if (bool(material_pco.has_base_color_texture))
+	{
+		base_color *= texture(base_color_texture_sampler, f_tex_coord).xyz;
+	}
 
 	// get lighting infos
 	vec3 light_dir = lighting_ubo.directional_light.direction;

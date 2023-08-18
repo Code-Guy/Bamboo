@@ -49,17 +49,28 @@ void main()
 	o_normal = vec4(calc_normal(), 0.0);
 
 	// base color
-	o_base_color = bool(material_pco.has_base_color_texture) ? 
-		texture(base_color_texture_sampler, f_tex_coord) : material_pco.base_color_factor;
+	o_base_color = material_pco.base_color_factor;
+	if (bool(material_pco.has_base_color_texture))
+	{
+		o_base_color *= texture(base_color_texture_sampler, f_tex_coord);
+	}
 
 	// emissive color
-	o_emissive_color = bool(material_pco.has_emissive_texture) ? 
-		texture(emissive_texture_sampler, f_tex_coord) : material_pco.emissive_factor;
+	o_emissive_color = material_pco.emissive_factor;
+	if (bool(material_pco.has_emissive_texture))
+	{
+		o_emissive_color *= texture(emissive_texture_sampler, f_tex_coord);
+	}
 
 	// metallic_roughness_occlusion
-	o_metallic_roughness_occlusion.xy = bool(material_pco.has_metallic_roughness_texture) ? 
-		texture(metallic_roughness_texture_sampler, f_tex_coord).xy : 
-		vec2(material_pco.m_metallic_factor, material_pco.m_roughness_factor);
-	o_metallic_roughness_occlusion.z = bool(material_pco.has_occlusion_texture) ? 
-		texture(occlusion_texture_sampler, f_tex_coord).r : 1.0;
+	o_metallic_roughness_occlusion.xyz = vec3(material_pco.m_metallic_factor, material_pco.m_roughness_factor, 1.0);
+	if (bool(material_pco.has_metallic_roughness_texture))
+	{
+		vec4 pack_params = texture(metallic_roughness_texture_sampler, f_tex_coord);
+		o_metallic_roughness_occlusion.xy *= vec2(pack_params.b, pack_params.g);
+	}
+	if (bool(material_pco.has_occlusion_texture))
+	{
+		o_metallic_roughness_occlusion.z *= texture(occlusion_texture_sampler, f_tex_coord).r;
+	}
 }

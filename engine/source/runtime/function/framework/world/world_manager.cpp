@@ -104,7 +104,7 @@ namespace Bamboo
 		std::shared_ptr<SkyLightComponent> sky_light_component = std::make_shared<SkyLightComponent>();
 		sky_light_component->m_intensity = 1.0f;
 
-		auto sky_texture_cube = g_runtime_context.assetManager()->loadAsset<TextureCube>("asset/engine/texture/ibl/texc_skybox.texc");
+		auto sky_texture_cube = g_runtime_context.assetManager()->loadAsset<TextureCube>("asset/engine/texture/ibl/texc_papermill.texc");
 		sky_light_component->setTextureCube(sky_texture_cube);
 
 		std::shared_ptr<Entity> sky_light_entity = m_current_world->createEntity("sky_light");

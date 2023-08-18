@@ -8,6 +8,7 @@ namespace Bamboo
 	class SkyLightComponent : public LightComponent, public IAssetRef
 	{
 	public:
+		SkyLightComponent();
 		virtual ~SkyLightComponent();
 
 		void setTextureCube(std::shared_ptr<TextureCube>& texture_cube);
@@ -16,6 +17,9 @@ namespace Bamboo
 		VmaImageViewSampler m_irradiance_texture_sampler;
 		VmaImageViewSampler m_prefilter_texture_sampler;
 		VmaImageViewSampler m_brdf_lut_texture_sampler;
+
+		float m_exposure;
+		uint32_t m_prefilter_mip_levels;
 
 	private:
 		REGISTER_REFLECTION(LightComponent)

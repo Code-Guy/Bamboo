@@ -40,6 +40,17 @@ struct MaterialPCO
     int has_occlusion_texture;
 };
 
+struct SkyLight
+{
+    vec3 color;
+	float padding0;
+
+	float exposure;
+	float prefilter_mip_levels;
+    float padding1;
+    float padding2;
+};
+
 struct DirectionalLight
 {
 	vec3 direction; float padding0;
@@ -53,6 +64,7 @@ struct LightingUBO
     mat4 inv_view_proj;
 
     // lights
+    SkyLight sky_light;
     DirectionalLight directional_light;
 };
 
