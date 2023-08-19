@@ -132,9 +132,6 @@ namespace Bamboo
 		// 3.forward subpass
 		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
 
-		// render transparency mesh
-		render_mesh(m_render_datas[m_render_datas.size() - 2], ERendererType::Forward);
-
 		// render skybox
 		// bind pipeline
 		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[5]);
@@ -167,6 +164,9 @@ namespace Bamboo
 		VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 			m_pipeline_layouts[5], 0, 1, &desc_write);
 		vkCmdDrawIndexed(command_buffer, skybox_render_data->index_count, 1, 0, 0, 0);
+
+		// render transparency mesh in final step
+		render_mesh(m_render_datas[m_render_datas.size() - 2], ERendererType::Forward);
 
 		vkCmdEndRenderPass(command_buffer);
 	}
@@ -333,7 +333,10 @@ namespace Bamboo
 			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{6, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{8, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -475,6 +478,7 @@ namespace Bamboo
 
 		// create transparency static mesh pipeline
 		m_color_blend_ci.attachmentCount = 1;
+		m_color_blend_attachments[0].blendEnable = VK_TRUE;
 		shader_stage_cis[1] = shader_manager->getShaderStageCI("forward_lighting.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 		m_pipeline_ci.layout = m_pipeline_layouts[3];
 		m_pipeline_ci.subpass = 2;
@@ -486,6 +490,7 @@ namespace Bamboo
 			shader_manager->getShaderStageCI("skybox.vert", VK_SHADER_STAGE_VERTEX_BIT),
 			shader_manager->getShaderStageCI("skybox.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
+		m_color_blend_attachments[0].blendEnable = VK_FALSE;
 		m_rasterize_state_ci.cullMode = VK_CULL_MODE_NONE;
 		m_pipeline_ci.layout = m_pipeline_layouts[5];
 		m_pipeline_ci.subpass = 2;
@@ -521,13 +526,6 @@ namespace Bamboo
 		// create transparency skeletal mesh pipeline
 		m_color_blend_ci.attachmentCount = 1;
 		m_color_blend_attachments[0].blendEnable = VK_TRUE;
-		m_color_blend_attachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-		m_color_blend_attachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		m_color_blend_attachments[0].colorBlendOp = VK_BLEND_OP_ADD;
-		m_color_blend_attachments[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		m_color_blend_attachments[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		m_color_blend_attachments[0].alphaBlendOp = VK_BLEND_OP_ADD;
-		m_color_blend_attachments[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 		shader_stage_cis[1] = shader_manager->getShaderStageCI("forward_lighting.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 		m_pipeline_ci.layout = m_pipeline_layouts[4];
 		m_pipeline_ci.subpass = 2;
@@ -676,9 +674,11 @@ namespace Bamboo
 				desc_writes.push_back(desc_write);
 			}
 
-			// lighting ubo
+			// forward rendering
+			std::vector<VkDescriptorImageInfo> ibl_desc_image_infos;
 			if (renderer_type == ERendererType::Forward)
 			{
+				// lighting ubo
 				VkDescriptorBufferInfo desc_buffer_info{};
 				desc_buffer_info.buffer = m_lighting_render_data->lighting_ubs[flight_index].buffer;
 				desc_buffer_info.offset = 0;
@@ -687,12 +687,36 @@ namespace Bamboo
 				VkWriteDescriptorSet desc_write{};
 				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				desc_write.dstSet = 0;
-				desc_write.dstBinding = 6;
+				desc_write.dstBinding = 8;
 				desc_write.dstArrayElement = 0;
 				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				desc_write.descriptorCount = 1;
 				desc_write.pBufferInfo = &desc_buffer_info;
 				desc_writes.push_back(desc_write);
+
+				// ibl textures
+				std::vector<VmaImageViewSampler> ibl_textures = {
+					m_lighting_render_data->m_irradiance_texture,
+					m_lighting_render_data->m_prefilter_texture,
+					m_lighting_render_data->m_brdf_lut_texture,
+				};
+				ibl_desc_image_infos.resize(ibl_textures.size(), {});
+				for (size_t t = 0; t < ibl_textures.size(); ++t)
+				{
+					ibl_desc_image_infos[t].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					ibl_desc_image_infos[t].imageView = ibl_textures[t].view;
+					ibl_desc_image_infos[t].sampler = ibl_textures[t].sampler;
+
+					VkWriteDescriptorSet desc_write{};
+					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					desc_write.dstSet = 0;
+					desc_write.dstBinding = static_cast<uint32_t>(t + 5);
+					desc_write.dstArrayElement = 0;
+					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					desc_write.descriptorCount = 1;
+					desc_write.pImageInfo = &ibl_desc_image_infos[t];
+					desc_writes.push_back(desc_write);
+				}
 			}
 			
 			// image sampler
@@ -703,21 +727,27 @@ namespace Bamboo
 				static_mesh_render_data->pbr_textures[i].occlusion_texure,
 				static_mesh_render_data->pbr_textures[i].emissive_texure,
 			};
-			std::vector<VkDescriptorImageInfo> desc_image_infos(pbr_textures.size(), VkDescriptorImageInfo{});
+			std::vector<VkDescriptorImageInfo> pbr_desc_image_infos(pbr_textures.size(), VkDescriptorImageInfo{});
 			for (size_t t = 0; t < pbr_textures.size(); ++t)
 			{
-				desc_image_infos[t].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				desc_image_infos[t].imageView = pbr_textures[t].view;
-				desc_image_infos[t].sampler = pbr_textures[t].sampler;
+				pbr_desc_image_infos[t].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				pbr_desc_image_infos[t].imageView = pbr_textures[t].view;
+				pbr_desc_image_infos[t].sampler = pbr_textures[t].sampler;
+
+				uint32_t binding = static_cast<uint32_t>(t + 1);
+				if (renderer_type == ERendererType::Forward && binding == 5)
+				{
+					binding = 9;
+				}
 
 				VkWriteDescriptorSet desc_write{};
 				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				desc_write.dstSet = 0;
-				desc_write.dstBinding = static_cast<uint32_t>(t + 1);
+				desc_write.dstBinding = binding;
 				desc_write.dstArrayElement = 0;
 				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				desc_write.descriptorCount = 1;
-				desc_write.pImageInfo = &desc_image_infos[t];
+				desc_write.pImageInfo = &pbr_desc_image_infos[t];
 				desc_writes.push_back(desc_write);
 			}
 

@@ -1,7 +1,6 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
 
-#include "host_device.h"
 #include "pbr.h"
 
 layout(input_attachment_index = 0, set = 0, binding = 0) uniform subpassInput normal_texture_sampler;
@@ -30,7 +29,7 @@ void main()
 	
 	// pbr material properties
 	mat_info.base_color = subpassLoad(base_color_texture_sampler);
-	mat_info.emissive_color = subpassLoad(emissive_color_texture_sampler).xyz;
+	mat_info.emissive_color = subpassLoad(emissive_color_texture_sampler);
 	vec3 metallic_roughness_occlusion = subpassLoad(metallic_roughness_occlusion_texture_sampler).xyz;
 	mat_info.metallic = metallic_roughness_occlusion.x;
 	mat_info.roughness = metallic_roughness_occlusion.y;

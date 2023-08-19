@@ -2,6 +2,7 @@
 #define PBR
 
 #include "hdr.h"
+#include "host_device.h"
 
 layout(set = 0, binding = 5) uniform samplerCube irradiance_texture_sampler;
 layout(set = 0, binding = 6) uniform samplerCube prefilter_texture_sampler;
@@ -87,17 +88,6 @@ bool is_nearly_equal(float a, float b)
     return abs(a - b) < EPSILON;
 }
 
-struct MaterialInfo
-{
-	vec3 position;
-	vec3 normal;
-	vec4 base_color;
-	vec3 emissive_color;
-	float metallic;
-	float roughness;
-	float occlusion;
-};
-
 vec4 calc_pbr(MaterialInfo mat_info)
 {
 	float perceptual_roughness = mat_info.roughness;
@@ -163,7 +153,7 @@ vec4 calc_pbr(MaterialInfo mat_info)
 	color += getIBLContribution(pbr_info, n, r);
 
 	// occlusion/emissive color
-	color = color * mat_info.occlusion + mat_info.emissive_color;
+	color = color * mat_info.occlusion + mat_info.emissive_color.xyz;
 
 	// get alpha from base_color's alpha
 	return vec4(color, mat_info.base_color.a);

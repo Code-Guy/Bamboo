@@ -63,4 +63,15 @@ struct LightingUBO
     DirectionalLight directional_light;
 };
 
+struct MaterialInfo
+{
+    vec3 position;
+    vec3 normal;
+    vec4 base_color;
+    vec4 emissive_color;
+    float metallic;
+    float roughness;
+    float occlusion;
+};
+
 #endif
