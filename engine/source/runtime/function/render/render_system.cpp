@@ -146,7 +146,6 @@ namespace Bamboo
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
 		lighting_ubo.sky_light.color = sky_light_component->getColor();
-		lighting_ubo.sky_light.exposure = sky_light_component->m_exposure;
 		lighting_ubo.sky_light.prefilter_mip_levels = sky_light_component->m_prefilter_mip_levels;
 		lighting_ubo.directional_light.direction = directional_light_transform_component->getForwardVector();
 		lighting_ubo.directional_light.color = directional_light_component->getColor();
@@ -260,6 +259,16 @@ namespace Bamboo
 		}
 
 		// set render datas
+		// main pass: 1 light data + n opaque mesh datas + 1 transparency mesh data + 1 skybox render data
+		std::shared_ptr<SkyboxRenderData> skybox_render_data = std::make_shared<SkyboxRenderData>();
+		std::shared_ptr<StaticMesh> skybox_cube_mesh = sky_light_component->m_cube_mesh;
+		skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
+		skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
+		skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
+		skybox_render_data->transform_pco.mvp = camera_component->getPerspectiveMatrix() * glm::mat4(glm::mat3(camera_component->getViewMatrix()));
+		skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
+		mesh_render_datas.push_back(skybox_render_data);
+
 		m_render_passes[ERenderPassType::Main]->setRenderDatas(mesh_render_datas);
 	}
 

@@ -1,8 +1,10 @@
 #version 450
+#extension GL_GOOGLE_include_directive : enable
+
+#include "constants.h"
 
 layout(location = 0) in vec3 f_uvw;
 layout(location = 0) out vec4 o_color;
-
 layout(binding = 0) uniform samplerCube env_tex;
 
 layout(push_constant) uniform PCO 
@@ -11,16 +13,14 @@ layout(push_constant) uniform PCO
 	layout (offset = 68) uint samples;
 } pco;
 
-#define PI 3.1415926536
-
 // Based omn http://byteblacksmith.com/improvements-to-the-canonical-one-liner-glsl-rand-for-opengl-es-2-0/
 float random(vec2 co)
 {
 	float a = 12.9898;
 	float b = 78.233;
 	float c = 43758.5453;
-	float dt= dot(co.xy ,vec2(a,b));
-	float sn= mod(dt,3.14);
+	float dt = dot(co.xy ,vec2(a,b));
+	float sn = mod(dt,3.14);
 	return fract(sin(sn) * c);
 }
 

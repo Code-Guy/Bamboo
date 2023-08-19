@@ -25,6 +25,7 @@ namespace Bamboo
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
 
+		std::shared_ptr<class StaticMesh> getCubeMesh() { return m_skybox_mesh; }
 		VmaImageViewSampler getIrradianceTextureSampler() { return m_cube_image_view_samplers[0]; }
 		VmaImageViewSampler getPrefilterTextureSampler() { return m_cube_image_view_samplers[1]; }
 		uint32_t getPrefilterMipLevels() { return m_mip_levels[1]; }

@@ -2,6 +2,7 @@
 
 #include "light_component.h"
 #include "runtime/resource/asset/texture_cube.h"
+#include "runtime/resource/asset/static_mesh.h"
 
 namespace Bamboo
 {
@@ -14,11 +15,10 @@ namespace Bamboo
 		void setTextureCube(std::shared_ptr<TextureCube>& texture_cube);
 		std::shared_ptr<TextureCube> getTextureCube() { return m_texture_cube; }
 
+		std::shared_ptr<StaticMesh> m_cube_mesh;
 		VmaImageViewSampler m_irradiance_texture_sampler;
 		VmaImageViewSampler m_prefilter_texture_sampler;
 		VmaImageViewSampler m_brdf_lut_texture_sampler;
-
-		float m_exposure;
 		uint32_t m_prefilter_mip_levels;
 
 	private:

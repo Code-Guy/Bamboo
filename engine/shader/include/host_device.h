@@ -12,7 +12,7 @@ using mat4 = glm::mat4;
 using uint = unsigned int;
 #endif
 
-#include "shader_constants.h"
+#include "constants.h"
 
 struct BoneUBO
 {
@@ -43,12 +43,7 @@ struct MaterialPCO
 struct SkyLight
 {
     vec3 color;
-	float padding0;
-
-	float exposure;
 	float prefilter_mip_levels;
-    float padding1;
-    float padding2;
 };
 
 struct DirectionalLight

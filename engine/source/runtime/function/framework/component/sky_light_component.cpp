@@ -18,7 +18,6 @@ namespace Bamboo
 
 	SkyLightComponent::SkyLightComponent()
 	{
-		m_exposure = 4.5f;
 		m_prefilter_mip_levels = 0;
 	}
 
@@ -65,6 +64,8 @@ namespace Bamboo
 
 		m_irradiance_texture_sampler.destroy();
 		m_prefilter_texture_sampler.destroy();
+
+		m_cube_mesh = filter_cube_pass->getCubeMesh();
 		m_irradiance_texture_sampler = filter_cube_pass->getIrradianceTextureSampler();
 		m_prefilter_texture_sampler = filter_cube_pass->getPrefilterTextureSampler();
 		m_prefilter_mip_levels = filter_cube_pass->getPrefilterMipLevels();

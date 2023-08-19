@@ -1,6 +1,7 @@
-// Generates an irradiance cube from an environment map using convolution
-
 #version 450
+#extension GL_GOOGLE_include_directive : enable
+
+#include "constants.h"
 
 layout(location = 0) in vec3 f_uvw;
 layout(location = 0) out vec4 o_color;
@@ -11,10 +12,6 @@ layout(push_constant) uniform PCO
 	layout (offset = 64) float delta_phi;
 	layout (offset = 68) float delta_theta;
 } pco;
-
-#define PI 3.1415926536
-#define TWO_PI (PI * 2.0)
-#define HALF_PI (PI * 0.5)
 
 void main()
 {

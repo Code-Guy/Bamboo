@@ -488,7 +488,7 @@
                                                         "ref_urls": [
                                                             {
                                                                 "key": "m_texture_cube",
-                                                                "value": "asset/engine/texture/ibl/texc_country_road.texc"
+                                                                "value": "asset/engine/texture/ibl/texc_helipad.texc"
                                                             }
                                                         ]
                                                     }

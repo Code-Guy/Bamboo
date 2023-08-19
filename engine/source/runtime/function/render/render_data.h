@@ -40,11 +40,11 @@ namespace Bamboo
 		VmaBuffer index_buffer;
 		std::vector<uint32_t> index_counts;
 		std::vector<uint32_t> index_offsets;
+		TransformPCO transform_pco;
 	};
 
 	struct StaticMeshRenderData : public MeshRenderData
 	{
-		TransformPCO transform_pco;
 		std::vector<MaterialPCO> material_pcos;
 		std::vector<PBRTexture> pbr_textures;
 	};
@@ -52,5 +52,14 @@ namespace Bamboo
 	struct SkeletalMeshRenderData : public StaticMeshRenderData
 	{
 		std::vector<VmaBuffer> bone_ubs;
+	};
+
+	struct SkyboxRenderData : public RenderData
+	{
+		VmaBuffer vertex_buffer;
+		VmaBuffer index_buffer;
+		uint32_t index_count;
+		TransformPCO transform_pco;
+		VmaImageViewSampler env_texture;
 	};
 }

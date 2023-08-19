@@ -25,6 +25,11 @@ namespace Bamboo
 
 	void MainPass::render()
 	{
+		if (m_render_datas.size() < 4)
+		{
+			return;
+		}
+
 		// get lighting render data, which is the first element of render datas
 		m_lighting_render_data = std::static_pointer_cast<LightingRenderData>(m_render_datas.front());
 
@@ -64,7 +69,7 @@ namespace Bamboo
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
 		// 1.deferred subpass
-		for (size_t i = 1; i < m_render_datas.size() - 1; ++i)
+		for (size_t i = 1; i < m_render_datas.size() - 2; ++i)
 		{
 			render_mesh(m_render_datas[i], ERendererType::Deferred);
 		}
@@ -124,13 +129,45 @@ namespace Bamboo
 			m_pipeline_layouts[2], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 		vkCmdDraw(command_buffer, 3, 1, 0, 0);
 
-		// 3.transparency subpass
+		// 3.forward subpass
 		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
-		if (m_render_datas.size() > 1)
-		{
-			render_mesh(m_render_datas[m_render_datas.size() - 1], ERendererType::Forward);
-		}
-		
+
+		// render transparency mesh
+		render_mesh(m_render_datas[m_render_datas.size() - 2], ERendererType::Forward);
+
+		// render skybox
+		// bind pipeline
+		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[5]);
+
+		// bind vertex and index buffer
+		std::shared_ptr<SkyboxRenderData> skybox_render_data = std::static_pointer_cast<SkyboxRenderData>(m_render_datas[m_render_datas.size() - 1]);
+		VkBuffer vertexBuffers[] = { skybox_render_data->vertex_buffer.buffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(command_buffer, skybox_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+		// push constants
+		vkCmdPushConstants(command_buffer, m_pipeline_layouts[5], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO), &skybox_render_data->transform_pco);
+
+		// update(push) sub mesh descriptors
+		VkDescriptorImageInfo desc_image_info{};
+		desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		desc_image_info.imageView = skybox_render_data->env_texture.view;
+		desc_image_info.sampler = skybox_render_data->env_texture.sampler;
+
+		desc_write = {};
+		desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		desc_write.dstSet = 0;
+		desc_write.dstBinding = 0;
+		desc_write.dstArrayElement = 0;
+		desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		desc_write.descriptorCount = 1;
+		desc_write.pImageInfo = &desc_image_info;
+
+		VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+			m_pipeline_layouts[5], 0, 1, &desc_write);
+		vkCmdDrawIndexed(command_buffer, skybox_render_data->index_count, 1, 0, 0, 0);
+
 		vkCmdEndRenderPass(command_buffer);
 	}
 
@@ -178,7 +215,7 @@ namespace Bamboo
 		subpass_descs[1].inputAttachmentCount = 5;
 		subpass_descs[1].pInputAttachments = &input_references[0];
 
-		// transparency subpass
+		// forward subpass
 		subpass_descs[2].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass_descs[2].colorAttachmentCount = 1;
 		subpass_descs[2].pColorAttachments = &references[0];
@@ -261,7 +298,7 @@ namespace Bamboo
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 
-		m_desc_set_layouts.resize(5);
+		m_desc_set_layouts.resize(6);
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create gbuffer static mesh descriptor set layout");
 
@@ -309,6 +346,16 @@ namespace Bamboo
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[4]);
 		CHECK_VULKAN_RESULT(result, "create transparency skeletal mesh descriptor set layout");
+
+		// skybox descriptor set layouts
+		desc_set_layout_bindings = {
+			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}
+		};
+
+		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
+		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
+		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[5]);
+		CHECK_VULKAN_RESULT(result, "create skybox descriptor set layout");
 	}
 
 	void MainPass::createPipelineLayouts()
@@ -328,7 +375,7 @@ namespace Bamboo
 		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
 		pipeline_layout_ci.pPushConstantRanges = m_push_constant_ranges.data();
 
-		m_pipeline_layouts.resize(5);
+		m_pipeline_layouts.resize(6);
 		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create gbuffer static mesh pipeline layout");
 
@@ -353,6 +400,12 @@ namespace Bamboo
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[4];
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[4]);
 		CHECK_VULKAN_RESULT(result, "create transparency static mesh pipeline layout");
+
+		// skybox pipeline layouts
+		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[5];
+		pipeline_layout_ci.pushConstantRangeCount = 1;
+		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[5]);
+		CHECK_VULKAN_RESULT(result, "create skybox pipeline layout");
 	}
 
 	void MainPass::createPipelines()
@@ -414,7 +467,7 @@ namespace Bamboo
 		m_pipeline_ci.renderPass = m_render_pass;
 		m_pipeline_ci.subpass = 0;
 
-		m_pipelines.resize(5);
+		m_pipelines.resize(6);
 
 		// create gbuffer static mesh pipeline
 		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[0]);
@@ -426,9 +479,21 @@ namespace Bamboo
 		m_pipeline_ci.layout = m_pipeline_layouts[3];
 		m_pipeline_ci.subpass = 2;
 		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[3]);
+		CHECK_VULKAN_RESULT(result, "create transparency static mesh graphics pipeline");
+
+		// skybox pipeline
+		shader_stage_cis = {
+			shader_manager->getShaderStageCI("skybox.vert", VK_SHADER_STAGE_VERTEX_BIT),
+			shader_manager->getShaderStageCI("skybox.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+		};
+		m_rasterize_state_ci.cullMode = VK_CULL_MODE_NONE;
+		m_pipeline_ci.layout = m_pipeline_layouts[5];
+		m_pipeline_ci.subpass = 2;
+		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[5]);
+		m_rasterize_state_ci.cullMode = VK_CULL_MODE_BACK_BIT;
 		m_color_blend_ci.attachmentCount = static_cast<uint32_t>(m_color_blend_attachments.size());
 		shader_stage_cis[1] = shader_manager->getShaderStageCI("gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-		CHECK_VULKAN_RESULT(result, "create transparency static mesh graphics pipeline");
+		CHECK_VULKAN_RESULT(result, "create skybox graphics pipeline");
 
 		// create gbuffer skeletal mesh pipeline
 		vertex_input_binding_descriptions[0].stride = sizeof(SkeletalVertex);
