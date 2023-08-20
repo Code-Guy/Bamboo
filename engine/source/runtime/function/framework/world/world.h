@@ -26,14 +26,13 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			ar(cereal::make_nvp("entity_counter", m_entity_counter));
 			ar(cereal::make_nvp("entities", m_entities));
 		}
 
 		friend class WorldManager;
 		World() = default;
 
-		uint32_t m_entity_counter = 0;
+		uint32_t m_next_entity_id = 0;
 		std::shared_ptr<Entity> m_camera_entity;
 		std::map<uint32_t, std::shared_ptr<Entity>> m_entities;
 	};

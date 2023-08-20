@@ -25,7 +25,7 @@ namespace Bamboo
 
 	void MainPass::render()
 	{
-		if (m_render_datas.size() < 4)
+		if (m_render_datas.size() < 2)
 		{
 			return;
 		}
@@ -69,7 +69,7 @@ namespace Bamboo
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
 		// 1.deferred subpass
-		for (size_t i = 1; i < m_render_datas.size() - 2; ++i)
+		for (size_t i = 1; i < m_render_datas.size() - 1; ++i)
 		{
 			render_mesh(m_render_datas[i], ERendererType::Deferred);
 		}
@@ -166,7 +166,7 @@ namespace Bamboo
 		vkCmdDrawIndexed(command_buffer, skybox_render_data->index_count, 1, 0, 0, 0);
 
 		// render transparency mesh in final step
-		render_mesh(m_render_datas[m_render_datas.size() - 2], ERendererType::Forward);
+		//render_mesh(m_render_datas[m_render_datas.size() - 2], ERendererType::Forward);
 
 		vkCmdEndRenderPass(command_buffer);
 	}

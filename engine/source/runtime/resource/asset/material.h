@@ -16,6 +16,7 @@ namespace Bamboo
 		glm::vec4 m_emissive_factor = glm::vec4(1.0f);
 		float m_metallic_factor = 1.0f;
 		float m_roughness_factor = 1.0f;
+		bool m_contains_occlusion_channel = false;
 
 	private:
 		friend class cereal::access;
@@ -27,6 +28,7 @@ namespace Bamboo
 			ar(cereal::make_nvp("emissive_factor", m_emissive_factor));
 			ar(cereal::make_nvp("metallic_factor", m_metallic_factor));
 			ar(cereal::make_nvp("roughness_factor", m_roughness_factor));
+			ar(cereal::make_nvp("contains_occlusion_channel", m_contains_occlusion_channel));
 		}
 
 		virtual void bindRefs() override;

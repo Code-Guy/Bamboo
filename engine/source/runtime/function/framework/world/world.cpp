@@ -39,10 +39,14 @@ namespace Bamboo
 			entity->m_world = weak_from_this();
 			entity->inflate();
 
+			// get camera entity
 			if (!m_camera_entity && entity->hasComponent(CameraComponent))
 			{
 				m_camera_entity = entity;
 			}
+
+			// update next entity id
+			m_next_entity_id = std::max(m_next_entity_id, entity->getID() + 1);
 		}
 	}
 
@@ -72,7 +76,7 @@ namespace Bamboo
 	const std::shared_ptr<Entity>& World::createEntity(const std::string& name)
 	{
 		std::shared_ptr<Entity> entity = std::shared_ptr<Entity>(new Entity);
-		entity->m_id = m_entity_counter++;
+		entity->m_id = m_next_entity_id++;
 		entity->m_name = name;
 		entity->m_world = weak_from_this();
 

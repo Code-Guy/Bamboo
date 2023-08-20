@@ -491,6 +491,7 @@ namespace Bamboo
 			material->m_emissive_factor = glm::make_vec4(gltf_material.emissiveFactor.data());
 			material->m_metallic_factor = gltf_material.pbrMetallicRoughness.metallicFactor;
 			material->m_roughness_factor = gltf_material.pbrMetallicRoughness.roughnessFactor;
+			material->m_contains_occlusion_channel = option.contains_occlusion_channel;
 
 			if (gltf_material.pbrMetallicRoughness.baseColorTexture.index != INVALID_INDEX)
 			{

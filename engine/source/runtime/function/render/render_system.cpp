@@ -235,7 +235,7 @@ namespace Bamboo
 						material_pco.has_base_color_texture = sub_mesh.m_material->m_base_color_texure != nullptr;
 						material_pco.has_emissive_texture = sub_mesh.m_material->m_emissive_texure != nullptr;
 						material_pco.has_metallic_roughness_occlusion_texture = sub_mesh.m_material->m_metallic_roughness_occlusion_texure != nullptr;
-						material_pco.contains_occlusion_channel = false;
+						material_pco.contains_occlusion_channel = sub_mesh.m_material->m_contains_occlusion_channel;
 						material_pco.has_normal_texture = sub_mesh.m_material->m_normal_texure != nullptr;
 						static_mesh_render_data->material_pcos.push_back(material_pco);
 

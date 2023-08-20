@@ -5,7 +5,6 @@
         "ptr_wrapper": {
             "id": 2147483649,
             "data": {
-                "entity_counter": 8,
                 "entities": [
                     {
                         "key": 0,
@@ -36,14 +35,14 @@
                                                         }
                                                     },
                                                     "position": {
-                                                        "x": 2.2612297534942629,
-                                                        "y": 1.9635127782821656,
-                                                        "z": -2.729043960571289
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 3.0
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
-                                                        "y": 126.5001449584961,
-                                                        "z": -16.699987411499025
+                                                        "y": 270.0,
+                                                        "z": 0.0
                                                     },
                                                     "scale": {
                                                         "x": 1.0,
@@ -108,7 +107,7 @@
                                                         }
                                                     },
                                                     "position": {
-                                                        "x": -1.0,
+                                                        "x": 0.0,
                                                         "y": 0.0,
                                                         "z": 0.0
                                                     },
@@ -158,79 +157,6 @@
                         "value": {
                             "polymorphic_id": 1073741824,
                             "ptr_wrapper": {
-                                "id": 2147483653,
-                                "data": {
-                                    "tickable": {
-                                        "tick_enabled": true,
-                                        "tick_interval": 0.0
-                                    },
-                                    "name": "sponza",
-                                    "id": 1,
-                                    "parent_id": 4294967295,
-                                    "child_ids": [],
-                                    "components": [
-                                        {
-                                            "polymorphic_id": 2,
-                                            "ptr_wrapper": {
-                                                "id": 2147483654,
-                                                "data": {
-                                                    "component": {
-                                                        "tickable": {
-                                                            "tick_enabled": false,
-                                                            "tick_interval": 0.0
-                                                        }
-                                                    },
-                                                    "position": {
-                                                        "x": 1.0,
-                                                        "y": 0.0,
-                                                        "z": 0.0
-                                                    },
-                                                    "rotation": {
-                                                        "x": 0.0,
-                                                        "y": 0.0,
-                                                        "z": 0.0
-                                                    },
-                                                    "scale": {
-                                                        "x": 1.0,
-                                                        "y": 1.0,
-                                                        "z": 1.0
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "polymorphic_id": 2147483652,
-                                            "polymorphic_name": "Bamboo::StaticMeshComponent",
-                                            "ptr_wrapper": {
-                                                "id": 2147483655,
-                                                "data": {
-                                                    "component": {
-                                                        "tickable": {
-                                                            "tick_enabled": false,
-                                                            "tick_interval": 0.0
-                                                        }
-                                                    },
-                                                    "asset_ref": {
-                                                        "ref_urls": [
-                                                            {
-                                                                "key": "m_static_mesh",
-                                                                "value": "asset\\helmet\\sm_helmet.sm"
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "key": 3,
-                        "value": {
-                            "polymorphic_id": 1073741824,
-                            "ptr_wrapper": {
                                 "id": 2147483664,
                                 "data": {
                                     "tickable": {
@@ -238,7 +164,7 @@
                                         "tick_interval": 0.0
                                     },
                                     "name": "directional_light",
-                                    "id": 4,
+                                    "id": 2,
                                     "parent_id": 4294967295,
                                     "child_ids": [],
                                     "components": [
@@ -301,7 +227,7 @@
                         }
                     },
                     {
-                        "key": 4,
+                        "key": 3,
                         "value": {
                             "polymorphic_id": 1073741824,
                             "ptr_wrapper": {
@@ -312,7 +238,7 @@
                                         "tick_interval": 0.0
                                     },
                                     "name": "sky_light",
-                                    "id": 5,
+                                    "id": 3,
                                     "parent_id": 4294967295,
                                     "child_ids": [],
                                     "components": [

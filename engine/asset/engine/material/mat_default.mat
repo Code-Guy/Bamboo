@@ -21,7 +21,8 @@
                     "w": 1.0
                 },
                 "metallic_factor": 1.0,
-                "roughness_factor": 1.0
+                "roughness_factor": 1.0,
+                "contains_occlusion_channel": false
             }
         }
     }

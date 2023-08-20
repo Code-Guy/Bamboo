@@ -40,6 +40,7 @@ namespace Bamboo
 		sprintf(m_title_buf, "%s %s###%s", ICON_FA_FAN, m_title.c_str(), m_title.c_str());
 		if (!ImGui::Begin(m_title_buf))
 		{
+			m_imported_files.clear();
 			ImGui::End();
 			return;
 		}
@@ -330,7 +331,8 @@ namespace Bamboo
 					ImGui::Text("Importing gltf: %s", import_file.c_str());
 					ImGui::Separator();
 
-					static bool combine_meshes = false;
+					static bool combine_meshes = true;
+					ImGui::SeparatorText("Mesh");
 					ImGui::Checkbox("combine meshes", &combine_meshes);
 
 					static bool force_static_mesh = false;
@@ -345,6 +347,10 @@ namespace Bamboo
 						ImGui::EndDisabled();
 					}
 
+					ImGui::SeparatorText("Material");
+					static bool contains_occlusion_channel = false;
+					ImGui::Checkbox("contain occlusion channel", &contains_occlusion_channel);
+
 					if (ImGui::Button("OK", ImVec2(120, 0)))
 					{
 						ImGui::CloseCurrentPopup();
@@ -352,7 +358,7 @@ namespace Bamboo
 						StopWatch stop_watch;
 						stop_watch.start();
 
-						as->importGltf(import_file, import_folder, { combine_meshes, force_static_mesh });
+						as->importGltf(import_file, import_folder, { combine_meshes, force_static_mesh, contains_occlusion_channel });
 						LOG_INFO("import gltf {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stop());
 						iter = m_imported_files.erase(iter);
 					}
@@ -362,6 +368,7 @@ namespace Bamboo
 					if (ImGui::Button("Cancel", ImVec2(120, 0)))
 					{
 						ImGui::CloseCurrentPopup();
+						iter = m_imported_files.erase(iter);
 					}
 					ImGui::EndPopup();
 				}
