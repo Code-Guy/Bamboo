@@ -234,21 +234,19 @@ namespace Bamboo
 						material_pco.m_roughness_factor = sub_mesh.m_material->m_roughness_factor;
 						material_pco.has_base_color_texture = sub_mesh.m_material->m_base_color_texure != nullptr;
 						material_pco.has_emissive_texture = sub_mesh.m_material->m_emissive_texure != nullptr;
-						material_pco.has_metallic_roughness_texture = sub_mesh.m_material->m_metallic_roughness_texure != nullptr;
+						material_pco.has_metallic_roughness_occlusion_texture = sub_mesh.m_material->m_metallic_roughness_occlusion_texure != nullptr;
+						material_pco.contains_occlusion_channel = false;
 						material_pco.has_normal_texture = sub_mesh.m_material->m_normal_texure != nullptr;
-						material_pco.has_occlusion_texture = sub_mesh.m_material->m_occlusion_texure != nullptr;
 						static_mesh_render_data->material_pcos.push_back(material_pco);
 
 						std::shared_ptr<Texture2D> base_color_texture = sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure : m_dummy_texture;
-						std::shared_ptr<Texture2D> metallic_roughness_texure = sub_mesh.m_material->m_metallic_roughness_texure ? sub_mesh.m_material->m_metallic_roughness_texure : m_dummy_texture;
+						std::shared_ptr<Texture2D> metallic_roughness_occlusion_texure = sub_mesh.m_material->m_metallic_roughness_occlusion_texure ? sub_mesh.m_material->m_metallic_roughness_occlusion_texure : m_dummy_texture;
 						std::shared_ptr<Texture2D> normal_texure = sub_mesh.m_material->m_normal_texure ? sub_mesh.m_material->m_normal_texure : m_dummy_texture;
-						std::shared_ptr<Texture2D> occlusion_texure = sub_mesh.m_material->m_occlusion_texure ? sub_mesh.m_material->m_occlusion_texure : m_dummy_texture;
 						std::shared_ptr<Texture2D> emissive_texture = sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure : m_dummy_texture;
 						static_mesh_render_data->pbr_textures.push_back({
 							base_color_texture->m_image_view_sampler,
-							metallic_roughness_texure->m_image_view_sampler,
+							metallic_roughness_occlusion_texure->m_image_view_sampler,
 							normal_texure->m_image_view_sampler,
-							occlusion_texure->m_image_view_sampler,
 							emissive_texture->m_image_view_sampler
 						});
 					}

@@ -35,9 +35,9 @@ struct MaterialPCO
 
     int has_base_color_texture; 
     int has_emissive_texture;
-    int has_metallic_roughness_texture;
+    int has_metallic_roughness_occlusion_texture;
+    int contains_occlusion_channel;
     int has_normal_texture;
-    int has_occlusion_texture;
 };
 
 struct SkyLight

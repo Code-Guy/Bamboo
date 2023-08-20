@@ -13,9 +13,8 @@ namespace Bamboo
 	struct PBRTexture
 	{
 		VmaImageViewSampler base_color_texure;
-		VmaImageViewSampler metallic_roughness_texure;
+		VmaImageViewSampler metallic_roughness_occlusion_texure;
 		VmaImageViewSampler normal_texure;
-		VmaImageViewSampler occlusion_texure;
 		VmaImageViewSampler emissive_texure;
 	};
 

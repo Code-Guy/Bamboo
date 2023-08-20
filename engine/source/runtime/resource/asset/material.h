@@ -8,9 +8,8 @@ namespace Bamboo
 	{
 	public:
 		std::shared_ptr<Texture2D> m_base_color_texure;
-		std::shared_ptr<Texture2D> m_metallic_roughness_texure;
+		std::shared_ptr<Texture2D> m_metallic_roughness_occlusion_texure;
 		std::shared_ptr<Texture2D> m_normal_texure;
-		std::shared_ptr<Texture2D> m_occlusion_texure;
 		std::shared_ptr<Texture2D> m_emissive_texure;
 
 		glm::vec4 m_base_color_factor = glm::vec4(1.0f);

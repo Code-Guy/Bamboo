@@ -3,8 +3,6 @@
 
 #include "material.h"
 
-layout(set = 0, binding = 5) uniform sampler2D emissive_texture_sampler;
-
 layout(location = 0) out vec4 o_normal;
 layout(location = 1) out vec4 o_base_color;
 layout(location = 2) out vec4 o_emissive_color;
@@ -12,7 +10,7 @@ layout(location = 3) out vec4 o_metallic_roughness_occlusion;
 
 void main()
 {
-	MaterialInfo mat_info = calc_material_info(emissive_texture_sampler);
+	MaterialInfo mat_info = calc_material_info();
 
 	// gbuffers
 	o_normal = vec4(mat_info.normal, 0.0);

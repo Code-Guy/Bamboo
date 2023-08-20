@@ -6,9 +6,8 @@ RTTR_REGISTRATION
 {
 rttr::registration::class_<Bamboo::Material>("Material")
 	 .property("base_color_texure", &Bamboo::Material::m_base_color_texure)
-	 .property("metallic_roughness_texure", &Bamboo::Material::m_metallic_roughness_texure)
+	 .property("metallic_roughness_occlusion_texure", &Bamboo::Material::m_metallic_roughness_occlusion_texure)
 	 .property("normal_texure", &Bamboo::Material::m_normal_texure)
-	 .property("occlusion_texure", &Bamboo::Material::m_occlusion_texure)
 	 .property("emissive_texure", &Bamboo::Material::m_emissive_texure);
 }
 
@@ -21,9 +20,8 @@ namespace Bamboo
 	void Material::bindRefs()
 	{
 		BIND_ASSET(m_base_color_texure, Texture2D)
-		BIND_ASSET(m_metallic_roughness_texure, Texture2D)
+		BIND_ASSET(m_metallic_roughness_occlusion_texure, Texture2D)
 		BIND_ASSET(m_normal_texure, Texture2D)
-		BIND_ASSET(m_occlusion_texure, Texture2D)
 		BIND_ASSET(m_emissive_texure, Texture2D)
 	}
 

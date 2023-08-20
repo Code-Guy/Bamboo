@@ -722,9 +722,8 @@ namespace Bamboo
 			// image sampler
 			std::vector<VmaImageViewSampler> pbr_textures = {
 				static_mesh_render_data->pbr_textures[i].base_color_texure,
-				static_mesh_render_data->pbr_textures[i].metallic_roughness_texure,
+				static_mesh_render_data->pbr_textures[i].metallic_roughness_occlusion_texure,
 				static_mesh_render_data->pbr_textures[i].normal_texure,
-				static_mesh_render_data->pbr_textures[i].occlusion_texure,
 				static_mesh_render_data->pbr_textures[i].emissive_texure,
 			};
 			std::vector<VkDescriptorImageInfo> pbr_desc_image_infos(pbr_textures.size(), VkDescriptorImageInfo{});
@@ -734,16 +733,10 @@ namespace Bamboo
 				pbr_desc_image_infos[t].imageView = pbr_textures[t].view;
 				pbr_desc_image_infos[t].sampler = pbr_textures[t].sampler;
 
-				uint32_t binding = static_cast<uint32_t>(t + 1);
-				if (renderer_type == ERendererType::Forward && binding == 5)
-				{
-					binding = 9;
-				}
-
 				VkWriteDescriptorSet desc_write{};
 				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				desc_write.dstSet = 0;
-				desc_write.dstBinding = binding;
+				desc_write.dstBinding = static_cast<uint32_t>(t + 1);
 				desc_write.dstArrayElement = 0;
 				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				desc_write.descriptorCount = 1;

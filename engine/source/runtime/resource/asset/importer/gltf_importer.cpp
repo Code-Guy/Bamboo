@@ -168,15 +168,11 @@ namespace Bamboo
 			}
 			else if (texture_index == gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index)
 			{
-				texture->m_texture_type = ETextureType::MetallicRoughness;
+				texture->m_texture_type = ETextureType::MetallicRoughnessOcclusion;
 			}
 			else if (texture_index == gltf_material.normalTexture.index)
 			{
 				texture->m_texture_type = ETextureType::Normal;
-			}
-			else if (texture_index == gltf_material.occlusionTexture.index)
-			{
-				texture->m_texture_type = ETextureType::Occlusion;
 			}
 			else if (texture_index == gltf_material.emissiveTexture.index)
 			{
@@ -464,7 +460,9 @@ namespace Bamboo
 		for (const tinygltf::Texture& gltf_texture : gltf_model.textures)
 		{
 			const tinygltf::Image& gltf_image = gltf_model.images[gltf_texture.source];
-			const tinygltf::Sampler& gltf_sampler = gltf_model.samplers[gltf_texture.sampler];
+			static tinygltf::Sampler default_sampler{};
+			const tinygltf::Sampler& gltf_sampler = (!gltf_model.samplers.empty() && gltf_texture.sampler > INVALID_INDEX) ?
+				gltf_model.samplers[gltf_texture.sampler] : default_sampler;
 
 			EAssetType asset_type = EAssetType::Texture2D;
 			std::string asset_name = as->getAssetName(gltf_texture.name, asset_type, asset_indices[asset_type]++, basename);
@@ -502,17 +500,12 @@ namespace Bamboo
 			if (gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index != INVALID_INDEX)
 			{
 				ASSERT(gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord == 0, "do not support non-zero texture coordinate index");
-				REF_ASSET_OUTER(material, m_metallic_roughness_texure, textures[gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index])
+				REF_ASSET_OUTER(material, m_metallic_roughness_occlusion_texure, textures[gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index])
 			}
 			if (gltf_material.normalTexture.index != INVALID_INDEX)
 			{
 				ASSERT(gltf_material.normalTexture.texCoord == 0, "do not support non-zero texture coordinate index");
 				REF_ASSET_OUTER(material, m_normal_texure, textures[gltf_material.normalTexture.index])
-			}
-			if (gltf_material.occlusionTexture.index != INVALID_INDEX)
-			{
-				ASSERT(gltf_material.occlusionTexture.texCoord == 0, "do not support non-zero texture coordinate index");
-				REF_ASSET_OUTER(material, m_occlusion_texure, textures[gltf_material.occlusionTexture.index])
 			}
 			if (gltf_material.emissiveTexture.index != INVALID_INDEX)
 			{

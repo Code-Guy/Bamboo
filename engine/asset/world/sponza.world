@@ -476,7 +476,7 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 0.2,
+                                                        "intensity": 0.5,
                                                         "color": {
                                                             "r": 1.0,
                                                             "g": 1.0,
@@ -488,7 +488,7 @@
                                                         "ref_urls": [
                                                             {
                                                                 "key": "m_texture_cube",
-                                                                "value": "asset/engine/texture/ibl/texc_helipad.texc"
+                                                                "value": "asset/engine/texture/ibl/texc_cloudy.texc"
                                                             }
                                                         ]
                                                     }

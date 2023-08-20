@@ -141,7 +141,7 @@
                                                         "ref_urls": [
                                                             {
                                                                 "key": "m_static_mesh",
-                                                                "value": "asset\\helmet\\sm_mesh_helmet_LP_13930damagedHelmet.sm"
+                                                                "value": "asset\\helmet\\sm_helmet.sm"
                                                             }
                                                         ]
                                                     }
@@ -214,7 +214,7 @@
                                                         "ref_urls": [
                                                             {
                                                                 "key": "m_static_mesh",
-                                                                "value": "asset\\helmet\\sm_mesh_helmet_LP_13930damagedHelmet.sm"
+                                                                "value": "asset\\helmet\\sm_helmet.sm"
                                                             }
                                                         ]
                                                     }
@@ -284,7 +284,7 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 0.5,
+                                                        "intensity": 4.0,
                                                         "color": {
                                                             "r": 1.0,
                                                             "g": 1.0,
@@ -358,7 +358,7 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 1.0,
+                                                        "intensity": 0.5,
                                                         "color": {
                                                             "r": 1.0,
                                                             "g": 1.0,
