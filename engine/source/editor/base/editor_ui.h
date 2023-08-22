@@ -37,6 +37,9 @@ namespace Bamboo
 		std::shared_ptr<ImGuiImage> loadImGuiImageFromTexture2D(std::shared_ptr<class Texture2D>& texture);
 		ImFont* smallFont();
 
+		bool isMouseFocused();
+		bool isPoppingUp();
+
 		std::string m_title;
 		char m_title_buf[128];
 		glm::uvec4 m_content_region;

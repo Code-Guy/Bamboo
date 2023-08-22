@@ -25,10 +25,7 @@ namespace Bamboo
 
 	void MainPass::render()
 	{
-		if (m_render_datas.size() < 2)
-		{
-			return;
-		}
+		ASSERT(!m_render_datas.empty(), "main pass render datas should not be empty!");
 
 		// get lighting render data, which is the first element of render datas
 		m_lighting_render_data = std::static_pointer_cast<LightingRenderData>(m_render_datas.front());
@@ -41,7 +38,7 @@ namespace Bamboo
 		render_pass_bi.renderArea.extent = { m_width, m_height };
 
 		std::array<VkClearValue, 6> clear_values{};
-		clear_values[0].color = { { 0.0f, 0.3f, 0.0f, 1.0f } };
+		clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
 		clear_values[1].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 		clear_values[2].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 		clear_values[3].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
@@ -76,97 +73,104 @@ namespace Bamboo
 
 		// 2.composition subpass
 		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[2]);
 
-		// lighting uniform buffer
-		VkDescriptorBufferInfo desc_buffer_info{};
-		desc_buffer_info.buffer = m_lighting_render_data->lighting_ubs[flight_index].buffer;
-		desc_buffer_info.offset = 0;
-		desc_buffer_info.range = sizeof(LightingUBO);
-
-		std::vector<VkWriteDescriptorSet> desc_writes;
-		VkWriteDescriptorSet desc_write{};
-		desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		desc_write.dstSet = 0;
-		desc_write.dstBinding = 8;
-		desc_write.dstArrayElement = 0;
-		desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		desc_write.descriptorCount = 1;
-		desc_write.pBufferInfo = &desc_buffer_info;
-		desc_writes.push_back(desc_write);
-
-		// input attachments and ibl textures
-		std::vector<VmaImageViewSampler> textures = {
-			m_normal_texture_sampler,
-			m_base_color_texture_sampler,
-			m_emissive_texture_sampler,
-			m_metallic_roughness_occlusion_texture_sampler,
-			m_depth_stencil_texture_sampler,
-			m_lighting_render_data->m_irradiance_texture,
-			m_lighting_render_data->m_prefilter_texture,
-			m_lighting_render_data->m_brdf_lut_texture,
-		};
-
-		std::vector<VkDescriptorImageInfo> desc_image_infos(textures.size(), VkDescriptorImageInfo{});
-		for (size_t i = 0; i < textures.size(); ++i)
+		if (m_render_datas.size() > 2)
 		{
-			desc_image_infos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			desc_image_infos[i].imageView = textures[i].view;
-			desc_image_infos[i].sampler = textures[i].sampler;
+			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[2]);
+
+			// lighting uniform buffer
+			VkDescriptorBufferInfo desc_buffer_info{};
+			desc_buffer_info.buffer = m_lighting_render_data->lighting_ubs[flight_index].buffer;
+			desc_buffer_info.offset = 0;
+			desc_buffer_info.range = sizeof(LightingUBO);
+
+			std::vector<VkWriteDescriptorSet> desc_writes;
+			VkWriteDescriptorSet desc_write{};
+			desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			desc_write.dstSet = 0;
+			desc_write.dstBinding = 8;
+			desc_write.dstArrayElement = 0;
+			desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			desc_write.descriptorCount = 1;
+			desc_write.pBufferInfo = &desc_buffer_info;
+			desc_writes.push_back(desc_write);
+
+			// input attachments and ibl textures
+			std::vector<VmaImageViewSampler> textures = {
+				m_normal_texture_sampler,
+				m_base_color_texture_sampler,
+				m_emissive_texture_sampler,
+				m_metallic_roughness_occlusion_texture_sampler,
+				m_depth_stencil_texture_sampler,
+				m_lighting_render_data->m_irradiance_texture,
+				m_lighting_render_data->m_prefilter_texture,
+				m_lighting_render_data->m_brdf_lut_texture,
+			};
+
+			std::vector<VkDescriptorImageInfo> desc_image_infos(textures.size(), VkDescriptorImageInfo{});
+			for (size_t i = 0; i < textures.size(); ++i)
+			{
+				desc_image_infos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				desc_image_infos[i].imageView = textures[i].view;
+				desc_image_infos[i].sampler = textures[i].sampler;
+
+				VkWriteDescriptorSet desc_write{};
+				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				desc_write.dstSet = 0;
+				desc_write.dstBinding = i;
+				desc_write.dstArrayElement = 0;
+				desc_write.descriptorType = i < 5 ? VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT : VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				desc_write.descriptorCount = 1;
+				desc_write.pImageInfo = &desc_image_infos[i];
+				desc_writes.push_back(desc_write);
+			}
+
+			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_pipeline_layouts[2], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+			vkCmdDraw(command_buffer, 3, 1, 0, 0);
+		}
+		
+		// 3.forward subpass
+		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
+
+		if (m_render_datas.size() > 1)
+		{
+			// render skybox
+			// bind pipeline
+			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[5]);
+
+			// bind vertex and index buffer
+			std::shared_ptr<SkyboxRenderData> skybox_render_data = std::static_pointer_cast<SkyboxRenderData>(m_render_datas[m_render_datas.size() - 1]);
+			VkBuffer vertexBuffers[] = { skybox_render_data->vertex_buffer.buffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(command_buffer, skybox_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+			// push constants
+			vkCmdPushConstants(command_buffer, m_pipeline_layouts[5], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO), &skybox_render_data->transform_pco);
+
+			// update(push) sub mesh descriptors
+			VkDescriptorImageInfo desc_image_info{};
+			desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			desc_image_info.imageView = skybox_render_data->env_texture.view;
+			desc_image_info.sampler = skybox_render_data->env_texture.sampler;
 
 			VkWriteDescriptorSet desc_write{};
 			desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			desc_write.dstSet = 0;
-			desc_write.dstBinding = i;
+			desc_write.dstBinding = 0;
 			desc_write.dstArrayElement = 0;
-			desc_write.descriptorType = i < 5 ? VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT : VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			desc_write.descriptorCount = 1;
-			desc_write.pImageInfo = &desc_image_infos[i];
-			desc_writes.push_back(desc_write);
+			desc_write.pImageInfo = &desc_image_info;
+
+			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_pipeline_layouts[5], 0, 1, &desc_write);
+			vkCmdDrawIndexed(command_buffer, skybox_render_data->index_count, 1, 0, 0, 0);
+
+			// render transparency mesh in final step
+			//render_mesh(m_render_datas[m_render_datas.size() - 2], ERendererType::Forward);
 		}
-
-		VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-			m_pipeline_layouts[2], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
-		vkCmdDraw(command_buffer, 3, 1, 0, 0);
-
-		// 3.forward subpass
-		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
-
-		// render skybox
-		// bind pipeline
-		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[5]);
-
-		// bind vertex and index buffer
-		std::shared_ptr<SkyboxRenderData> skybox_render_data = std::static_pointer_cast<SkyboxRenderData>(m_render_datas[m_render_datas.size() - 1]);
-		VkBuffer vertexBuffers[] = { skybox_render_data->vertex_buffer.buffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(command_buffer, skybox_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-		// push constants
-		vkCmdPushConstants(command_buffer, m_pipeline_layouts[5], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO), &skybox_render_data->transform_pco);
-
-		// update(push) sub mesh descriptors
-		VkDescriptorImageInfo desc_image_info{};
-		desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		desc_image_info.imageView = skybox_render_data->env_texture.view;
-		desc_image_info.sampler = skybox_render_data->env_texture.sampler;
-
-		desc_write = {};
-		desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		desc_write.dstSet = 0;
-		desc_write.dstBinding = 0;
-		desc_write.dstArrayElement = 0;
-		desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		desc_write.descriptorCount = 1;
-		desc_write.pImageInfo = &desc_image_info;
-
-		VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-			m_pipeline_layouts[5], 0, 1, &desc_write);
-		vkCmdDrawIndexed(command_buffer, skybox_render_data->index_count, 1, 0, 0, 0);
-
-		// render transparency mesh in final step
-		//render_mesh(m_render_datas[m_render_datas.size() - 2], ERendererType::Forward);
 
 		vkCmdEndRenderPass(command_buffer);
 	}

@@ -26,7 +26,7 @@ namespace Bamboo
 		g_runtime_context.eventSystem()->addListener(EventType::UISelectEntity, std::bind(&PropertyUI::onSelectEntity, this, std::placeholders::_1));
 
 		// get dummy texture2d
-		std::shared_ptr<Texture2D> m_dummy_texture = g_runtime_context.assetManager()->loadAsset<Texture2D>(DEFAULT_TEXTURE_URL);
+		std::shared_ptr<Texture2D> m_dummy_texture = g_runtime_context.assetManager()->loadAsset<Texture2D>(DEFAULT_TEXTURE_2D_URL);
 		m_dummy_image = loadImGuiImageFromTexture2D(m_dummy_texture);
 	}
 

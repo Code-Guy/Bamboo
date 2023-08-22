@@ -43,6 +43,8 @@ namespace Bamboo
 		bool removeDir(const std::string& path, bool is_recursive = false);
 
 		bool loadBinary(const std::string& filename, std::vector<uint8_t>& data);
+		bool writeString(const std::string& filename, const std::string& str);
+		bool loadString(const std::string& filename, std::string& str);
 
 		template<typename T, typename... Ts>
 		std::string combine(const T& first, const Ts&... rest)

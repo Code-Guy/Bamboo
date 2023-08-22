@@ -1,5 +1,8 @@
 #include "editor_ui.h"
+#include "runtime/function/render/window_system.h"
+
 #include <imgui/backends/imgui_impl_vulkan.h>
+#include <imgui/imgui_internal.h>
 #include <tinygltf/stb_image.h>
 
 namespace Bamboo
@@ -85,6 +88,20 @@ namespace Bamboo
 	ImFont* EditorUI::smallFont()
 	{
 		return ImGui::GetIO().Fonts->Fonts[1];
+	}
+
+	bool EditorUI::isMouseFocused()
+	{
+		int xpos, ypos;
+		g_runtime_context.windowSystem()->getMousePos(xpos, ypos);
+		return xpos > m_content_region.x && xpos < m_content_region.x + m_content_region.z &&
+			ypos > m_content_region.y && ypos < m_content_region.y + m_content_region.w;
+	}
+
+	bool EditorUI::isPoppingUp()
+	{
+		ImGuiContext& g = *GImGui;
+		return !g.OpenPopupStack.empty();
 	}
 
 }

@@ -39,7 +39,7 @@ namespace Bamboo
 
 		// get dummy texture2d
 		const auto& as = g_runtime_context.assetManager();
-		m_dummy_texture = as->loadAsset<Texture2D>(DEFAULT_TEXTURE_URL);
+		m_dummy_texture = as->loadAsset<Texture2D>(DEFAULT_TEXTURE_2D_URL);
 
 		// create lighting uniform buffers
 		m_lighting_ubs.resize(MAX_FRAMES_IN_FLIGHT);
@@ -116,7 +116,7 @@ namespace Bamboo
 	void RenderSystem::collectRenderDatas()
 	{
 		// mesh render datas
-		std::vector<std::shared_ptr<RenderData>> mesh_render_datas;
+		std::vector<std::shared_ptr<RenderData>> main_pass_render_datas;
 
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
@@ -126,34 +126,20 @@ namespace Bamboo
 		auto camera_transform_component = camera_entity->getComponent(TransformComponent);
 		auto camera_component = camera_entity->getComponent(CameraComponent);
 
-		// get sky light entity and component
+		// set render datas
 		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();
-		lighting_render_data->lighting_ubs = m_lighting_ubs;
+		const auto& as = g_runtime_context.assetManager();
+		lighting_render_data->m_brdf_lut_texture = as->loadAsset<Texture2D>(DEFAULT_TEXTURE_2D_URL)->m_image_view_sampler;
+		lighting_render_data->m_irradiance_texture = as->loadAsset<TextureCube>(DEFAULT_TEXTURE_CUBE_URL)->m_image_view_sampler;
+		lighting_render_data->m_prefilter_texture = as->loadAsset<TextureCube>(DEFAULT_TEXTURE_CUBE_URL)->m_image_view_sampler;
 
-		const auto& sky_light_entity = current_world->getEntity("sky_light");
-		auto sky_light_component = sky_light_entity->getComponent(SkyLightComponent);
-		lighting_render_data->m_brdf_lut_texture = sky_light_component->m_brdf_lut_texture_sampler;
-		lighting_render_data->m_irradiance_texture = sky_light_component->m_irradiance_texture_sampler;
-		lighting_render_data->m_prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
-		mesh_render_datas.push_back(lighting_render_data);
-
-		// get directional light entity and component
-		const auto& directional_light_entity = current_world->getEntity("directional_light");
-		auto directional_light_component = directional_light_entity->getComponent(DirectionalLightComponent);
-		auto directional_light_transform_component = directional_light_entity->getComponent(TransformComponent);
-
-		// update lighting uniform buffers
+		std::shared_ptr<SkyboxRenderData> skybox_render_data = nullptr;
+		
+		// set lighting uniform buffer object
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
-		lighting_ubo.sky_light.color = sky_light_component->getColor();
-		lighting_ubo.sky_light.prefilter_mip_levels = sky_light_component->m_prefilter_mip_levels;
-		lighting_ubo.directional_light.direction = directional_light_transform_component->getForwardVector();
-		lighting_ubo.directional_light.color = directional_light_component->getColor();
 		lighting_ubo.inv_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
-		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
-		{
-			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
-		}
+		lighting_ubo.has_sky_light = lighting_ubo.has_directional_light = false;
 
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
@@ -251,23 +237,62 @@ namespace Bamboo
 						});
 					}
 
-					mesh_render_datas.push_back(static_mesh_render_data);
+					main_pass_render_datas.push_back(static_mesh_render_data);
 				}
+			}
+
+			// get sky light component
+			auto sky_light_component = entity->getComponent(SkyLightComponent);
+			if (sky_light_component)
+			{
+				// set lighting render data
+				lighting_render_data->m_brdf_lut_texture = sky_light_component->m_brdf_lut_texture_sampler;
+				lighting_render_data->m_irradiance_texture = sky_light_component->m_irradiance_texture_sampler;
+				lighting_render_data->m_prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
+
+				// set skybox render data
+				skybox_render_data = std::make_shared<SkyboxRenderData>();
+				std::shared_ptr<StaticMesh> skybox_cube_mesh = sky_light_component->m_cube_mesh;
+				skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
+				skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
+				skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
+				skybox_render_data->transform_pco.mvp = camera_component->getPerspectiveMatrix() * glm::mat4(glm::mat3(camera_component->getViewMatrix()));
+				skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
+
+				// set lighting uniform buffer object
+				lighting_ubo.has_sky_light = true;
+				lighting_ubo.sky_light.color = sky_light_component->getColor();
+				lighting_ubo.sky_light.prefilter_mip_levels = sky_light_component->m_prefilter_mip_levels;
+			}
+
+			// get directional light component
+			auto directional_light_component = entity->getComponent(DirectionalLightComponent);
+			if (directional_light_component)
+			{
+				auto directional_light_transform_component = entity->getComponent(TransformComponent);
+
+				// set lighting uniform buffer object
+				lighting_ubo.has_directional_light = true;
+				lighting_ubo.directional_light.direction = directional_light_transform_component->getForwardVector();
+				lighting_ubo.directional_light.color = directional_light_component->getColor();
 			}
 		}
 
-		// set render datas
-		// main pass: 1 light data + n opaque mesh datas + 1 transparency mesh data + 1 skybox render data
-		std::shared_ptr<SkyboxRenderData> skybox_render_data = std::make_shared<SkyboxRenderData>();
-		std::shared_ptr<StaticMesh> skybox_cube_mesh = sky_light_component->m_cube_mesh;
-		skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
-		skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
-		skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
-		skybox_render_data->transform_pco.mvp = camera_component->getPerspectiveMatrix() * glm::mat4(glm::mat3(camera_component->getViewMatrix()));
-		skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
-		mesh_render_datas.push_back(skybox_render_data);
-
-		m_render_passes[ERenderPassType::Main]->setRenderDatas(mesh_render_datas);
+		// update lighting uniform buffers
+		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
+		{
+			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
+		}
+		lighting_render_data->lighting_ubs = m_lighting_ubs;
+		
+		// main pass: 1 light data + n mesh datas(opaque or transparent) + 1 skybox render data(optional)
+		main_pass_render_datas.insert(main_pass_render_datas.begin(), lighting_render_data);
+		if (skybox_render_data)
+		{
+			main_pass_render_datas.push_back(skybox_render_data);
+		}
+		
+		m_render_passes[ERenderPassType::Main]->setRenderDatas(main_pass_render_datas);
 	}
 
 }

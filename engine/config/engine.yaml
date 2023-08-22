@@ -2,6 +2,6 @@ window:
   width: 1280
   height: 720
 
-default_world_url: "asset/world/sponza.world"
+default_world_url: "asset/world/shader_ball.world"
 editor_layout: "default.layout"
 save_layout: false

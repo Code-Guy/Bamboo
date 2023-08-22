@@ -128,7 +128,7 @@ namespace Bamboo
 		return EAssetType::Invalid;
 	}
 
-	void AssetManager::serializeAsset(std::shared_ptr<Asset> asset)
+	void AssetManager::serializeAsset(std::shared_ptr<Asset> asset, const URL& url)
 	{
 		// reference asset
 		m_assets[asset->getURL()] = asset;
@@ -136,7 +136,7 @@ namespace Bamboo
 		EAssetType asset_type = asset->getAssetType();
 		const std::string& asset_ext = m_asset_type_exts[asset_type];
 		EArchiveType archive_type = m_asset_archive_types[asset_type];
-		std::string filename = TO_ABSOLUTE(asset->getURL());
+		std::string filename = TO_ABSOLUTE(url.empty() ? asset->getURL() : url);
 
 		switch (archive_type)
 		{

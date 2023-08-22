@@ -58,7 +58,7 @@ MaterialInfo calc_material_info()
 	mat_info.emissive_color = material_pco.emissive_factor;
 	if (bool(material_pco.has_emissive_texture))
 	{
-		mat_info.emissive_color *= texture(emissive_texture_sampler, f_tex_coord);
+		mat_info.emissive_color = texture(emissive_texture_sampler, f_tex_coord);
 	}
 
 	// metallic_roughness_occlusion

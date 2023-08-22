@@ -61,6 +61,9 @@ struct LightingUBO
     // lights
     SkyLight sky_light;
     DirectionalLight directional_light;
+
+    int has_sky_light;
+    int has_directional_light;
 };
 
 struct MaterialInfo

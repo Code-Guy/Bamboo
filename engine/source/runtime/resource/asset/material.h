@@ -13,7 +13,7 @@ namespace Bamboo
 		std::shared_ptr<Texture2D> m_emissive_texure;
 
 		glm::vec4 m_base_color_factor = glm::vec4(1.0f);
-		glm::vec4 m_emissive_factor = glm::vec4(1.0f);
+		glm::vec4 m_emissive_factor = glm::vec4(0.0f);
 		float m_metallic_factor = 1.0f;
 		float m_roughness_factor = 1.0f;
 		bool m_contains_occlusion_channel = false;

@@ -25,12 +25,6 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::CameraComponent)
 namespace Bamboo
 {
 
-	void CameraComponent::setContentRegion(const glm::uvec4& content_region)
-	{
-		m_content_region = content_region;
-		m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
-	}
-
 	glm::mat4 CameraComponent::getViewMatrix()
 	{
 		if (m_last_rotation != m_transform_component->m_rotation)
@@ -103,7 +97,7 @@ namespace Bamboo
 	void CameraComponent::onKey(const std::shared_ptr<class Event>& event)
 	{
 		const WindowKeyEvent* key_event = static_cast<const WindowKeyEvent*>(event.get());
-		if (key_event->action != GLFW_PRESS && key_event->action != GLFW_RELEASE)
+		if (!m_key_enabled || (key_event->action != GLFW_PRESS && key_event->action != GLFW_RELEASE))
 		{
 			return;
 		}
@@ -138,13 +132,12 @@ namespace Bamboo
 	void CameraComponent::onCursorPos(const std::shared_ptr<class Event>& event)
 	{
 		const WindowCursorPosEvent* cursor_pos_event = static_cast<const WindowCursorPosEvent*>(event.get());
-		m_mouse_in_content = isInContentRegion(cursor_pos_event->xpos, cursor_pos_event->ypos);
 		if (!m_mouse_right_button_pressed)
 		{
 			return;
 		}
 
-		if (!m_mouse_in_content)
+		if (!m_mouse_enabled)
 		{
 			m_last_xpos = m_last_ypos = 0.0f;
 			return;
@@ -193,12 +186,10 @@ namespace Bamboo
 	void CameraComponent::onScroll(const std::shared_ptr<class Event>& event)
 	{
 		const WindowScrollEvent* scroll_event = static_cast<const WindowScrollEvent*>(event.get());
-		if (!m_mouse_in_content)
+		if (m_mouse_enabled)
 		{
-			return;
+			m_transform_component->m_position += m_forward * (float)scroll_event->yoffset * m_zoom_speed;
 		}
-
-		m_transform_component->m_position += m_forward * (float)scroll_event->yoffset * m_zoom_speed;
 	}
 
 	void CameraComponent::updatePose()
@@ -206,12 +197,6 @@ namespace Bamboo
 		m_forward = m_transform_component->getForwardVector();
 		m_right = glm::cross(m_forward, k_up_vector);
 		m_up = glm::cross(m_right, m_forward);
-	}
-
-	bool CameraComponent::isInContentRegion(double xpos, double ypos)
-	{
-		return xpos > m_content_region.x && xpos < m_content_region.x + m_content_region.z &&
-			ypos > m_content_region.y && ypos < m_content_region.y + m_content_region.w;
 	}
 
 }

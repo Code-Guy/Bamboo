@@ -10,8 +10,6 @@ namespace Bamboo
 	class CameraComponent : public Component
 	{
 	public:
-		void setContentRegion(const glm::uvec4& content_region);
-
 		glm::mat4 getViewMatrix();
 		glm::mat4 getPerspectiveMatrix();
 		glm::mat4 getViewPerspectiveMatrix();
@@ -29,6 +27,10 @@ namespace Bamboo
 		float m_move_speed;
 		float m_turn_speed;
 		float m_zoom_speed;
+
+		// enabled
+		bool m_mouse_enabled = false;
+		bool m_key_enabled = false;
 
 	private:
 		REGISTER_REFLECTION(Component)
@@ -57,7 +59,6 @@ namespace Bamboo
 		void onScroll(const std::shared_ptr<class Event>& event);
 
 		void updatePose();
-		bool isInContentRegion(double xpos, double ypos);
 
 		// camera component depends a transform component
 		std::shared_ptr<class TransformComponent> m_transform_component;
@@ -73,11 +74,8 @@ namespace Bamboo
 		bool m_move_right = false;
 		bool m_move_up = false;
 		bool m_move_down = false;
-
-		bool m_mouse_in_content = false;
 		bool m_mouse_right_button_pressed = false;
 
-		glm::uvec4 m_content_region;
 		double m_last_xpos = 0.0f, m_last_ypos = 0.0f;
 	};
 }

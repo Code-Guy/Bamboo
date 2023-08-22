@@ -43,7 +43,12 @@ namespace Bamboo
 
 	TimerHandle TimerManager::addTimer(float interval, const std::function<void(void)>& func, bool loop, bool loop_im_call)
 	{
-		m_timers[m_timer_handle++] = { interval, func, loop, (loop && loop_im_call) ? (interval + 0.001f) : 0.0f };
+		if (loop_im_call)
+		{
+			func();
+		}
+
+		m_timers[m_timer_handle++] = { interval, func, loop, 0.0f };
 		return m_timer_handle;
 	}
 

@@ -57,6 +57,12 @@ namespace Bamboo
 
 		ImGui::End();
 		ImGui::PopStyleVar();
+
+		// set camera component
+		auto camera_component = g_runtime_context.worldManager()->getCameraComponent();
+		camera_component->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
+		camera_component->m_key_enabled = !isPoppingUp();		
+		camera_component->m_mouse_enabled = !isPoppingUp() && isMouseFocused();
 	}
 
 	void SimulationUI::destroy()
@@ -69,9 +75,6 @@ namespace Bamboo
 
 	void SimulationUI::onWindowResize()
 	{
-		// reset camera aspect ratio
-		g_runtime_context.worldManager()->getCameraComponent()->setContentRegion(m_content_region);
-
 		// resize render pass
 		std::shared_ptr<MainPass> main_pass = std::dynamic_pointer_cast<MainPass>(g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Main));
 		main_pass->onResize(m_content_region.z, m_content_region.w);
@@ -82,11 +85,6 @@ namespace Bamboo
 			ImGui_ImplVulkan_RemoveTexture(m_color_texture_desc_set);
 		}
 		m_color_texture_desc_set = ImGui_ImplVulkan_AddTexture(m_color_texture_sampler, main_pass->getColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	}
-
-	void SimulationUI::onWindowRepos()
-	{
-		g_runtime_context.worldManager()->getCameraComponent()->setContentRegion(m_content_region);
 	}
 
 	void SimulationUI::loadAsset(const std::string& url)
@@ -101,7 +99,6 @@ namespace Bamboo
 		// add transform component
 		std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
 		entity->addComponent(transform_component);
-		entity->setTickEnabled(true);
 
 		if (asset_type == EAssetType::StaticMesh)
 		{
@@ -128,6 +125,7 @@ namespace Bamboo
 			animator_component->setSkeleton(skeleton);
 			entity->addComponent(animator_component);
 
+			entity->setTickEnabled(true);
 			entity->setTickInterval(0.0167f);
 		}
 	}

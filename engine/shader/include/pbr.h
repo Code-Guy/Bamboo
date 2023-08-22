@@ -146,12 +146,15 @@ vec4 calc_pbr(MaterialInfo mat_info)
 	vec3 specular_contrib = F * G * D / (4.0 * NdotL * NdotV);
 
 	// obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-	vec3 radiance = lighting_ubo.directional_light.color;
+	vec3 radiance = bool(lighting_ubo.has_directional_light) ? lighting_ubo.directional_light.color : vec3(0.0);
 	vec3 color = NdotL * radiance * (diffuse_contrib + specular_contrib);
 
 	// calculate lighting contribution from image based lighting source (IBL)
-	color += getIBLContribution(pbr_info, n, r);
-
+	if (bool(lighting_ubo.has_sky_light))
+	{
+		color += getIBLContribution(pbr_info, n, r);
+	}
+	
 	// occlusion/emissive color
 	color = color * mat_info.occlusion + mat_info.emissive_color.xyz;
 

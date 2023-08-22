@@ -4,7 +4,9 @@
 #include "importer/import_option.h"
 
 #define DEFAULT_MATERIAL_URL "asset/engine/material/mat_default.mat"
-#define DEFAULT_TEXTURE_URL "asset/engine/texture/material/tex_dummy.tex"
+#define DEFAULT_TEXTURE_2D_URL "asset/engine/material/tex_dummy.tex"
+#define DEFAULT_TEXTURE_CUBE_URL "asset/engine/texture/ibl/texc_cloudy.texc"
+#define BRDF_TEXTURE_URL "asset/engine/texture/ibl/tex_brdf_lut.tex"
 
 namespace Bamboo
 {
@@ -36,7 +38,7 @@ namespace Bamboo
 			return std::dynamic_pointer_cast<AssetClass>(asset);
 		}
 
-		void serializeAsset(std::shared_ptr<Asset> asset);
+		void serializeAsset(std::shared_ptr<Asset> asset, const URL& url = "");
 
 	private:
 		friend class GltfImporter;

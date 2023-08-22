@@ -12,9 +12,8 @@ namespace Bamboo
 
 		// set poll folder timer
 		const float k_poll_folder_time = 1.0f;
-		m_poll_folder_timer_handle = g_runtime_context.timerManager()->addTimer(k_poll_folder_time, [this](){ pollFolders(); }, true);
-		pollFolders();
-		pollSelectedFolder(g_runtime_context.fileSystem()->getAssetDir());
+		m_poll_folder_timer_handle = g_runtime_context.timerManager()->addTimer(k_poll_folder_time, [this](){ pollFolders(); }, true, true);
+		openFolder(g_runtime_context.fileSystem()->getAssetDir());
 
 		// load icon images
 		const auto& fs = g_runtime_context.fileSystem();
@@ -56,10 +55,7 @@ namespace Bamboo
 		// folder tree
 		ImGui::BeginChild("folder_tree", ImVec2(content_size.x * k_folder_tree_width_scale, content_size.y), true);
 		ImGui::Spacing();
-		if (!m_folder_nodes.empty())
-		{
-			constructFolderTree(m_folder_nodes);
-		}
+		constructFolderTree();
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -104,49 +100,6 @@ namespace Bamboo
 		g_runtime_context.timerManager()->removeTimer(m_poll_folder_timer_handle);
 	}
 
-	void AssetUI::constructFolderTree(const std::vector<FolderNode>& folder_nodes, uint32_t index)
-	{
-		const FolderNode& folder_node = folder_nodes[index];
-
-		ImGuiTreeNodeFlags tree_node_flags = 0;
-		tree_node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-		if (folder_node.is_root)
-		{
-			tree_node_flags |= ImGuiTreeNodeFlags_DefaultOpen;
-		}
-		else if (folder_node.is_leaf)
-		{
-			tree_node_flags |= ImGuiTreeNodeFlags_Leaf;
-		}
-		if (folder_node.dir == m_selected_folder)
-		{
-			tree_node_flags |= ImGuiTreeNodeFlags_Selected;
-		}
-
-		bool is_treenode_opened = ImGui::TreeNodeEx((void*)(intptr_t)index, tree_node_flags, "%s %s", m_folder_opened_map[folder_node.name] ? ICON_FA_FOLDER_OPEN : ICON_FA_FOLDER, folder_node.name.c_str());
-		m_folder_opened_map[folder_node.name] = is_treenode_opened && !folder_node.is_leaf;
-		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-		{
-			pollSelectedFolder(folder_node.dir);
-		}
-
-		if (is_treenode_opened)
-		{
-			if (!folder_node.child_folders.empty())
-			{
-				const float k_unindent_w = 8;
-				ImGui::Unindent(k_unindent_w);
-
-				for (uint32_t child_folder : folder_node.child_folders)
-				{
-					constructFolderTree(folder_nodes, child_folder);
-				}
-			}
-
-			ImGui::TreePop();
-		}
-	}
-
 	void AssetUI::constructAssetNavigator()
 	{
 		ImVec2 button_size(20, 20);
@@ -164,6 +117,21 @@ namespace Bamboo
 		ImGui::SameLine();
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
 		ImGui::Text(m_formatted_selected_folder.c_str());
+
+		ImGui::SameLine(ImGui::GetWindowWidth() - 22);
+		if (ImGui::Button(ICON_FA_COG, button_size))
+		{
+			ImGui::OpenPopup("asset settings");
+		}
+
+		if (ImGui::BeginPopup("asset settings"))
+		{
+			if (ImGui::Checkbox("show engine assets", &show_engine_assets))
+			{
+				pollFolders();
+			}
+			ImGui::EndPopup();
+		}
 	}
 
 	void AssetUI::constructFolderFiles()
@@ -301,7 +269,7 @@ namespace Bamboo
 		{
 			if (g_runtime_context.fileSystem()->isDir(filename))
 			{
-				pollSelectedFolder(filename);
+				openFolder(filename);
 			}
 			else
 			{
@@ -325,6 +293,7 @@ namespace Bamboo
 			const std::string& import_file = *iter;
 			if (as->isGltfFile(import_file))
 			{
+				ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 				ImGui::OpenPopup("Import Asset");
 				if (ImGui::BeginPopupModal("Import Asset", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 				{
@@ -348,7 +317,7 @@ namespace Bamboo
 					}
 
 					ImGui::SeparatorText("Material");
-					static bool contains_occlusion_channel = false;
+					static bool contains_occlusion_channel = true;
 					ImGui::Checkbox("contain occlusion channel", &contains_occlusion_channel);
 
 					if (ImGui::Button("OK", ImVec2(120, 0)))
@@ -400,80 +369,16 @@ namespace Bamboo
 		}
 	}
 
-	void AssetUI::pollFolders()
-	{
-		// recursively traverse the root folder by a queue
-		const auto& fs = g_runtime_context.fileSystem();
-
-		m_folder_nodes.clear();
-		std::queue<std::string> folder_queue;
-		folder_queue.push(fs->getAssetDir());
-		while (!folder_queue.empty())
-		{
-			size_t offset = m_folder_nodes.size();
-			std::vector<std::string> folders;
-			while (!folder_queue.empty())
-			{
-				m_folder_nodes.push_back({});
-				folders.push_back(folder_queue.front());
-				folder_queue.pop();
-			}
-
-			uint32_t child_offset = m_folder_nodes.size();
-			for (size_t i = 0; i < folders.size(); ++i)
-			{
-				FolderNode& folder_node = m_folder_nodes[offset + i];
-				folder_node.dir = folders[i];
-				folder_node.name = fs->basename(folders[i]);
-				folder_node.is_root = folders[i] == fs->getAssetDir();
-				for (auto& file : std::filesystem::directory_iterator(folders[i]))
-				{
-					std::string filename = file.path().string();
-					if (file.is_regular_file())
-					{
-						if (g_runtime_context.assetManager()->getAssetType(filename) != EAssetType::Invalid)
-						{
-							folder_node.child_files.push_back(filename);
-						}
-					}
-					else if (file.is_directory())
-					{
-						// ignore internal engine folder
-						if (filename.find("asset/engine") == std::string::npos &&
-							filename.find("asset\\engine") == std::string::npos)
-						{
-							folder_node.child_folders.push_back(child_offset++);
-							folder_queue.push(filename);
-						}
-					}
-				}
-				folder_node.is_leaf = folder_node.child_folders.empty();
-			}
-		}
-
-		// update folder opened status
-		for (const FolderNode& folder_node : m_folder_nodes)
-		{
-			if (m_folder_opened_map.find(folder_node.name) == m_folder_opened_map.end())
-			{
-				m_folder_opened_map[folder_node.name] = false;
-			}
-		}
-
-		// update selected folder's files
-		pollSelectedFolder();
-	}
-
-	void AssetUI::pollSelectedFolder(std::string selected_folder)
+	void AssetUI::openFolder(std::string folder)
 	{
 		if (!g_runtime_context.fileSystem()->exists(m_selected_folder))
 		{
-			selected_folder = g_runtime_context.fileSystem()->getAssetDir();
+			folder = g_runtime_context.fileSystem()->getAssetDir();
 		}
 
-		if (!selected_folder.empty() && m_selected_folder != selected_folder)
+		if (!folder.empty() && m_selected_folder != folder)
 		{
-			m_selected_folder = selected_folder;
+			m_selected_folder = folder;
 
 			m_formatted_selected_folder = g_runtime_context.fileSystem()->relative(m_selected_folder);
 			StringUtil::replace_all(m_formatted_selected_folder, "/", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");

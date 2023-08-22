@@ -2,8 +2,6 @@
 
 #include "render_pass.h"
 
-#define BRDF_TEXTURE_URL "asset/engine/texture/ibl/tex_brdf_lut.tex"
-
 namespace Bamboo
 {
 	class BRDFLUTPass : public RenderPass

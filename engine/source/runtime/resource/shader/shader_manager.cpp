@@ -19,6 +19,11 @@ namespace Bamboo
 		std::vector<std::string> spv_filenames = fs->traverse(spv_dir);
 		for (const std::string& spv_filename : spv_filenames)
 		{
+			if (fs->extension(spv_filename) != "spv")
+			{
+				continue;
+			}
+
 			std::string spv_basename = fs->basename(spv_filename); 
 			std::vector<std::string> splits = StringUtil::split(spv_basename, "-");
 			spv_basename_modified_time_map[splits[0]] = splits[1];
@@ -32,7 +37,25 @@ namespace Bamboo
 		}
 
 		// get shader include directory
+		bool need_compile_all = false;
 		std::string global_shader_include_dir = fs->global(fs->combine(fs->getShaderDir(), std::string("include")));
+		std::string shader_include_dir_modified_time = fs->modifiedTime(global_shader_include_dir);
+		std::string spv_include_filename = fs->combine(spv_dir, std::string("include.txt"));
+		if (!fs->exists(spv_include_filename))
+		{
+			need_compile_all = true;
+			fs->writeString(spv_include_filename, shader_include_dir_modified_time);
+		}
+		else
+		{
+			std::string last_shader_include_dir_modified_time;
+			fs->loadString(spv_include_filename, last_shader_include_dir_modified_time);
+			if (shader_include_dir_modified_time != last_shader_include_dir_modified_time)
+			{
+				need_compile_all = true;
+				fs->writeString(spv_include_filename, shader_include_dir_modified_time);
+			}
+		}
 
 		// compile glsl shader if necessary
 		std::vector<std::string> glsl_filenames = fs->traverse(fs->getShaderDir());
@@ -47,7 +70,7 @@ namespace Bamboo
 			std::string modified_time = fs->modifiedTime(glsl_filename);
 
 			bool need_compile = spv_basename_modified_time_map.find(glsl_basename) == spv_basename_modified_time_map.end() ||
-				modified_time != spv_basename_modified_time_map[glsl_basename];
+				modified_time != spv_basename_modified_time_map[glsl_basename] || need_compile_all;
 			if (need_compile)
 			{
 				// remove old spv file

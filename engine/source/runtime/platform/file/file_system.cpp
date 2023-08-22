@@ -42,7 +42,9 @@ namespace Bamboo
 
 	std::string FileSystem::relative(const std::string& path)
 	{
-		return std::filesystem::relative(path, m_header).string();
+		std::string rel_path = std::filesystem::relative(path, m_header).string();
+		StringUtil::replace_all(rel_path, "\\", "/");
+		return rel_path;
 	}
 
 	std::string FileSystem::extension(const std::string& path)
@@ -72,7 +74,25 @@ namespace Bamboo
 
 	std::string FileSystem::modifiedTime(const std::string& path)
 	{
-		return std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::filesystem::last_write_time(path).time_since_epoch()).count());
+		if (isFile(path))
+		{
+			return std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::filesystem::last_write_time(path).time_since_epoch()).count());
+		}
+
+		if (isDir(path))
+		{
+			long long last_write_time = 0;
+			std::vector<std::string> files = traverse(path, true);
+			for (const std::string& file : files)
+			{
+				if (isFile(file))
+				{
+					last_write_time = std::max(last_write_time, std::chrono::duration_cast<std::chrono::seconds>(std::filesystem::last_write_time(file).time_since_epoch()).count());
+				}
+			}
+			return std::to_string(last_write_time);
+		}
+		return "";
 	}
 
 	std::vector<std::string> FileSystem::traverse(const std::string& path, bool is_recursive, EFileOrderType file_order_type, bool is_reverse)
@@ -212,7 +232,7 @@ namespace Bamboo
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 		if (!file.is_open())
 		{
-			LOG_FATAL("failed to load shader {}", filename);
+			LOG_FATAL("failed to load binary file {}", filename);
 			return false;
 		}
 
@@ -221,6 +241,36 @@ namespace Bamboo
 
 		file.seekg(0);
 		file.read((char*)data.data(), file_size);
+		file.close();
+
+		return true;
+	}
+
+	bool FileSystem::writeString(const std::string& filename, const std::string& str)
+	{
+		std::ofstream file(filename);
+		if (!file.is_open())
+		{
+			LOG_FATAL("failed to write string file {}", filename);
+			return false;
+		}
+
+		file << str;
+		file.close();
+
+		return true;
+	}
+
+	bool FileSystem::loadString(const std::string& filename, std::string& str)
+	{
+		std::ifstream file(filename);
+		if (!file.is_open())
+		{
+			LOG_FATAL("failed to load string file {}", filename);
+			return false;
+		}
+
+		file >> str;
 		file.close();
 
 		return true;

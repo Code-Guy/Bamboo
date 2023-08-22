@@ -1,22 +1,12 @@
 #pragma once
 
 #include "editor/base/editor_ui.h"
+#include "editor/base/folder_tree_ui.h"
 #include "runtime/resource/asset/asset_manager.h"
 
 namespace Bamboo
 {
-	struct FolderNode
-	{
-		std::string name;
-		std::string dir;
-		std::vector<std::string> child_files;
-		std::vector<uint32_t> child_folders;
-
-		bool is_root;
-		bool is_leaf;
-	};
-
-	class AssetUI : public EditorUI
+	class AssetUI : public EditorUI, public IFolderTreeUI
 	{
 	public:
 		AssetUI() = default;
@@ -26,14 +16,12 @@ namespace Bamboo
 		virtual void destroy() override;
 
 	private:
-		void constructFolderTree(const std::vector<FolderNode>& folder_nodes, uint32_t index = 0);
 		void constructAssetNavigator();
 		void constructFolderFiles();
 		void constructAsset(const std::string& filename, const ImVec2& size);
 		void constructImportPopups();
 
-		void pollFolders();
-		void pollSelectedFolder(std::string selected_folder = "");
+		virtual void openFolder(std::string folder) override;
 
 		void onDropFiles(const std::shared_ptr<class Event>& event);
 
@@ -44,20 +32,9 @@ namespace Bamboo
 
 		// folder infos
 		uint32_t m_poll_folder_timer_handle;
-		std::vector<FolderNode> m_folder_nodes;
-		std::map<std::string, bool> m_folder_opened_map;
-
-		std::string m_selected_folder;
 		std::string m_formatted_selected_folder;
 		std::string m_selected_file;
 		std::vector<std::string> m_selected_files;
-
-		struct HoverState
-		{
-			bool is_hovered;
-			ImVec2 rect_min;
-			ImVec2 rect_max;
-		};
 
 		std::map<std::string, HoverState> m_selected_file_hover_states;
 

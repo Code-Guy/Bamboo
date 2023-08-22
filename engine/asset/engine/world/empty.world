@@ -1,0 +1,86 @@
+{
+    "world": {
+        "polymorphic_id": 2147483649,
+        "polymorphic_name": "Bamboo::World",
+        "ptr_wrapper": {
+            "id": 2147483649,
+            "data": {
+                "entities": [
+                    {
+                        "key": 0,
+                        "value": {
+                            "polymorphic_id": 1073741824,
+                            "ptr_wrapper": {
+                                "id": 2147483650,
+                                "data": {
+                                    "tickable": {
+                                        "tick_enabled": true,
+                                        "tick_interval": 0.0
+                                    },
+                                    "name": "camera",
+                                    "id": 0,
+                                    "parent_id": 4294967295,
+                                    "child_ids": [],
+                                    "components": [
+                                        {
+                                            "polymorphic_id": 2147483650,
+                                            "polymorphic_name": "Bamboo::TransformComponent",
+                                            "ptr_wrapper": {
+                                                "id": 2147483651,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "x": 1.8,
+                                                        "y": 1.0,
+                                                        "z": -1.3
+                                                    },
+                                                    "rotation": {
+                                                        "x": 0.0,
+                                                        "y": 144.4,
+                                                        "z": -5.0
+                                                    },
+                                                    "scale": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 2147483651,
+                                            "polymorphic_name": "Bamboo::CameraComponent",
+                                            "ptr_wrapper": {
+                                                "id": 2147483652,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": true,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "fovy": 60.0,
+                                                    "aspect_ratio": 1.5,
+                                                    "near": 0.10000000149011612,
+                                                    "far": 1000.0,
+                                                    "move_speed": 4.0,
+                                                    "turn_speed": 0.10000000149011612,
+                                                    "zoom_speed": 2.0
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
