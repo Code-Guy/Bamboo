@@ -88,6 +88,26 @@ bool is_nearly_equal(float a, float b)
     return abs(a - b) < EPSILON;
 }
 
+vec3 getLightContribution(PBRInfo pbr_info, vec3 n, vec3 v, vec3 l, vec3 c)
+{
+	vec3 h = normalize(l + v);
+	pbr_info.NdotL = clamp(dot(n, l), 0.001, 1.0);
+	pbr_info.NdotH = clamp(dot(n, h), 0.0, 1.0);
+	pbr_info.VdotH = clamp(dot(v, h), 0.0, 1.0);
+
+	// calculate the shading terms for the microfacet specular shading model
+	vec3 F = specularReflection(pbr_info);
+	float G = geometricOcclusion(pbr_info);
+	float D = microfacetDistribution(pbr_info);
+
+	// calculation of analytical lighting contribution
+	vec3 diffuse_contrib = (1.0 - F) * diffuse(pbr_info);
+	vec3 specular_contrib = F * G * D / (4.0 * pbr_info.NdotL * pbr_info.NdotV);
+
+	// obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
+	return pbr_info.NdotL * c * (diffuse_contrib + specular_contrib);
+}
+
 vec4 calc_pbr(MaterialInfo mat_info)
 {
 	float perceptual_roughness = mat_info.roughness;
@@ -111,45 +131,69 @@ vec4 calc_pbr(MaterialInfo mat_info)
 	// surface/camera/light directions
 	vec3 n = mat_info.normal;
 	vec3 v = normalize(lighting_ubo.camera_pos - mat_info.position);
-	vec3 l = normalize(-lighting_ubo.directional_light.direction);
-	vec3 h = normalize(l + v);
-	vec3 r = -normalize(reflect(v, n));
-
-	// surface/camera/light cosine angles
-	float NdotL = clamp(dot(n, l), 0.001, 1.0);
+	vec3 r = reflect(-v, n);
 	float NdotV = clamp(abs(dot(n, v)), 0.001, 1.0);
-	float NdotH = clamp(dot(n, h), 0.0, 1.0);
-	float VdotH = clamp(dot(v, h), 0.0, 1.0);
 
 	// construct pbr info structure
-	PBRInfo pbr_info = PBRInfo(
-		NdotL,
-		NdotV,
-		NdotH,
-		VdotH,
-		perceptual_roughness,
-		alpha_roughness,
-		mat_info.metallic,
-		specularEnvironmentR0,
-		specularEnvironmentR90,
-		diffuse_color,
-		specular_color
-	);
+	PBRInfo pbr_info;
+	pbr_info.NdotV = NdotV;
+	pbr_info.perceptual_roughness = perceptual_roughness;
+	pbr_info.alpha_roughness = alpha_roughness;
+	pbr_info.metallic = mat_info.metallic;
+	pbr_info.reflectance0 = specularEnvironmentR0;
+	pbr_info.reflectance90 = specularEnvironmentR90;
+	pbr_info.diffuse_color = diffuse_color;
+	pbr_info.specular_color = specular_color;
 
-	// calculate the shading terms for the microfacet specular shading model
-	vec3 F = specularReflection(pbr_info);
-	float G = geometricOcclusion(pbr_info);
-	float D = microfacetDistribution(pbr_info);
+	// calculate light contribution
+	vec3 color = vec3(0.0);
 
-	// calculation of analytical lighting contribution
-	vec3 diffuse_contrib = (1.0 - F) * diffuse(pbr_info);
-	vec3 specular_contrib = F * G * D / (4.0 * NdotL * NdotV);
+	// directional light
+	if (bool(lighting_ubo.has_directional_light))
+	{
+		color += getLightContribution(pbr_info, n, v, -lighting_ubo.directional_light.direction, lighting_ubo.directional_light.color);
+	}
 
-	// obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-	vec3 radiance = bool(lighting_ubo.has_directional_light) ? lighting_ubo.directional_light.color : vec3(0.0);
-	vec3 color = NdotL * radiance * (diffuse_contrib + specular_contrib);
+	// point lights
+	for (int i = 0; i < lighting_ubo.point_light_num; ++i)
+	{
+		PointLight point_light = lighting_ubo.point_lights[i];
+		
+		float distance = distance(point_light.position, mat_info.position);
+		if (distance < point_light.radius)
+		{
+			float attenuation = 1.0 / (1.0 + point_light.linear_attenuation * distance + 
+	    		    point_light.quadratic_attenuation * (distance * distance));
+			vec3 c = point_light.color * attenuation;
+			vec3 l = normalize(point_light.position - mat_info.position);
 
-	// calculate lighting contribution from image based lighting source (IBL)
+			color += getLightContribution(pbr_info, n, v, l, c);
+		}
+	}
+
+	// spot lights
+	for (int i = 0; i < lighting_ubo.spot_light_num; ++i)
+	{
+		SpotLight spot_light = lighting_ubo.spot_lights[i];
+		PointLight point_light = spot_light._pl;
+
+		float distance = distance(point_light.position, mat_info.position);
+		if (distance < point_light.radius)
+		{
+			float pl_attenuation = 1.0 / (1.0 + point_light.linear_attenuation * distance + 
+	    		    point_light.quadratic_attenuation * (distance * distance));
+			float theta = dot(normalize(mat_info.position - point_light.position), spot_light.direction);
+			float epsilon = point_light.padding0 - point_light.padding1;
+			float sl_attenuation = clamp((theta - point_light.padding1) / epsilon, 0.0, 1.0); 
+
+			vec3 c = point_light.color * pl_attenuation * sl_attenuation;
+			vec3 l = normalize(point_light.position - mat_info.position);
+
+			color += getLightContribution(pbr_info, n, v, l, c);
+		}
+	}
+
+	// calculate ibl contribution
 	if (bool(lighting_ubo.has_sky_light))
 	{
 		color += getIBLContribution(pbr_info, n, r);

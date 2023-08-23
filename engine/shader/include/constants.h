@@ -14,4 +14,7 @@
 #define TONEMAP_EXPOSURE 4.5
 #define EPSILON 0.001
 
+#define MAX_POINT_LIGHT_NUM 16
+#define MAX_SPOT_LIGHT_NUM 16
+
 #endif

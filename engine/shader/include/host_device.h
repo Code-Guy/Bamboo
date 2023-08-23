@@ -52,6 +52,26 @@ struct DirectionalLight
 	vec3 color; float padding1;
 };
 
+struct PointLight
+{
+	vec3 position; 
+    float padding0; // inner_cutoff for SpotLight
+
+	vec3 color; 
+    float padding1; // outer_cutoff for SpotLight
+
+    float radius;
+	float linear_attenuation;
+	float quadratic_attenuation;
+    float padding2;
+};
+
+struct SpotLight
+{
+    PointLight _pl;
+    vec3 direction; float padding0;
+};
+
 struct LightingUBO
 {
     // camera
@@ -61,9 +81,13 @@ struct LightingUBO
     // lights
     SkyLight sky_light;
     DirectionalLight directional_light;
+    PointLight point_lights[MAX_POINT_LIGHT_NUM];
+    SpotLight spot_lights[MAX_SPOT_LIGHT_NUM];
 
     int has_sky_light;
     int has_directional_light;
+    int point_light_num;
+    int spot_light_num;
 };
 
 struct MaterialInfo

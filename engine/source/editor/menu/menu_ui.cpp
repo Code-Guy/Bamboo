@@ -421,7 +421,7 @@ namespace Bamboo
 
 	void MenuUI::newWorld()
 	{
-		if (isShowingPopup())
+		if (isPoppingUp())
 		{
 			return;
 		}
@@ -432,7 +432,7 @@ namespace Bamboo
 
 	void MenuUI::openWorld()
 	{
-		if (isShowingPopup())
+		if (isPoppingUp())
 		{
 			return;
 		}
@@ -455,7 +455,7 @@ namespace Bamboo
 
 	void MenuUI::saveWorld()
 	{
-		if (isShowingPopup())
+		if (isPoppingUp())
 		{
 			return;
 		}
@@ -465,7 +465,7 @@ namespace Bamboo
 
 	void MenuUI::saveAsWorld()
 	{
-		if (isShowingPopup())
+		if (isPoppingUp())
 		{
 			return;
 		}
@@ -595,11 +595,6 @@ namespace Bamboo
 	void MenuUI::constructWorldURLPanel()
 	{
 
-	}
-
-	bool MenuUI::isShowingPopup()
-	{
-		return showing_new_world_popup || showing_open_world_popup || showing_save_as_world_popup;
 	}
 
 }

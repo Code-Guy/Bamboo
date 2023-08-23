@@ -15,6 +15,8 @@
 #include "runtime/function/framework/component/skeletal_mesh_component.h"
 #include "runtime/function/framework/component/sky_light_component.h"
 #include "runtime/function/framework/component/directional_light_component.h"
+#include "runtime/function/framework/component/point_light_component.h"
+#include "runtime/function/framework/component/spot_light_component.h"
 
 namespace Bamboo
 {
@@ -140,6 +142,7 @@ namespace Bamboo
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
 		lighting_ubo.inv_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
 		lighting_ubo.has_sky_light = lighting_ubo.has_directional_light = false;
+		lighting_ubo.point_light_num = lighting_ubo.spot_light_num = 0;
 
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
@@ -269,12 +272,47 @@ namespace Bamboo
 			auto directional_light_component = entity->getComponent(DirectionalLightComponent);
 			if (directional_light_component)
 			{
-				auto directional_light_transform_component = entity->getComponent(TransformComponent);
+				auto transform_component = entity->getComponent(TransformComponent);
 
 				// set lighting uniform buffer object
 				lighting_ubo.has_directional_light = true;
-				lighting_ubo.directional_light.direction = directional_light_transform_component->getForwardVector();
+				lighting_ubo.directional_light.direction = transform_component->getForwardVector();
 				lighting_ubo.directional_light.color = directional_light_component->getColor();
+			}
+
+			// get point light component
+			auto point_light_component = entity->getComponent(PointLightComponent);
+			if (point_light_component)
+			{
+				auto transform_component = entity->getComponent(TransformComponent);
+
+				// set lighting uniform buffer object
+				PointLight& point_light = lighting_ubo.point_lights[lighting_ubo.point_light_num++];
+				point_light.position = transform_component->m_position;
+				point_light.color = point_light_component->getColor();
+				point_light.radius = point_light_component->m_radius;
+				point_light.linear_attenuation = point_light_component->m_linear_attenuation;
+				point_light.quadratic_attenuation = point_light_component->m_quadratic_attenuation;
+			}
+
+			// get point light component
+			auto spot_light_component = entity->getComponent(SpotLightComponent);
+			if (spot_light_component)
+			{
+				auto transform_component = entity->getComponent(TransformComponent);
+
+				// set lighting uniform buffer object
+				SpotLight& spot_light = lighting_ubo.spot_lights[lighting_ubo.spot_light_num++];
+				PointLight& point_light = spot_light._pl;
+				point_light.position = transform_component->m_position;
+				point_light.color = spot_light_component->getColor();
+				point_light.radius = spot_light_component->m_radius;
+				point_light.linear_attenuation = spot_light_component->m_linear_attenuation;
+				point_light.quadratic_attenuation = spot_light_component->m_quadratic_attenuation;
+				point_light.padding0 = std::cos(glm::radians(spot_light_component->m_inner_cone_angle));
+				point_light.padding1 = std::cos(glm::radians(spot_light_component->m_outer_cone_angle));
+
+				spot_light.direction = transform_component->getForwardVector();
 			}
 		}
 
