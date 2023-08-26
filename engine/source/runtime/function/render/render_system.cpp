@@ -24,13 +24,16 @@ namespace Bamboo
 
 	void RenderSystem::init()
 	{
-		m_render_passes[ERenderPassType::DirectionalLightShadow] = std::make_shared<DirectionalLightShadowPass>();
-		m_render_passes[ERenderPassType::Main] = std::make_shared<MainPass>();
+		m_directional_light_shadow_pass = std::make_shared<DirectionalLightShadowPass>();
+		m_main_pass = std::make_shared<MainPass>();
 		m_ui_pass = std::make_shared<UIPass>();
-		m_render_passes[ERenderPassType::UI] = m_ui_pass;
+
+		m_render_passes = {
+			m_directional_light_shadow_pass, m_main_pass, m_ui_pass
+		};
 		for (auto& render_pass : m_render_passes)
 		{
-			render_pass.second->init();
+			render_pass->init();
 		}
 
 		// set vulkan rhi callback functions
@@ -43,7 +46,8 @@ namespace Bamboo
 
 		// get dummy texture2d
 		const auto& as = g_runtime_context.assetManager();
-		m_dummy_texture = as->loadAsset<Texture2D>(DEFAULT_TEXTURE_2D_URL);
+		m_default_texture_2d = as->loadAsset<Texture2D>(DEFAULT_TEXTURE_2D_URL);
+		m_default_texture_cube = as->loadAsset<TextureCube>(DEFAULT_TEXTURE_CUBE_URL);
 
 		// create lighting uniform buffers
 		m_lighting_ubs.resize(MAX_FRAMES_IN_FLIGHT);
@@ -71,19 +75,15 @@ namespace Bamboo
 	{
 		for (auto& render_pass : m_render_passes)
 		{
-			render_pass.second->destroy();
+			render_pass->destroy();
 		}
 		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
 		{
 			uniform_buffer.destroy();
 		}
 
-		m_dummy_texture.reset();
-	}
-
-	std::shared_ptr<RenderPass> RenderSystem::getRenderPass(ERenderPassType render_pass_type)
-	{
-		return m_render_passes[render_pass_type];
+		m_default_texture_2d.reset();
+		m_default_texture_cube.reset();
 	}
 
 	void RenderSystem::onCreateSwapchainObjects(const std::shared_ptr<class Event>& event)
@@ -110,9 +110,9 @@ namespace Bamboo
 		// render pass rendering
 		for (auto& render_pass : m_render_passes)
 		{
-			if (render_pass.second->isEnabled())
+			if (render_pass->isEnabled())
 			{
-				render_pass.second->render();
+				render_pass->render();
 			}
 		}
 	}
@@ -133,21 +133,21 @@ namespace Bamboo
 
 		// set render datas
 		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();
-		const auto& as = g_runtime_context.assetManager();
-		lighting_render_data->m_brdf_lut_texture = as->loadAsset<Texture2D>(DEFAULT_TEXTURE_2D_URL)->m_image_view_sampler;
-		lighting_render_data->m_irradiance_texture = as->loadAsset<TextureCube>(DEFAULT_TEXTURE_CUBE_URL)->m_image_view_sampler;
-		lighting_render_data->m_prefilter_texture = as->loadAsset<TextureCube>(DEFAULT_TEXTURE_CUBE_URL)->m_image_view_sampler;
+		lighting_render_data->brdf_lut_texture = m_default_texture_2d->m_image_view_sampler;
+		lighting_render_data->irradiance_texture = m_default_texture_cube->m_image_view_sampler;
+		lighting_render_data->prefilter_texture = m_default_texture_cube->m_image_view_sampler;
 
 		std::shared_ptr<SkyboxRenderData> skybox_render_data = nullptr;
-		std::shared_ptr<DirectionalLightShadowPassRenderData> directional_light_shadow_pass_render_data = std::make_shared<DirectionalLightShadowPassRenderData>();
-		directional_light_shadow_pass_render_data->camera_near = camera_component->m_near;
-		directional_light_shadow_pass_render_data->camera_far = camera_component->m_far;
-		directional_light_shadow_pass_render_data->inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
+		ShadowCascadeCreateInfo shadow_cascade_ci{};
+		shadow_cascade_ci.camera_near = camera_component->m_near;
+		shadow_cascade_ci.camera_far = camera_component->m_far;
+		shadow_cascade_ci.inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
 
 		// set lighting uniform buffer object
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
-		lighting_ubo.inv_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
+		lighting_ubo.camera_view = camera_component->getViewMatrix();
+		lighting_ubo.inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
 		lighting_ubo.has_sky_light = lighting_ubo.has_directional_light = false;
 		lighting_ubo.point_light_num = lighting_ubo.spot_light_num = 0;
 
@@ -235,10 +235,10 @@ namespace Bamboo
 						material_pco.has_normal_texture = sub_mesh.m_material->m_normal_texure != nullptr;
 						static_mesh_render_data->material_pcos.push_back(material_pco);
 
-						std::shared_ptr<Texture2D> base_color_texture = sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure : m_dummy_texture;
-						std::shared_ptr<Texture2D> metallic_roughness_occlusion_texure = sub_mesh.m_material->m_metallic_roughness_occlusion_texure ? sub_mesh.m_material->m_metallic_roughness_occlusion_texure : m_dummy_texture;
-						std::shared_ptr<Texture2D> normal_texure = sub_mesh.m_material->m_normal_texure ? sub_mesh.m_material->m_normal_texure : m_dummy_texture;
-						std::shared_ptr<Texture2D> emissive_texture = sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure : m_dummy_texture;
+						std::shared_ptr<Texture2D> base_color_texture = sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure : m_default_texture_2d;
+						std::shared_ptr<Texture2D> metallic_roughness_occlusion_texure = sub_mesh.m_material->m_metallic_roughness_occlusion_texure ? sub_mesh.m_material->m_metallic_roughness_occlusion_texure : m_default_texture_2d;
+						std::shared_ptr<Texture2D> normal_texure = sub_mesh.m_material->m_normal_texure ? sub_mesh.m_material->m_normal_texure : m_default_texture_2d;
+						std::shared_ptr<Texture2D> emissive_texture = sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure : m_default_texture_2d;
 						static_mesh_render_data->pbr_textures.push_back({
 							base_color_texture->m_image_view_sampler,
 							metallic_roughness_occlusion_texure->m_image_view_sampler,
@@ -257,9 +257,9 @@ namespace Bamboo
 			if (sky_light_component)
 			{
 				// set lighting render data
-				lighting_render_data->m_brdf_lut_texture = sky_light_component->m_brdf_lut_texture_sampler;
-				lighting_render_data->m_irradiance_texture = sky_light_component->m_irradiance_texture_sampler;
-				lighting_render_data->m_prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
+				lighting_render_data->brdf_lut_texture = sky_light_component->m_brdf_lut_texture_sampler;
+				lighting_render_data->irradiance_texture = sky_light_component->m_irradiance_texture_sampler;
+				lighting_render_data->prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
 
 				// set skybox render data
 				skybox_render_data = std::make_shared<SkyboxRenderData>();
@@ -287,7 +287,7 @@ namespace Bamboo
 				lighting_ubo.directional_light.direction = transform_component->getForwardVector();
 				lighting_ubo.directional_light.color = directional_light_component->getColor();
 
-				directional_light_shadow_pass_render_data->light_dir = transform_component->getForwardVector();
+				shadow_cascade_ci.light_dir = transform_component->getForwardVector();
 			}
 
 			// get point light component
@@ -326,6 +326,21 @@ namespace Bamboo
 			}
 		}
 
+		// directional light shadow pass: n mesh datas
+		if (lighting_ubo.has_directional_light)
+		{
+			m_directional_light_shadow_pass->updateCascades(shadow_cascade_ci);
+
+			for (uint32_t i = 0; i < SHADOW_CASCADE_NUM; ++i)
+			{
+				lighting_ubo.directional_light.cascade_splits[i] = m_directional_light_shadow_pass->m_cascade_splits[i];
+				lighting_ubo.directional_light.cascade_view_projs[i] = m_directional_light_shadow_pass->m_shadow_cascade_ubo.cascade_view_projs[i];
+			}
+			lighting_render_data->directional_light_shadow_texture = m_directional_light_shadow_pass->getDepthImageViewSampler();
+
+			m_directional_light_shadow_pass->setRenderDatas(directional_light_shadow_pass_render_datas);
+		}
+		
 		// update lighting uniform buffers
 		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
 		{
@@ -333,17 +348,13 @@ namespace Bamboo
 		}
 		lighting_render_data->lighting_ubs = m_lighting_ubs;
 
-		// directional light shadow pass: 1 directional light shadow pass render data + n mesh datas
-		directional_light_shadow_pass_render_datas.insert(directional_light_shadow_pass_render_datas.begin(), directional_light_shadow_pass_render_data);
-		m_render_passes[ERenderPassType::DirectionalLightShadow]->setRenderDatas(directional_light_shadow_pass_render_datas);
-
 		// main pass: 1 light data + n mesh datas(opaque or transparent) + 1 skybox render data(optional)
 		main_pass_render_datas.insert(main_pass_render_datas.begin(), lighting_render_data);
 		if (skybox_render_data)
 		{
 			main_pass_render_datas.push_back(skybox_render_data);
 		}
-		m_render_passes[ERenderPassType::Main]->setRenderDatas(main_pass_render_datas);
+		m_main_pass->setRenderDatas(main_pass_render_datas);
 	}
 
 }

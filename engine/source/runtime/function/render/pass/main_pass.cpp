@@ -88,7 +88,7 @@ namespace Bamboo
 			VkWriteDescriptorSet desc_write{};
 			desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			desc_write.dstSet = 0;
-			desc_write.dstBinding = 8;
+			desc_write.dstBinding = 9;
 			desc_write.dstArrayElement = 0;
 			desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			desc_write.descriptorCount = 1;
@@ -102,15 +102,17 @@ namespace Bamboo
 				m_emissive_texture_sampler,
 				m_metallic_roughness_occlusion_texture_sampler,
 				m_depth_stencil_texture_sampler,
-				m_lighting_render_data->m_irradiance_texture,
-				m_lighting_render_data->m_prefilter_texture,
-				m_lighting_render_data->m_brdf_lut_texture,
+				m_lighting_render_data->irradiance_texture,
+				m_lighting_render_data->prefilter_texture,
+				m_lighting_render_data->brdf_lut_texture,
+				m_lighting_render_data->directional_light_shadow_texture
 			};
 
 			std::vector<VkDescriptorImageInfo> desc_image_infos(textures.size(), VkDescriptorImageInfo{});
 			for (size_t i = 0; i < textures.size(); ++i)
 			{
-				desc_image_infos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				desc_image_infos[i].imageLayout = i == textures.size() - 1 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL :
+					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				desc_image_infos[i].imageView = textures[i].view;
 				desc_image_infos[i].sampler = textures[i].sampler;
 
@@ -322,7 +324,8 @@ namespace Bamboo
 			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{8, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{9, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -339,8 +342,8 @@ namespace Bamboo
 			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{8, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{9, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -691,7 +694,7 @@ namespace Bamboo
 				VkWriteDescriptorSet desc_write{};
 				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				desc_write.dstSet = 0;
-				desc_write.dstBinding = 8;
+				desc_write.dstBinding = 9;
 				desc_write.dstArrayElement = 0;
 				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				desc_write.descriptorCount = 1;
@@ -700,14 +703,16 @@ namespace Bamboo
 
 				// ibl textures
 				std::vector<VmaImageViewSampler> ibl_textures = {
-					m_lighting_render_data->m_irradiance_texture,
-					m_lighting_render_data->m_prefilter_texture,
-					m_lighting_render_data->m_brdf_lut_texture,
+					m_lighting_render_data->irradiance_texture,
+					m_lighting_render_data->prefilter_texture,
+					m_lighting_render_data->brdf_lut_texture,
+					m_lighting_render_data->directional_light_shadow_texture
 				};
 				ibl_desc_image_infos.resize(ibl_textures.size(), {});
 				for (size_t t = 0; t < ibl_textures.size(); ++t)
 				{
-					ibl_desc_image_infos[t].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					ibl_desc_image_infos[t].imageLayout = t == ibl_textures.size() - 1 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : 
+						VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 					ibl_desc_image_infos[t].imageView = ibl_textures[t].view;
 					ibl_desc_image_infos[t].sampler = ibl_textures[t].sampler;
 

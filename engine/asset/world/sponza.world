@@ -67,7 +67,7 @@
                                                     "fovy": 60.0,
                                                     "aspect_ratio": 1.5,
                                                     "near": 0.10000000149011612,
-                                                    "far": 1000.0,
+                                                    "far": 256.0,
                                                     "move_speed": 4.0,
                                                     "turn_speed": 0.10000000149011612,
                                                     "zoom_speed": 2.0

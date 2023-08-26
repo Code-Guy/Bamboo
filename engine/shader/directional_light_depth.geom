@@ -21,8 +21,7 @@ void main()
         gl_Layer = i; // built-in variable that specifies to which face we render.
         for(int v = 0; v < 3; ++v) // for each triangle vertex
         {
-            gl_Position = shadow_cascade_ubo.view_projs[i] * vec4(f_position[v], 1.0);
-            //gl_Position = gl_in[v].gl_Position;
+            gl_Position = shadow_cascade_ubo.cascade_view_projs[i] * vec4(f_position[v], 1.0);
             g_tex_coord = f_tex_coord[v];
             EmitVertex();
         }

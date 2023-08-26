@@ -76,7 +76,7 @@ namespace Bamboo
 	void SimulationUI::onWindowResize()
 	{
 		// resize render pass
-		std::shared_ptr<MainPass> main_pass = std::dynamic_pointer_cast<MainPass>(g_runtime_context.renderSystem()->getRenderPass(ERenderPassType::Main));
+		const auto& main_pass = g_runtime_context.renderSystem()->getMainPass();
 		main_pass->onResize(m_content_region.z, m_content_region.w);
 
 		// recreate color image and view

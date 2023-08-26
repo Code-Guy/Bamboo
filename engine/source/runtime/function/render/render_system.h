@@ -15,7 +15,7 @@ namespace Bamboo
 		void tick(float delta_time);
 		void destroy();
 
-		std::shared_ptr<RenderPass> getRenderPass(ERenderPassType render_pass_type);
+		const std::shared_ptr<class MainPass>& getMainPass() { return m_main_pass; }
 
 	private:
 		void onCreateSwapchainObjects(const std::shared_ptr<class Event>& event);
@@ -24,9 +24,13 @@ namespace Bamboo
 
 		void collectRenderDatas();
 
-		std::shared_ptr<class Texture2D> m_dummy_texture;
+		std::shared_ptr<class Texture2D> m_default_texture_2d;
+		std::shared_ptr<class TextureCube> m_default_texture_cube;
+
+		std::shared_ptr<class DirectionalLightShadowPass> m_directional_light_shadow_pass;
+		std::shared_ptr<class MainPass> m_main_pass;
 		std::shared_ptr<class UIPass> m_ui_pass;
-		std::map<ERenderPassType, std::shared_ptr<RenderPass>> m_render_passes;
+		std::vector<std::shared_ptr<RenderPass>> m_render_passes;
 
 		std::vector<VmaBuffer> m_lighting_ubs;
 	};

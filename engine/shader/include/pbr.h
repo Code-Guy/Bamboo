@@ -4,11 +4,16 @@
 #include "hdr.h"
 #include "host_device.h"
 
+// ibl textures
 layout(set = 0, binding = 5) uniform samplerCube irradiance_texture_sampler;
 layout(set = 0, binding = 6) uniform samplerCube prefilter_texture_sampler;
 layout(set = 0, binding = 7) uniform sampler2D brdf_lut_texture_sampler;
 
-layout(set = 0, binding = 8) uniform _LightingUBO { LightingUBO lighting_ubo; };
+// shadow textures
+layout(set = 0, binding = 8) uniform sampler2DArray directional_light_shadow_texture_sampler;
+
+// lighting ubo
+layout(set = 0, binding = 9) uniform _LightingUBO { LightingUBO lighting_ubo; };
 
 struct PBRInfo
 {
@@ -108,6 +113,46 @@ vec3 getLightContribution(PBRInfo pbr_info, vec3 n, vec3 v, vec3 l, vec3 c)
 	return pbr_info.NdotL * c * (diffuse_contrib + specular_contrib);
 }
 
+const mat4 k_shadow_bias_mat = mat4( 
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0 
+);
+
+float textureProj(vec4 shadow_coord, vec2 offset, uint cascade_index)
+{
+	if (shadow_coord.z > 0.0 && shadow_coord.z < 1.0) 
+	{
+		float depth = texture(directional_light_shadow_texture_sampler, 
+			vec3(shadow_coord.xy + offset, cascade_index)).r;
+		if (depth < shadow_coord.z - SHADOW_BIAS) 
+		{
+			return 0.0;
+		}
+	}
+	return 1.0;
+}
+
+float filterPCF(vec4 shadow_coord, uint cascade_index)
+{
+	ivec2 dim = textureSize(directional_light_shadow_texture_sampler, 0).xy;
+	float dx = PCF_DELTA_SCALE / float(dim.x);
+	float dy = PCF_DELTA_SCALE / float(dim.y);
+
+	int count = 0;
+	float shadow = 0.0;
+	for (int x = -PCF_SAMPLE_RANGE; x <= PCF_SAMPLE_RANGE; ++x) 
+	{
+		for (int y = -PCF_SAMPLE_RANGE; y <= PCF_SAMPLE_RANGE; ++y) 
+		{
+			shadow += textureProj(shadow_coord, vec2(dx * x, dy * y), cascade_index);
+			count++;
+		}
+	}
+	return shadow / count;
+}
+
 vec4 calc_pbr(MaterialInfo mat_info)
 {
 	float perceptual_roughness = mat_info.roughness;
@@ -149,9 +194,22 @@ vec4 calc_pbr(MaterialInfo mat_info)
 	vec3 color = vec3(0.0);
 
 	// directional light
+	uint cascade_index = 0;
 	if (bool(lighting_ubo.has_directional_light))
 	{
-		color += getLightContribution(pbr_info, n, v, -lighting_ubo.directional_light.direction, lighting_ubo.directional_light.color);
+		DirectionalLight directional_light = lighting_ubo.directional_light;
+		vec3 view_pos = (lighting_ubo.camera_view * vec4(mat_info.position, 1.0)).xyz;
+		for(uint i = 0; i < SHADOW_CASCADE_NUM - 1; ++i)
+		{
+			if(view_pos.z < directional_light.cascade_splits[i]) 
+			{	
+				cascade_index = i + 1;
+			}
+		}
+		vec4 shadow_coord = (k_shadow_bias_mat * directional_light.cascade_view_projs[cascade_index]) * vec4(mat_info.position, 1.0);
+		shadow_coord = shadow_coord / shadow_coord.w;
+		float shadow = filterPCF(shadow_coord, cascade_index);
+		color += getLightContribution(pbr_info, n, v, -directional_light.direction, directional_light.color) * shadow;
 	}
 
 	// point lights

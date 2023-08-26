@@ -27,9 +27,11 @@ namespace Bamboo
 	{
 		std::vector<VmaBuffer> lighting_ubs;
 
-		VmaImageViewSampler m_irradiance_texture;
-		VmaImageViewSampler m_prefilter_texture;
-		VmaImageViewSampler m_brdf_lut_texture;
+		VmaImageViewSampler irradiance_texture;
+		VmaImageViewSampler prefilter_texture;
+		VmaImageViewSampler brdf_lut_texture;
+
+		VmaImageViewSampler directional_light_shadow_texture;
 	};
 
 	struct MeshRenderData : public RenderData
@@ -62,7 +64,7 @@ namespace Bamboo
 		VmaImageViewSampler env_texture;
 	};
 
-	struct DirectionalLightShadowPassRenderData : public RenderData
+	struct ShadowCascadeCreateInfo
 	{
 		float camera_near;
 		float camera_far;

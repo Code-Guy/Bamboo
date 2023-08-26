@@ -50,6 +50,8 @@ struct DirectionalLight
 {
 	vec3 direction; float padding0;
 	vec3 color; float padding1;
+	mat4 cascade_view_projs[SHADOW_CASCADE_NUM];
+	vec4 cascade_splits;
 };
 
 struct PointLight
@@ -76,7 +78,8 @@ struct LightingUBO
 {
     // camera
     vec3 camera_pos; float padding0;
-    mat4 inv_view_proj;
+    mat4 camera_view;
+    mat4 inv_camera_view_proj;
 
     // lights
     SkyLight sky_light;
@@ -103,8 +106,7 @@ struct MaterialInfo
 
 struct ShadowCascadeUBO
 {
-    mat4 view_projs[SHADOW_CASCADE_NUM];
-    float splits[SHADOW_CASCADE_NUM];
+    mat4 cascade_view_projs[SHADOW_CASCADE_NUM];
 };
 
 #endif

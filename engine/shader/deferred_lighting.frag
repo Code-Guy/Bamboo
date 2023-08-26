@@ -23,7 +23,7 @@ void main()
 	// reconstruct position from depth image
 	MaterialInfo mat_info;
     vec4 ndc_pos = vec4(f_tex_coord * 2.0 - 1.0, depth, 1.0);
-    vec4 world_position = lighting_ubo.inv_view_proj * ndc_pos;
+    vec4 world_position = lighting_ubo.inv_camera_view_proj * ndc_pos;
 	mat_info.position = world_position.xyz / world_position.w;
 	mat_info.normal = subpassLoad(normal_texture_sampler).xyz;
 	

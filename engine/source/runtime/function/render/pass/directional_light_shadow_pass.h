@@ -20,17 +20,18 @@ namespace Bamboo
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
 
-	private:
-		void updateCascades();
+		void updateCascades(const ShadowCascadeCreateInfo& shadow_cascade_ci);
+		VmaImageViewSampler getDepthImageViewSampler() { return m_depth_image_view_sampler; }
 
+		ShadowCascadeUBO m_shadow_cascade_ubo;
+		float m_cascade_splits[SHADOW_CASCADE_NUM];
+
+	private:
 		VkFormat m_format;
 		uint32_t m_size;
 		float m_cascade_split_lambda;
 
 		VmaImageViewSampler m_depth_image_view_sampler;
-		std::shared_ptr<DirectionalLightShadowPassRenderData> m_dlsp_render_data;
-
-		ShadowCascadeUBO m_shadow_cascade_ubo;
 		std::vector<VmaBuffer> m_shadow_cascade_ubs;
 	};
 }

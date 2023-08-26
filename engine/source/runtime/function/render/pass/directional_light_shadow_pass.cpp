@@ -12,7 +12,7 @@ namespace Bamboo
 	DirectionalLightShadowPass::DirectionalLightShadowPass()
 	{
 		m_format = VulkanRHI::get().getDepthFormat();
-		m_size = 256;
+		m_size = 2048;
 		m_cascade_split_lambda = 0.95f;
 	}
 
@@ -32,7 +32,10 @@ namespace Bamboo
 
 	void DirectionalLightShadowPass::render()
 	{
-		updateCascades();
+		if (m_render_datas.empty())
+		{
+			return;
+		}
 
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -46,10 +49,8 @@ namespace Bamboo
 		render_pass_bi.clearValueCount = 1;
 		render_pass_bi.pClearValues = &clear_value;
 
-		//VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
-		//uint32_t flight_index = VulkanRHI::get().getFlightIndex();
-		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
-		uint32_t flight_index = 0;
+ 		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
+ 		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
 
 		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -67,9 +68,8 @@ namespace Bamboo
 		scissor.extent = { m_size, m_size };
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
-		for (uint32_t r = 1; r < m_render_datas.size(); ++r)
+		for (const auto& render_data : m_render_datas)
 		{
-			std::shared_ptr<RenderData>& render_data = m_render_datas[r];
 			std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
 			std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = std::static_pointer_cast<StaticMeshRenderData>(render_data);
 			EMeshType mesh_type = static_mesh_render_data->mesh_type;
@@ -109,12 +109,12 @@ namespace Bamboo
 				std::vector<VkWriteDescriptorSet> desc_writes;
 
 				// bone matrix ubo
+				VkDescriptorBufferInfo bone_ubo_desc_buffer_info{};
 				if (mesh_type == EMeshType::Skeletal)
 				{
-					VkDescriptorBufferInfo desc_buffer_info{};
-					desc_buffer_info.buffer = skeletal_mesh_render_data->bone_ubs[flight_index].buffer;
-					desc_buffer_info.offset = 0;
-					desc_buffer_info.range = sizeof(BoneUBO);
+					bone_ubo_desc_buffer_info.buffer = skeletal_mesh_render_data->bone_ubs[flight_index].buffer;
+					bone_ubo_desc_buffer_info.offset = 0;
+					bone_ubo_desc_buffer_info.range = sizeof(BoneUBO);
 
 					VkWriteDescriptorSet desc_write{};
 					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -123,16 +123,16 @@ namespace Bamboo
 					desc_write.dstArrayElement = 0;
 					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					desc_write.descriptorCount = 1;
-					desc_write.pBufferInfo = &desc_buffer_info;
+					desc_write.pBufferInfo = &bone_ubo_desc_buffer_info;
 					desc_writes.push_back(desc_write);
 				}
 
 				// shadow cascade ubo
+				VkDescriptorBufferInfo shadow_cascade_ubo_desc_buffer_info{};
 				{
-					VkDescriptorBufferInfo desc_buffer_info{};
-					desc_buffer_info.buffer = m_shadow_cascade_ubs[flight_index].buffer;
-					desc_buffer_info.offset = 0;
-					desc_buffer_info.range = sizeof(ShadowCascadeUBO);
+					shadow_cascade_ubo_desc_buffer_info.buffer = m_shadow_cascade_ubs[flight_index].buffer;
+					shadow_cascade_ubo_desc_buffer_info.offset = 0;
+					shadow_cascade_ubo_desc_buffer_info.range = sizeof(ShadowCascadeUBO);
 
 					VkWriteDescriptorSet desc_write{};
 					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -141,14 +141,14 @@ namespace Bamboo
 					desc_write.dstArrayElement = 0;
 					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					desc_write.descriptorCount = 1;
-					desc_write.pBufferInfo = &desc_buffer_info;
+					desc_write.pBufferInfo = &shadow_cascade_ubo_desc_buffer_info;
 					desc_writes.push_back(desc_write);
 				}
 
 				// base color texture image sampler
+				VkDescriptorImageInfo desc_image_info;
 				{
 					VmaImageViewSampler base_color_texture = static_mesh_render_data->pbr_textures[i].base_color_texure;
-					VkDescriptorImageInfo desc_image_info;
 					desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 					desc_image_info.imageView = base_color_texture.view;
 					desc_image_info.sampler = base_color_texture.sampler;
@@ -173,11 +173,6 @@ namespace Bamboo
 		}
 
 		vkCmdEndRenderPass(command_buffer);
-		VulkanUtil::endInstantCommands(command_buffer);
-
-		// save depth image to disk
-		VulkanUtil::saveImage(m_depth_image_view_sampler.image(), m_size, m_size, m_format, 
-			VK_IMAGE_LAYOUT_UNDEFINED, "D:/Test/shadow/0.bin", 1, SHADOW_CASCADE_NUM);
 	}
 
 	void DirectionalLightShadowPass::destroy()
@@ -395,13 +390,12 @@ namespace Bamboo
 		RenderPass::destroyResizableObjects();
 	}
 
-	void DirectionalLightShadowPass::updateCascades()
+	void DirectionalLightShadowPass::updateCascades(const ShadowCascadeCreateInfo& shadow_cascade_ci)
 	{
 		float cascade_splits[SHADOW_CASCADE_NUM];
 
-		m_dlsp_render_data = std::static_pointer_cast<DirectionalLightShadowPassRenderData>(m_render_datas.front());
-		float near = m_dlsp_render_data->camera_near;
-		float far = m_dlsp_render_data->camera_far;
+		float near = shadow_cascade_ci.camera_near;
+		float far = shadow_cascade_ci.camera_far;
 		float range = far - near;
 
 		float min_z = near;
@@ -441,7 +435,7 @@ namespace Bamboo
 			// Project frustum corners into world space
 			for (uint32_t i = 0; i < 8; ++i)
 			{
-				glm::vec4 inv_frustum_corner = m_dlsp_render_data->inv_camera_view_proj * glm::vec4(frustum_corners[i], 1.0f);
+				glm::vec4 inv_frustum_corner = shadow_cascade_ci.inv_camera_view_proj * glm::vec4(frustum_corners[i], 1.0f);
 				frustum_corners[i] = inv_frustum_corner / inv_frustum_corner.w;
 			}
 
@@ -464,20 +458,16 @@ namespace Bamboo
 			for (uint32_t i = 0; i < 8; ++i) 
 			{
 				float distance = glm::length(frustum_corners[i] - frustum_center);
-				radius = glm::max(radius, distance);
+				radius = std::max(radius, distance);
 			}
-			radius = std::ceil(radius * 16.0f) / 16.0f;
 
-			glm::vec3 max_extents = glm::vec3(radius);
-			glm::vec3 min_extents = -max_extents;
-
-			glm::mat4 light_view = glm::lookAtRH(frustum_center - m_dlsp_render_data->light_dir * max_extents.z, frustum_center, k_up_vector);
-			glm::mat4 light_proj = glm::orthoRH_ZO(min_extents.x, max_extents.x, min_extents.y, max_extents.y, 0.0f, max_extents.z - min_extents.z);
+			glm::mat4 light_view = glm::lookAtRH(frustum_center - shadow_cascade_ci.light_dir * radius, frustum_center, k_up_vector);
+			glm::mat4 light_proj = glm::orthoRH_ZO(-radius, radius, -radius, radius, -far, radius * 2.0f);
 			light_proj[1][1] *= -1.0f;
 
 			// Store split distance and matrix in cascade
-			m_shadow_cascade_ubo.view_projs[c] = light_proj * light_view;
-			m_shadow_cascade_ubo.splits[c] = -(near + cascade_split * range);
+			m_shadow_cascade_ubo.cascade_view_projs[c] = light_proj * light_view;
+			m_cascade_splits[c] = -(near + cascade_split * range);
 
 			last_cascade_split = cascade_split;
 		}
