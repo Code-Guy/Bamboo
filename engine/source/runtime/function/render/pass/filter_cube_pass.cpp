@@ -1,5 +1,6 @@
 #include "filter_cube_pass.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
+#include "runtime/core/math/transform.h"
 #include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/resource/asset/base/mesh.h"
@@ -10,8 +11,6 @@
 
 #include <array>
 #include <fstream>
-
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 namespace Bamboo
 {
@@ -50,8 +49,7 @@ namespace Bamboo
 	{
 		RenderPass::init();
 
-		const uint32_t kSize = 2048;
-		createResizableObjects(kSize, kSize);
+		createFramebuffer();
 	}
 
 	void FilterCubePass::render()
@@ -118,7 +116,7 @@ namespace Bamboo
 					vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 					vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
-					glm::mat4 mvp = glm::perspective((float)PI / 2.0f, 1.0f, 0.1f, 512.0f) * view_matrices[f];
+					glm::mat4 mvp = glm::perspectiveRH_ZO((float)PI / 2.0f, 1.0f, 0.1f, 512.0f) * view_matrices[f];
 					switch (FilterType)
 					{
 					case EFilterType::Irradiance:
@@ -216,8 +214,8 @@ namespace Bamboo
 					VulkanUtil::endInstantCommands(command_buffer);
 
 					// save framebuffer texture data to file
-					VulkanUtil::saveImage(color_image, static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height), 
-						m_formats[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, StringUtil::format("D:/Test/ibl/filter_cube_%d_%d_%d.bin", i, f, m));
+// 					VulkanUtil::saveImage(color_image, static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height), 
+// 						m_formats[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, StringUtil::format("D:/Test/ibl/filter_cube_%d_%d_%d.bin", i, f, m));
 
 					// transition framebuffer texture to color attachment optimal
 					VulkanUtil::transitionImageLayout(color_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);

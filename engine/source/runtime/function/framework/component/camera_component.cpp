@@ -33,12 +33,12 @@ namespace Bamboo
 			updatePose();
 		}
 
-		return glm::lookAt(m_transform_component->m_position, m_transform_component->m_position + m_forward, m_up);
+		return glm::lookAtRH(m_transform_component->m_position, m_transform_component->m_position + m_forward, m_up);
 	}
 
 	glm::mat4 CameraComponent::getPerspectiveMatrix()
 	{
-		glm::mat4 projMat = glm::perspective(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
+		glm::mat4 projMat = glm::perspectiveRH_ZO(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
 		projMat[1][1] *= -1.0f;
 
 		return projMat;

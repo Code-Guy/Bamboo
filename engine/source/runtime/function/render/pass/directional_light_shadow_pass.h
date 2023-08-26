@@ -4,13 +4,14 @@
 
 namespace Bamboo
 {
-	class BRDFLUTPass : public RenderPass
+	class DirectionalLightShadowPass : public RenderPass
 	{
 	public:
-		BRDFLUTPass();
+		DirectionalLightShadowPass();
 
 		virtual void init() override;
 		virtual void render() override;
+		virtual void destroy() override;
 
 		virtual void createRenderPass() override;
 		virtual void createDescriptorSetLayouts() override;
@@ -20,8 +21,16 @@ namespace Bamboo
 		virtual void destroyResizableObjects() override;
 
 	private:
+		void updateCascades();
+
 		VkFormat m_format;
 		uint32_t m_size;
-		VmaImageView m_image_view;
+		float m_cascade_split_lambda;
+
+		VmaImageViewSampler m_depth_image_view_sampler;
+		std::shared_ptr<DirectionalLightShadowPassRenderData> m_dlsp_render_data;
+
+		ShadowCascadeUBO m_shadow_cascade_ubo;
+		std::vector<VmaBuffer> m_shadow_cascade_ubs;
 	};
 }

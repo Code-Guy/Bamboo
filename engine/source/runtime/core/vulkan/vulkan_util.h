@@ -97,8 +97,10 @@ namespace Bamboo
 		static uint32_t calcFormatSize(VkFormat format);
 		static uint32_t calcMipLevel(uint32_t width, uint32_t height = 0);
 		static void extractImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
-			VkImageLayout initial_layout, std::vector<uint8_t>& image_data, VkImageLayout final_layout = VK_IMAGE_LAYOUT_UNDEFINED);
+			VkImageLayout initial_layout, std::vector<uint8_t>& image_data, uint32_t mip_levels = 1,
+			uint32_t layers = 1, VkImageLayout final_layout = VK_IMAGE_LAYOUT_UNDEFINED);
 		static void saveImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
-			VkImageLayout initial_layout, const std::string& filename, VkImageLayout final_layout = VK_IMAGE_LAYOUT_UNDEFINED);
+			VkImageLayout initial_layout, const std::string& filename, uint32_t mip_levels = 1,
+			uint32_t layers = 1, VkImageLayout final_layout = VK_IMAGE_LAYOUT_UNDEFINED);
 	};
 }

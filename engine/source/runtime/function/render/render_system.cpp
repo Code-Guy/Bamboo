@@ -6,6 +6,7 @@
 #include "runtime/platform/timer/timer.h"
 
 #include "runtime/core/vulkan/vulkan_rhi.h"
+#include "runtime/function/render/pass/directional_light_shadow_pass.h"
 #include "runtime/function/render/pass/main_pass.h"
 #include "runtime/function/render/pass/ui_pass.h"
 
@@ -22,7 +23,8 @@ namespace Bamboo
 {
 
 	void RenderSystem::init()
-	{		
+	{
+		m_render_passes[ERenderPassType::DirectionalLightShadow] = std::make_shared<DirectionalLightShadowPass>();
 		m_render_passes[ERenderPassType::Main] = std::make_shared<MainPass>();
 		m_ui_pass = std::make_shared<UIPass>();
 		m_render_passes[ERenderPassType::UI] = m_ui_pass;
@@ -118,6 +120,7 @@ namespace Bamboo
 	void RenderSystem::collectRenderDatas()
 	{
 		// mesh render datas
+		std::vector<std::shared_ptr<RenderData>> directional_light_shadow_pass_render_datas;
 		std::vector<std::shared_ptr<RenderData>> main_pass_render_datas;
 
 		// get current active world
@@ -136,7 +139,11 @@ namespace Bamboo
 		lighting_render_data->m_prefilter_texture = as->loadAsset<TextureCube>(DEFAULT_TEXTURE_CUBE_URL)->m_image_view_sampler;
 
 		std::shared_ptr<SkyboxRenderData> skybox_render_data = nullptr;
-		
+		std::shared_ptr<DirectionalLightShadowPassRenderData> directional_light_shadow_pass_render_data = std::make_shared<DirectionalLightShadowPassRenderData>();
+		directional_light_shadow_pass_render_data->camera_near = camera_component->m_near;
+		directional_light_shadow_pass_render_data->camera_far = camera_component->m_far;
+		directional_light_shadow_pass_render_data->inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
+
 		// set lighting uniform buffer object
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
@@ -240,6 +247,7 @@ namespace Bamboo
 						});
 					}
 
+					directional_light_shadow_pass_render_datas.push_back(static_mesh_render_data);
 					main_pass_render_datas.push_back(static_mesh_render_data);
 				}
 			}
@@ -278,6 +286,8 @@ namespace Bamboo
 				lighting_ubo.has_directional_light = true;
 				lighting_ubo.directional_light.direction = transform_component->getForwardVector();
 				lighting_ubo.directional_light.color = directional_light_component->getColor();
+
+				directional_light_shadow_pass_render_data->light_dir = transform_component->getForwardVector();
 			}
 
 			// get point light component
@@ -322,14 +332,17 @@ namespace Bamboo
 			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
 		}
 		lighting_render_data->lighting_ubs = m_lighting_ubs;
-		
+
+		// directional light shadow pass: 1 directional light shadow pass render data + n mesh datas
+		directional_light_shadow_pass_render_datas.insert(directional_light_shadow_pass_render_datas.begin(), directional_light_shadow_pass_render_data);
+		m_render_passes[ERenderPassType::DirectionalLightShadow]->setRenderDatas(directional_light_shadow_pass_render_datas);
+
 		// main pass: 1 light data + n mesh datas(opaque or transparent) + 1 skybox render data(optional)
 		main_pass_render_datas.insert(main_pass_render_datas.begin(), lighting_render_data);
 		if (skybox_render_data)
 		{
 			main_pass_render_datas.push_back(skybox_render_data);
 		}
-		
 		m_render_passes[ERenderPassType::Main]->setRenderDatas(main_pass_render_datas);
 	}
 

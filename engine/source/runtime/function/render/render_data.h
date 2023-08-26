@@ -61,4 +61,13 @@ namespace Bamboo
 		TransformPCO transform_pco;
 		VmaImageViewSampler env_texture;
 	};
+
+	struct DirectionalLightShadowPassRenderData : public RenderData
+	{
+		float camera_near;
+		float camera_far;
+		mat4 inv_camera_view_proj;
+
+		vec3 light_dir;
+	};
 }

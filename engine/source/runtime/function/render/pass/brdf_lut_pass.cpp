@@ -13,13 +13,14 @@ namespace Bamboo
 	BRDFLUTPass::BRDFLUTPass()
 	{
 		m_format = VK_FORMAT_R16G16_SFLOAT;
+		m_size = 2048;
 	}
 
 	void BRDFLUTPass::init()
 	{
 		RenderPass::init();
 
-		createFramebuffer();
+		createResizableObjects(m_size, m_size);
 	}
 
 	void BRDFLUTPass::render()

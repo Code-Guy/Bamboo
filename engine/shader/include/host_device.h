@@ -101,4 +101,10 @@ struct MaterialInfo
     float occlusion;
 };
 
+struct ShadowCascadeUBO
+{
+    mat4 view_projs[SHADOW_CASCADE_NUM];
+    float splits[SHADOW_CASCADE_NUM];
+};
+
 #endif

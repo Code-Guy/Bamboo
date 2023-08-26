@@ -16,5 +16,7 @@
 
 #define MAX_POINT_LIGHT_NUM 16
 #define MAX_SPOT_LIGHT_NUM 16
+#define SHADOW_CASCADE_NUM 4
+#define MIN_SHADOW_ALPHA 0.1
 
 #endif

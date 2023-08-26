@@ -1,8 +1,6 @@
 #pragma once
 
 #include "component.h"
-
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "runtime/core/math/transform.h"
 
 namespace Bamboo

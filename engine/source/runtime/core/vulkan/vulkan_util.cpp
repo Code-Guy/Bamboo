@@ -267,7 +267,7 @@ namespace Bamboo
 		VkImageViewCreateInfo image_view_ci{};
 		image_view_ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		image_view_ci.image = image;
-		image_view_ci.viewType = layers == 6 ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
+		image_view_ci.viewType = layers == 6 ? VK_IMAGE_VIEW_TYPE_CUBE : (layers > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D);
 		image_view_ci.format = format;
 
 		image_view_ci.subresourceRange.aspectMask = aspect_flags;
@@ -598,11 +598,12 @@ namespace Bamboo
 	}
 
 	void VulkanUtil::extractImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
-		VkImageLayout initial_layout, std::vector<uint8_t>& image_data, VkImageLayout final_layout)
+		VkImageLayout initial_layout, std::vector<uint8_t>& image_data, uint32_t mip_levels,
+		uint32_t layers, VkImageLayout final_layout)
 	{
 		// create staging buffer
 		VmaBuffer staging_buffer;
-		size_t image_size = width * height * calcFormatSize(format);
+		size_t image_size = width * height * calcFormatSize(format) * layers;
 		createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, staging_buffer);
 
 		// copy to staging buffer
@@ -611,18 +612,14 @@ namespace Bamboo
 		region.bufferImageHeight = 0;
 		region.bufferRowLength = 0;
 		region.imageSubresource.aspectMask = calcImageAspectFlags(format);
-		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.mipLevel = mip_levels - 1;
 		region.imageSubresource.baseArrayLayer = 0;
-		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.layerCount = layers;
 		region.imageOffset = { 0, 0, 0 };
 		region.imageExtent = { width, height, 1 };
 
 		// transition image layouts
-		if (final_layout == VK_IMAGE_LAYOUT_UNDEFINED)
-		{
-			final_layout = initial_layout;
-		}
-		VulkanUtil::transitionImageLayout(image, initial_layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, format);
+		VulkanUtil::transitionImageLayout(image, initial_layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, format, mip_levels, layers);
 
 		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
 
@@ -638,7 +635,10 @@ namespace Bamboo
 		VulkanUtil::endInstantCommands(command_buffer);
 
 		// reset image layouts
-		VulkanUtil::transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, final_layout, format);
+		if (final_layout != VK_IMAGE_LAYOUT_UNDEFINED)
+		{
+			VulkanUtil::transitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, final_layout, format, mip_levels, layers);
+		}
 
 		// mapping data
 		void* mapped_data = nullptr;
@@ -650,10 +650,11 @@ namespace Bamboo
 	}
 
 	void VulkanUtil::saveImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
-		VkImageLayout initial_layout, const std::string& filename, VkImageLayout final_layout)
+		VkImageLayout initial_layout, const std::string& filename, uint32_t mip_levels, 
+		uint32_t layers, VkImageLayout final_layout)
 	{
 		std::vector<uint8_t> image_data;
-		extractImage(image, width, height, format, initial_layout, image_data, final_layout);
+		extractImage(image, width, height, format, initial_layout, image_data, mip_levels, layers, final_layout);
 
 		std::ofstream ofs(filename, std::ios::binary);
 		ofs.write((const char*)image_data.data(), image_data.size());
