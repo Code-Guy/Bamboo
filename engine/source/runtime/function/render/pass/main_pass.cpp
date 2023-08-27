@@ -6,8 +6,6 @@
 #include "runtime/resource/asset/base/mesh.h"
 #include "runtime/function/render/render_data.h"
 
-#include <array>
-
 namespace Bamboo
 {
 
@@ -78,22 +76,11 @@ namespace Bamboo
 		{
 			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[2]);
 
-			// lighting uniform buffer
-			VkDescriptorBufferInfo desc_buffer_info{};
-			desc_buffer_info.buffer = m_lighting_render_data->lighting_ubs[flight_index].buffer;
-			desc_buffer_info.offset = 0;
-			desc_buffer_info.range = sizeof(LightingUBO);
-
 			std::vector<VkWriteDescriptorSet> desc_writes;
-			VkWriteDescriptorSet desc_write{};
-			desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			desc_write.dstSet = 0;
-			desc_write.dstBinding = 9;
-			desc_write.dstArrayElement = 0;
-			desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			desc_write.descriptorCount = 1;
-			desc_write.pBufferInfo = &desc_buffer_info;
-			desc_writes.push_back(desc_write);
+			std::array<VkDescriptorBufferInfo, 1> desc_buffer_infos{};
+
+			// lighting uniform buffer
+			addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 9);
 
 			// input attachments and ibl textures
 			std::vector<VmaImageViewSampler> textures = {
@@ -107,24 +94,10 @@ namespace Bamboo
 				m_lighting_render_data->brdf_lut_texture,
 				m_lighting_render_data->directional_light_shadow_texture
 			};
-
 			std::vector<VkDescriptorImageInfo> desc_image_infos(textures.size(), VkDescriptorImageInfo{});
 			for (size_t i = 0; i < textures.size(); ++i)
 			{
-				desc_image_infos[i].imageLayout = i == textures.size() - 1 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL :
-					VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				desc_image_infos[i].imageView = textures[i].view;
-				desc_image_infos[i].sampler = textures[i].sampler;
-
-				VkWriteDescriptorSet desc_write{};
-				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				desc_write.dstSet = 0;
-				desc_write.dstBinding = i;
-				desc_write.dstArrayElement = 0;
-				desc_write.descriptorType = i < 5 ? VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT : VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				desc_write.descriptorCount = 1;
-				desc_write.pImageInfo = &desc_image_infos[i];
-				desc_writes.push_back(desc_write);
+				addImageDescriptorSet(desc_writes, desc_image_infos[i], textures[i], i);
 			}
 
 			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -142,7 +115,7 @@ namespace Bamboo
 			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[5]);
 
 			// bind vertex and index buffer
-			std::shared_ptr<SkyboxRenderData> skybox_render_data = std::static_pointer_cast<SkyboxRenderData>(m_render_datas[m_render_datas.size() - 1]);
+			std::shared_ptr<SkyboxRenderData> skybox_render_data = std::static_pointer_cast<SkyboxRenderData>(m_render_datas.back());
 			VkBuffer vertexBuffers[] = { skybox_render_data->vertex_buffer.buffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
@@ -152,22 +125,12 @@ namespace Bamboo
 			vkCmdPushConstants(command_buffer, m_pipeline_layouts[5], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO), &skybox_render_data->transform_pco);
 
 			// update(push) sub mesh descriptors
+			std::vector<VkWriteDescriptorSet> desc_writes;
 			VkDescriptorImageInfo desc_image_info{};
-			desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			desc_image_info.imageView = skybox_render_data->env_texture.view;
-			desc_image_info.sampler = skybox_render_data->env_texture.sampler;
-
-			VkWriteDescriptorSet desc_write{};
-			desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			desc_write.dstSet = 0;
-			desc_write.dstBinding = 0;
-			desc_write.dstArrayElement = 0;
-			desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			desc_write.descriptorCount = 1;
-			desc_write.pImageInfo = &desc_image_info;
+			addImageDescriptorSet(desc_writes, desc_image_info, skybox_render_data->env_texture, 0);
 
 			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-				m_pipeline_layouts[5], 0, 1, &desc_write);
+				m_pipeline_layouts[5], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 			vkCmdDrawIndexed(command_buffer, skybox_render_data->index_count, 1, 0, 0, 0);
 
 			// render transparency mesh in final step
@@ -202,7 +165,7 @@ namespace Bamboo
 		for (uint32_t i = 0; i < 5; ++i)
 		{
 			input_references[i].attachment = i + 1;
-			input_references[i].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			input_references[i].layout = i == 4 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		}
 
 		// subpasses
@@ -661,45 +624,20 @@ namespace Bamboo
 
 			// update(push) sub mesh descriptors
 			std::vector<VkWriteDescriptorSet> desc_writes;
+			std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
+			std::array<VkDescriptorImageInfo, 8> desc_image_infos{};
 
 			// bone matrix ubo
 			if (mesh_type == EMeshType::Skeletal)
 			{
-				VkDescriptorBufferInfo desc_buffer_info{};
-				desc_buffer_info.buffer = skeletal_mesh_render_data->bone_ubs[flight_index].buffer;
-				desc_buffer_info.offset = 0;
-				desc_buffer_info.range = sizeof(BoneUBO);
-
-				VkWriteDescriptorSet desc_write{};
-				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				desc_write.dstSet = 0;
-				desc_write.dstBinding = 0;
-				desc_write.dstArrayElement = 0;
-				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				desc_write.descriptorCount = 1;
-				desc_write.pBufferInfo = &desc_buffer_info;
-				desc_writes.push_back(desc_write);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
 			}
 
 			// forward rendering
-			std::vector<VkDescriptorImageInfo> ibl_desc_image_infos;
 			if (renderer_type == ERendererType::Forward)
 			{
 				// lighting ubo
-				VkDescriptorBufferInfo desc_buffer_info{};
-				desc_buffer_info.buffer = m_lighting_render_data->lighting_ubs[flight_index].buffer;
-				desc_buffer_info.offset = 0;
-				desc_buffer_info.range = sizeof(LightingUBO);
-
-				VkWriteDescriptorSet desc_write{};
-				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				desc_write.dstSet = 0;
-				desc_write.dstBinding = 9;
-				desc_write.dstArrayElement = 0;
-				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				desc_write.descriptorCount = 1;
-				desc_write.pBufferInfo = &desc_buffer_info;
-				desc_writes.push_back(desc_write);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 9);
 
 				// ibl textures
 				std::vector<VmaImageViewSampler> ibl_textures = {
@@ -708,23 +646,9 @@ namespace Bamboo
 					m_lighting_render_data->brdf_lut_texture,
 					m_lighting_render_data->directional_light_shadow_texture
 				};
-				ibl_desc_image_infos.resize(ibl_textures.size(), {});
 				for (size_t t = 0; t < ibl_textures.size(); ++t)
 				{
-					ibl_desc_image_infos[t].imageLayout = t == ibl_textures.size() - 1 ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : 
-						VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					ibl_desc_image_infos[t].imageView = ibl_textures[t].view;
-					ibl_desc_image_infos[t].sampler = ibl_textures[t].sampler;
-
-					VkWriteDescriptorSet desc_write{};
-					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					desc_write.dstSet = 0;
-					desc_write.dstBinding = static_cast<uint32_t>(t + 5);
-					desc_write.dstArrayElement = 0;
-					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					desc_write.descriptorCount = 1;
-					desc_write.pImageInfo = &ibl_desc_image_infos[t];
-					desc_writes.push_back(desc_write);
+					addImageDescriptorSet(desc_writes, desc_image_infos[t], ibl_textures[t], static_cast<uint32_t>(t + 5));
 				}
 			}
 			
@@ -735,22 +659,9 @@ namespace Bamboo
 				static_mesh_render_data->pbr_textures[i].normal_texure,
 				static_mesh_render_data->pbr_textures[i].emissive_texure,
 			};
-			std::vector<VkDescriptorImageInfo> pbr_desc_image_infos(pbr_textures.size(), VkDescriptorImageInfo{});
 			for (size_t t = 0; t < pbr_textures.size(); ++t)
 			{
-				pbr_desc_image_infos[t].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				pbr_desc_image_infos[t].imageView = pbr_textures[t].view;
-				pbr_desc_image_infos[t].sampler = pbr_textures[t].sampler;
-
-				VkWriteDescriptorSet desc_write{};
-				desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				desc_write.dstSet = 0;
-				desc_write.dstBinding = static_cast<uint32_t>(t + 1);
-				desc_write.dstArrayElement = 0;
-				desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				desc_write.descriptorCount = 1;
-				desc_write.pImageInfo = &pbr_desc_image_infos[t];
-				desc_writes.push_back(desc_write);
+				addImageDescriptorSet(desc_writes, desc_image_infos[t + 4], pbr_textures[t], static_cast<uint32_t>(t + 1));
 			}
 
 			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,

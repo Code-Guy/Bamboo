@@ -155,4 +155,40 @@ namespace Bamboo
 		return m_width > 0 && m_height > 0;
 	}
 
+	void RenderPass::addBufferDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
+		VkDescriptorBufferInfo& desc_buffer_info, VmaBuffer buffer, uint32_t binding)
+	{
+		desc_buffer_info.buffer = buffer.buffer;
+		desc_buffer_info.offset = 0;
+		desc_buffer_info.range = buffer.size;
+
+		VkWriteDescriptorSet desc_write{};
+		desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		desc_write.dstSet = 0;
+		desc_write.dstBinding = binding;
+		desc_write.dstArrayElement = 0;
+		desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		desc_write.descriptorCount = 1;
+		desc_write.pBufferInfo = &desc_buffer_info;
+		desc_writes.push_back(desc_write);
+	}
+
+	void RenderPass::addImageDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
+		VkDescriptorImageInfo& desc_image_info, VmaImageViewSampler texture, uint32_t binding)
+	{
+		desc_image_info.imageLayout = texture.image_layout;
+		desc_image_info.imageView = texture.view;
+		desc_image_info.sampler = texture.sampler;
+
+		VkWriteDescriptorSet desc_write{};
+		desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		desc_write.dstSet = 0;
+		desc_write.dstBinding = binding;
+		desc_write.dstArrayElement = 0;
+		desc_write.descriptorType = texture.descriptor_type;
+		desc_write.descriptorCount = 1;
+		desc_write.pImageInfo = &desc_image_info;
+		desc_writes.push_back(desc_write);
+	}
+
 }

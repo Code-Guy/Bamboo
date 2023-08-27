@@ -5,8 +5,6 @@
 #include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/texture_2d.h"
 
-#include <array>
-
 namespace Bamboo
 {
 

@@ -71,5 +71,6 @@ namespace Bamboo
 		mat4 inv_camera_view_proj;
 
 		vec3 light_dir;
+		float light_cascade_frustum_near;
 	};
 }

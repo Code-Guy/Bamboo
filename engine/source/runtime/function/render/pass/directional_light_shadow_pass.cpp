@@ -4,8 +4,6 @@
 #include "runtime/resource/asset/base/mesh.h"
 #include "runtime/core/math/transform.h"
 
-#include <array>
-
 namespace Bamboo
 {
 
@@ -98,71 +96,24 @@ namespace Bamboo
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
 				// push constants
-				const void* pcos[] = { &static_mesh_render_data->transform_pco };
-				for (size_t c = 0; c < m_push_constant_ranges.size(); ++c)
-				{
-					const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[c];
-					vkCmdPushConstants(command_buffer, pipeline_layout, pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[c]);
-				}
+				vkCmdPushConstants(command_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO), &static_mesh_render_data->transform_pco);
 
 				// update(push) sub mesh descriptors
 				std::vector<VkWriteDescriptorSet> desc_writes;
+				std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
+				std::array<VkDescriptorImageInfo, 1> desc_image_infos{};
 
 				// bone matrix ubo
-				VkDescriptorBufferInfo bone_ubo_desc_buffer_info{};
 				if (mesh_type == EMeshType::Skeletal)
 				{
-					bone_ubo_desc_buffer_info.buffer = skeletal_mesh_render_data->bone_ubs[flight_index].buffer;
-					bone_ubo_desc_buffer_info.offset = 0;
-					bone_ubo_desc_buffer_info.range = sizeof(BoneUBO);
-
-					VkWriteDescriptorSet desc_write{};
-					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					desc_write.dstSet = 0;
-					desc_write.dstBinding = 0;
-					desc_write.dstArrayElement = 0;
-					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					desc_write.descriptorCount = 1;
-					desc_write.pBufferInfo = &bone_ubo_desc_buffer_info;
-					desc_writes.push_back(desc_write);
+					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
 				}
 
 				// shadow cascade ubo
-				VkDescriptorBufferInfo shadow_cascade_ubo_desc_buffer_info{};
-				{
-					shadow_cascade_ubo_desc_buffer_info.buffer = m_shadow_cascade_ubs[flight_index].buffer;
-					shadow_cascade_ubo_desc_buffer_info.offset = 0;
-					shadow_cascade_ubo_desc_buffer_info.range = sizeof(ShadowCascadeUBO);
-
-					VkWriteDescriptorSet desc_write{};
-					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					desc_write.dstSet = 0;
-					desc_write.dstBinding = 1;
-					desc_write.dstArrayElement = 0;
-					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					desc_write.descriptorCount = 1;
-					desc_write.pBufferInfo = &shadow_cascade_ubo_desc_buffer_info;
-					desc_writes.push_back(desc_write);
-				}
-
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_shadow_cascade_ubs[flight_index], 1);
+	
 				// base color texture image sampler
-				VkDescriptorImageInfo desc_image_info;
-				{
-					VmaImageViewSampler base_color_texture = static_mesh_render_data->pbr_textures[i].base_color_texure;
-					desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					desc_image_info.imageView = base_color_texture.view;
-					desc_image_info.sampler = base_color_texture.sampler;
-
-					VkWriteDescriptorSet desc_write{};
-					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					desc_write.dstSet = 0;
-					desc_write.dstBinding = 2;
-					desc_write.dstArrayElement = 0;
-					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					desc_write.descriptorCount = 1;
-					desc_write.pImageInfo = &desc_image_info;
-					desc_writes.push_back(desc_write);
-				}
+				addImageDescriptorSet(desc_writes, desc_image_infos[0], static_mesh_render_data->pbr_textures[i].base_color_texure, 2);
 
 				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 					pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
@@ -396,6 +347,7 @@ namespace Bamboo
 
 		float near = shadow_cascade_ci.camera_near;
 		float far = shadow_cascade_ci.camera_far;
+		float cascade_frustum_near = shadow_cascade_ci.light_cascade_frustum_near;
 		float range = far - near;
 
 		float min_z = near;
@@ -462,7 +414,7 @@ namespace Bamboo
 			}
 
 			glm::mat4 light_view = glm::lookAtRH(frustum_center - shadow_cascade_ci.light_dir * radius, frustum_center, k_up_vector);
-			glm::mat4 light_proj = glm::orthoRH_ZO(-radius, radius, -radius, radius, -far, radius * 2.0f);
+			glm::mat4 light_proj = glm::orthoRH_ZO(-radius, radius, -radius, radius, cascade_frustum_near, radius * 2.0f);
 			light_proj[1][1] *= -1.0f;
 
 			// Store split distance and matrix in cascade

@@ -65,9 +65,8 @@
                                                         }
                                                     },
                                                     "fovy": 60.0,
-                                                    "aspect_ratio": 1.5,
                                                     "near": 0.10000000149011612,
-                                                    "far": 256.0,
+                                                    "far": 1000.0,
                                                     "move_speed": 4.0,
                                                     "turn_speed": 0.10000000149011612,
                                                     "zoom_speed": 2.0
@@ -377,8 +376,8 @@
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
-                                                        "y": 135.0,
-                                                        "z": -35.2
+                                                        "y": 20.0,
+                                                        "z": -67.0
                                                     },
                                                     "scale": {
                                                         "x": 1.0,
@@ -401,14 +400,15 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 4,
+                                                        "intensity": 4.0,
                                                         "color": {
                                                             "r": 1.0,
                                                             "g": 1.0,
                                                             "b": 1.0
                                                         },
                                                         "cast_shadow": true
-                                                    }
+                                                    },
+                                                    "cascade_frustum_near": -50.0
                                                 }
                                             }
                                         }

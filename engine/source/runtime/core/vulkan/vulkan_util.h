@@ -26,6 +26,7 @@ namespace Bamboo
 	{
 		VkBuffer buffer = VK_NULL_HANDLE;
 		VmaAllocation allocation;
+		VkDeviceSize size;
 
 		void destroy();
 	};
@@ -55,6 +56,9 @@ namespace Bamboo
 		VmaImage vma_image;
 		VkImageView view = VK_NULL_HANDLE;
 		VkSampler sampler = VK_NULL_HANDLE;
+
+		VkImageLayout image_layout;
+		VkDescriptorType descriptor_type;
 
 		void destroy();
 		VkImage image() { return vma_image.image; }

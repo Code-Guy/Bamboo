@@ -9,7 +9,6 @@
 #include "runtime/platform/timer/timer.h"
 #include "runtime/platform/string/string_util.h"
 
-#include <array>
 #include <fstream>
 
 namespace Bamboo
@@ -146,23 +145,12 @@ namespace Bamboo
 					}
 
 					// update(push) descriptors
-					VkWriteDescriptorSet desc_write{};
-
+					std::vector<VkWriteDescriptorSet> desc_writes;
 					VkDescriptorImageInfo desc_image_info{};
-					desc_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					desc_image_info.imageView = m_skybox_texture_cube->m_image_view_sampler.view;
-					desc_image_info.sampler = m_skybox_texture_cube->m_image_view_sampler.sampler;
-
-					desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					desc_write.dstSet = 0;
-					desc_write.dstBinding = 0;
-					desc_write.dstArrayElement = 0;
-					desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					desc_write.descriptorCount = 1;
-					desc_write.pImageInfo = &desc_image_info;
+					addImageDescriptorSet(desc_writes, desc_image_info, m_skybox_texture_cube->m_image_view_sampler, 0);
 
 					VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-						m_pipeline_layouts[i], 0, 1, &desc_write);
+						m_pipeline_layouts[i], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 
 					// bind pipeline
 					vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[i]);

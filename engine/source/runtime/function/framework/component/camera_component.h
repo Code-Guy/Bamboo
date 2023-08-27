@@ -41,7 +41,6 @@ namespace Bamboo
 
 			// projection
 			ar(cereal::make_nvp("fovy", m_fovy));
-			ar(cereal::make_nvp("aspect_ratio", m_aspect_ratio));
 			ar(cereal::make_nvp("near", m_near));
 			ar(cereal::make_nvp("far", m_far));
 

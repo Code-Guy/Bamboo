@@ -2,7 +2,8 @@
 
 RTTR_REGISTRATION
 {
-rttr::registration::class_<Bamboo::DirectionalLightComponent>("DirectionalLightComponent");
+rttr::registration::class_<Bamboo::DirectionalLightComponent>("DirectionalLightComponent")
+	.property("cascade_frustum_near", &Bamboo::DirectionalLightComponent::m_cascade_frustum_near);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::DirectionalLightComponent)

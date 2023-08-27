@@ -156,6 +156,7 @@ namespace Bamboo
 			vma_alloc_ci.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
 		}
 		
+		buffer.size = size;
 		vmaCreateBuffer(VulkanRHI::get().getAllocator(), &buffer_ci, &vma_alloc_ci, &buffer.buffer, &buffer.allocation, nullptr);
 	}
 
@@ -201,6 +202,18 @@ namespace Bamboo
 
 		// create VkSampler
 		vma_image_view_sampler.sampler = createSampler(min_filter, mag_filter, mip_levels, address_mode, address_mode, address_mode);
+
+		// set image layout add descriptor type
+		vma_image_view_sampler.image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		vma_image_view_sampler.descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		if (ext_use_flags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+		{
+			vma_image_view_sampler.image_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		}
+		if (ext_use_flags & VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT)
+		{
+			vma_image_view_sampler.descriptor_type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+		}
 
 		if (image_data)
 		{

@@ -25,6 +25,11 @@ namespace Bamboo
 		bool isEnabled();
 
 	protected:
+		void addBufferDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
+			VkDescriptorBufferInfo& desc_buffer_info, VmaBuffer buffer, uint32_t binding);
+		void addImageDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
+			VkDescriptorImageInfo& desc_image_info, VmaImageViewSampler texture, uint32_t binding);
+
 		// vulkan objects
 		VkRenderPass m_render_pass = VK_NULL_HANDLE;
 		VkDescriptorPool m_descriptor_pool = VK_NULL_HANDLE;

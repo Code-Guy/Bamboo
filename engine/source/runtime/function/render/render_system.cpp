@@ -288,6 +288,7 @@ namespace Bamboo
 				lighting_ubo.directional_light.color = directional_light_component->getColor();
 
 				shadow_cascade_ci.light_dir = transform_component->getForwardVector();
+				shadow_cascade_ci.light_cascade_frustum_near = directional_light_component->m_cascade_frustum_near;
 			}
 
 			// get point light component

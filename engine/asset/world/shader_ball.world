@@ -65,9 +65,8 @@
                                                         }
                                                     },
                                                     "fovy": 60.0,
-                                                    "aspect_ratio": 1.5,
                                                     "near": 0.10000000149011612,
-                                                    "far": 64.0,
+                                                    "far": 1000.0,
                                                     "move_speed": 4.0,
                                                     "turn_speed": 0.10000000149011612,
                                                     "zoom_speed": 2.0
@@ -290,7 +289,8 @@
                                                             "b": 1.0
                                                         },
                                                         "cast_shadow": true
-                                                    }
+                                                    },
+                                                    "cascade_frustum_near": 0.0
                                                 }
                                             }
                                         }
