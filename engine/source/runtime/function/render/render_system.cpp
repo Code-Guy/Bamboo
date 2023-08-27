@@ -286,6 +286,7 @@ namespace Bamboo
 				lighting_ubo.has_directional_light = true;
 				lighting_ubo.directional_light.direction = transform_component->getForwardVector();
 				lighting_ubo.directional_light.color = directional_light_component->getColor();
+				lighting_ubo.directional_light.cast_shadow = directional_light_component->m_cast_shadow;
 
 				shadow_cascade_ci.light_dir = transform_component->getForwardVector();
 				shadow_cascade_ci.light_cascade_frustum_near = directional_light_component->m_cascade_frustum_near;
@@ -339,9 +340,12 @@ namespace Bamboo
 			}
 			lighting_render_data->directional_light_shadow_texture = m_directional_light_shadow_pass->getDepthImageViewSampler();
 
-			m_directional_light_shadow_pass->setRenderDatas(directional_light_shadow_pass_render_datas);
+			if (lighting_ubo.directional_light.cast_shadow)
+			{
+				m_directional_light_shadow_pass->setRenderDatas(directional_light_shadow_pass_render_datas);
+			}
 		}
-		
+
 		// update lighting uniform buffers
 		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
 		{

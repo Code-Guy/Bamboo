@@ -124,6 +124,7 @@ namespace Bamboo
 		}
 
 		vkCmdEndRenderPass(command_buffer);
+		m_render_datas.clear();
 	}
 
 	void DirectionalLightShadowPass::destroy()

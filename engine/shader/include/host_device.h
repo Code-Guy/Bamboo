@@ -48,8 +48,8 @@ struct SkyLight
 
 struct DirectionalLight
 {
-	vec3 direction; float padding0;
-	vec3 color; float padding1;
+	vec3 direction; int cast_shadow;
+	vec3 color; float padding0;
 	mat4 cascade_view_projs[SHADOW_CASCADE_NUM];
 	vec4 cascade_splits;
 };

@@ -194,21 +194,27 @@ vec4 calc_pbr(MaterialInfo mat_info)
 	vec3 color = vec3(0.0);
 
 	// directional light
-	uint cascade_index = 0;
 	if (bool(lighting_ubo.has_directional_light))
 	{
 		DirectionalLight directional_light = lighting_ubo.directional_light;
-		vec3 view_pos = (lighting_ubo.camera_view * vec4(mat_info.position, 1.0)).xyz;
-		for(uint i = 0; i < SHADOW_CASCADE_NUM - 1; ++i)
+
+		float shadow = 1.0;
+		if (bool(directional_light.cast_shadow))
 		{
-			if(view_pos.z < directional_light.cascade_splits[i]) 
-			{	
-				cascade_index = i + 1;
+			uint cascade_index = 0;
+			vec3 view_pos = (lighting_ubo.camera_view * vec4(mat_info.position, 1.0)).xyz;
+			for(uint i = 0; i < SHADOW_CASCADE_NUM - 1; ++i)
+			{
+				if(view_pos.z < directional_light.cascade_splits[i]) 
+				{	
+					cascade_index = i + 1;
+				}
 			}
+			vec4 shadow_coord = (k_shadow_bias_mat * directional_light.cascade_view_projs[cascade_index]) * vec4(mat_info.position, 1.0);
+			shadow_coord = shadow_coord / shadow_coord.w;
+			shadow = filterPCF(shadow_coord, cascade_index);
 		}
-		vec4 shadow_coord = (k_shadow_bias_mat * directional_light.cascade_view_projs[cascade_index]) * vec4(mat_info.position, 1.0);
-		shadow_coord = shadow_coord / shadow_coord.w;
-		float shadow = filterPCF(shadow_coord, cascade_index);
+		
 		color += getLightContribution(pbr_info, n, v, -directional_light.direction, directional_light.color) * shadow;
 	}
 
