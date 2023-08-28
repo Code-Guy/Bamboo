@@ -7,6 +7,7 @@
 
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/render/pass/directional_light_shadow_pass.h"
+#include "runtime/function/render/pass/point_light_shadow_pass.h"
 #include "runtime/function/render/pass/main_pass.h"
 #include "runtime/function/render/pass/ui_pass.h"
 
@@ -25,11 +26,14 @@ namespace Bamboo
 	void RenderSystem::init()
 	{
 		m_directional_light_shadow_pass = std::make_shared<DirectionalLightShadowPass>();
+		m_point_light_shadow_pass = std::make_shared<PointLightShadowPass>();
 		m_main_pass = std::make_shared<MainPass>();
 		m_ui_pass = std::make_shared<UIPass>();
 
 		m_render_passes = {
-			m_directional_light_shadow_pass, m_main_pass, m_ui_pass
+			m_directional_light_shadow_pass, 
+			m_point_light_shadow_pass,
+			m_main_pass, m_ui_pass
 		};
 		for (auto& render_pass : m_render_passes)
 		{
@@ -121,6 +125,7 @@ namespace Bamboo
 	{
 		// mesh render datas
 		std::vector<std::shared_ptr<RenderData>> directional_light_shadow_pass_render_datas;
+		std::vector<std::shared_ptr<RenderData>> point_light_shadow_pass_render_datas;
 		std::vector<std::shared_ptr<RenderData>> main_pass_render_datas;
 
 		// get current active world
@@ -138,10 +143,15 @@ namespace Bamboo
 		lighting_render_data->prefilter_texture = m_default_texture_cube->m_image_view_sampler;
 
 		std::shared_ptr<SkyboxRenderData> skybox_render_data = nullptr;
+
+		// shadow create infos
 		ShadowCascadeCreateInfo shadow_cascade_ci{};
 		shadow_cascade_ci.camera_near = camera_component->m_near;
 		shadow_cascade_ci.camera_far = camera_component->m_far;
 		shadow_cascade_ci.inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
+
+		ShadowCubeCreateInfo shadow_cube_ci{};
+		shadow_cube_ci.light_near = camera_component->m_near;
 
 		// set lighting uniform buffer object
 		LightingUBO lighting_ubo;
@@ -248,6 +258,7 @@ namespace Bamboo
 					}
 
 					directional_light_shadow_pass_render_datas.push_back(static_mesh_render_data);
+					point_light_shadow_pass_render_datas.push_back(static_mesh_render_data);
 					main_pass_render_datas.push_back(static_mesh_render_data);
 				}
 			}
@@ -305,6 +316,10 @@ namespace Bamboo
 				point_light.radius = point_light_component->m_radius;
 				point_light.linear_attenuation = point_light_component->m_linear_attenuation;
 				point_light.quadratic_attenuation = point_light_component->m_quadratic_attenuation;
+				point_light.cast_shadow = point_light_component->m_cast_shadow;
+
+				shadow_cube_ci.light_pos = transform_component->m_position;
+				shadow_cube_ci.light_far =point_light_component->m_radius;
 			}
 
 			// get point light component
@@ -338,11 +353,24 @@ namespace Bamboo
 				lighting_ubo.directional_light.cascade_splits[i] = m_directional_light_shadow_pass->m_cascade_splits[i];
 				lighting_ubo.directional_light.cascade_view_projs[i] = m_directional_light_shadow_pass->m_shadow_cascade_ubo.cascade_view_projs[i];
 			}
-			lighting_render_data->directional_light_shadow_texture = m_directional_light_shadow_pass->getDepthImageViewSampler();
+			lighting_render_data->directional_light_shadow_texture = m_directional_light_shadow_pass->getShadowImageViewSampler();
 
 			if (lighting_ubo.directional_light.cast_shadow)
 			{
 				m_directional_light_shadow_pass->setRenderDatas(directional_light_shadow_pass_render_datas);
+			}
+		}
+
+		// point light shadow pass: n mesh datas
+		if (lighting_ubo.point_light_num > 0)
+		{
+			m_point_light_shadow_pass->updateCube(shadow_cube_ci);
+			lighting_render_data->point_light_shadow_texture = m_point_light_shadow_pass->getShadowImageViewSampler();
+
+			PointLight point_light = lighting_ubo.point_lights[0];
+			if (point_light.cast_shadow)
+			{
+				m_point_light_shadow_pass->setRenderDatas(point_light_shadow_pass_render_datas);
 			}
 		}
 

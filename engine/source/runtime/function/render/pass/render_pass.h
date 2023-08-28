@@ -25,6 +25,7 @@ namespace Bamboo
 		bool isEnabled();
 
 	protected:
+		void updatePushConstants(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, const std::vector<const void*>& pcos);
 		void addBufferDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
 			VkDescriptorBufferInfo& desc_buffer_info, VmaBuffer buffer, uint32_t binding);
 		void addImageDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 

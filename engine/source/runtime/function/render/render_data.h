@@ -32,6 +32,7 @@ namespace Bamboo
 		VmaImageViewSampler brdf_lut_texture;
 
 		VmaImageViewSampler directional_light_shadow_texture;
+		VmaImageViewSampler point_light_shadow_texture;
 	};
 
 	struct MeshRenderData : public RenderData
@@ -72,5 +73,12 @@ namespace Bamboo
 
 		vec3 light_dir;
 		float light_cascade_frustum_near;
+	};
+
+	struct ShadowCubeCreateInfo
+	{
+		vec3 light_pos;
+		float light_near;
+		float light_far;
 	};
 }

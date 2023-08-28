@@ -155,7 +155,16 @@ namespace Bamboo
 		return m_width > 0 && m_height > 0;
 	}
 
-	void RenderPass::addBufferDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
+	void RenderPass::updatePushConstants(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, const std::vector<const void*>& pcos)
+	{
+		for (size_t c = 0; c < m_push_constant_ranges.size(); ++c)
+		{
+			const VkPushConstantRange& push_constant_range = m_push_constant_ranges[c];
+			vkCmdPushConstants(command_buffer, pipeline_layout, push_constant_range.stageFlags, push_constant_range.offset, push_constant_range.size, pcos[c]);
+		}
+	}
+
+	void RenderPass::addBufferDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes,
 		VkDescriptorBufferInfo& desc_buffer_info, VmaBuffer buffer, uint32_t binding)
 	{
 		desc_buffer_info.buffer = buffer.buffer;

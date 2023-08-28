@@ -80,7 +80,7 @@ namespace Bamboo
 			std::array<VkDescriptorBufferInfo, 1> desc_buffer_infos{};
 
 			// lighting uniform buffer
-			addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 9);
+			addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 10);
 
 			// input attachments and ibl textures
 			std::vector<VmaImageViewSampler> textures = {
@@ -92,7 +92,8 @@ namespace Bamboo
 				m_lighting_render_data->irradiance_texture,
 				m_lighting_render_data->prefilter_texture,
 				m_lighting_render_data->brdf_lut_texture,
-				m_lighting_render_data->directional_light_shadow_texture
+				m_lighting_render_data->directional_light_shadow_texture,
+				m_lighting_render_data->point_light_shadow_texture
 			};
 			std::vector<VkDescriptorImageInfo> desc_image_infos(textures.size(), VkDescriptorImageInfo{});
 			for (size_t i = 0; i < textures.size(); ++i)
@@ -205,7 +206,7 @@ namespace Bamboo
 		// color dependency
 		dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
 		dependencies[1].dstSubpass = 0;
-		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		dependencies[1].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 		dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -288,7 +289,8 @@ namespace Bamboo
 			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{9, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{10, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -306,7 +308,8 @@ namespace Bamboo
 			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{9, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{10, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -615,12 +618,7 @@ namespace Bamboo
 		for (size_t i = 0; i < sub_mesh_count; ++i)
 		{
 			// push constants
-			const void* pcos[] = { &static_mesh_render_data->transform_pco, &static_mesh_render_data->material_pcos[i] };
-			for (size_t c = 0; c < m_push_constant_ranges.size(); ++c)
-			{
-				const VkPushConstantRange& pushConstantRange = m_push_constant_ranges[c];
-				vkCmdPushConstants(command_buffer, pipeline_layout, pushConstantRange.stageFlags, pushConstantRange.offset, pushConstantRange.size, pcos[c]);
-			}
+			updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco, &static_mesh_render_data->material_pcos[i] });
 
 			// update(push) sub mesh descriptors
 			std::vector<VkWriteDescriptorSet> desc_writes;
@@ -637,14 +635,15 @@ namespace Bamboo
 			if (renderer_type == ERendererType::Forward)
 			{
 				// lighting ubo
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 9);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 10);
 
 				// ibl textures
 				std::vector<VmaImageViewSampler> ibl_textures = {
 					m_lighting_render_data->irradiance_texture,
 					m_lighting_render_data->prefilter_texture,
 					m_lighting_render_data->brdf_lut_texture,
-					m_lighting_render_data->directional_light_shadow_texture
+					m_lighting_render_data->directional_light_shadow_texture,
+					m_lighting_render_data->point_light_shadow_texture,
 				};
 				for (size_t t = 0; t < ibl_textures.size(); ++t)
 				{

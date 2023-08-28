@@ -4,10 +4,10 @@
 
 namespace Bamboo
 {
-	class DirectionalLightShadowPass : public RenderPass
+	class PointLightShadowPass : public RenderPass
 	{
 	public:
-		DirectionalLightShadowPass();
+		PointLightShadowPass();
 
 		virtual void init() override;
 		virtual void render() override;
@@ -20,18 +20,17 @@ namespace Bamboo
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
 
-		void updateCascades(const ShadowCascadeCreateInfo& shadow_cascade_ci);
+		void updateCube(const ShadowCubeCreateInfo& shadow_cube_ci);
 		VmaImageViewSampler getShadowImageViewSampler() { return m_shadow_image_view_sampler; }
 
-		ShadowCascadeUBO m_shadow_cascade_ubo;
-		float m_cascade_splits[SHADOW_CASCADE_NUM];
-
 	private:
-		VkFormat m_format;
+		std::vector<VkFormat> m_formats;
 		uint32_t m_size;
-		float m_cascade_split_lambda;
 
+		VmaImageViewSampler m_depth_image_view_sampler;
 		VmaImageViewSampler m_shadow_image_view_sampler;
-		std::vector<VmaBuffer> m_shadow_cascade_ubs;
+		std::vector<VmaBuffer> m_shadow_cube_ubs;
+
+		glm::vec3 m_light_pos;
 	};
 }

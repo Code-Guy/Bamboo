@@ -57,7 +57,7 @@ struct DirectionalLight
 struct PointLight
 {
 	vec3 position; 
-    float padding0; // inner_cutoff for SpotLight
+    float padding0; // inner_cutoff for SpotLight, cast shadow for PointLight
 
 	vec3 color; 
     float padding1; // outer_cutoff for SpotLight
@@ -65,7 +65,7 @@ struct PointLight
     float radius;
 	float linear_attenuation;
 	float quadratic_attenuation;
-    float padding2;
+    int cast_shadow;
 };
 
 struct SpotLight
@@ -107,6 +107,11 @@ struct MaterialInfo
 struct ShadowCascadeUBO
 {
     mat4 cascade_view_projs[SHADOW_CASCADE_NUM];
+};
+
+struct ShadowCubeUBO
+{
+    mat4 face_view_projs[SHADOW_FACE_NUM];
 };
 
 #endif
