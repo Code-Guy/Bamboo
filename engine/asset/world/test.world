@@ -35,14 +35,14 @@
                                                         }
                                                     },
                                                     "position": {
-                                                        "x": -3.4027373790740969,
-                                                        "y": 11.712231636047364,
-                                                        "z": -4.378597736358643
+                                                        "x": 2.8344993591308595,
+                                                        "y": 11.03014087677002,
+                                                        "z": -4.616103172302246
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
-                                                        "y": 90.00053405761719,
-                                                        "z": -56.69990921020508
+                                                        "y": 93.40045166015625,
+                                                        "z": -57.399871826171878
                                                     },
                                                     "scale": {
                                                         "x": 1.0,
@@ -562,6 +562,82 @@
                                                             "r": 1.0,
                                                             "g": 0.0,
                                                             "b": 0.0
+                                                        },
+                                                        "cast_shadow": true
+                                                    },
+                                                    "radius": 128.0,
+                                                    "linear_attenuation": 0.14000000059604646,
+                                                    "quadratic_attenuation": 0.07000000029802323
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "key": 7,
+                        "value": {
+                            "polymorphic_id": 1073741824,
+                            "ptr_wrapper": {
+                                "id": 2147483673,
+                                "data": {
+                                    "tickable": {
+                                        "tick_enabled": false,
+                                        "tick_interval": 0.0
+                                    },
+                                    "name": "point_light",
+                                    "id": 7,
+                                    "parent_id": 4294967295,
+                                    "child_ids": [],
+                                    "components": [
+                                        {
+                                            "polymorphic_id": 2,
+                                            "ptr_wrapper": {
+                                                "id": 2147483674,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "x": 6.0,
+                                                        "y": 5.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "rotation": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "scale": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 10,
+                                            "ptr_wrapper": {
+                                                "id": 2147483675,
+                                                "data": {
+                                                    "light": {
+                                                        "component": {
+                                                            "tickable": {
+                                                                "tick_enabled": false,
+                                                                "tick_interval": 0.0
+                                                            }
+                                                        },
+                                                        "intensity": 10.0,
+                                                        "color": {
+                                                            "r": 0.0,
+                                                            "g": 0.0,
+                                                            "b": 1.0
                                                         },
                                                         "cast_shadow": true
                                                     },

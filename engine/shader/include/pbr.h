@@ -11,7 +11,7 @@ layout(set = 0, binding = 7) uniform sampler2D brdf_lut_texture_sampler;
 
 // shadow textures
 layout(set = 0, binding = 8) uniform sampler2DArray directional_light_shadow_texture_sampler;
-layout(set = 0, binding = 9) uniform samplerCube point_light_shadow_texture_sampler;
+layout(set = 0, binding = 9) uniform samplerCube point_light_shadow_texture_samplers[MAX_POINT_LIGHT_NUM];
 
 // lighting ubo
 layout(set = 0, binding = 10) uniform _LightingUBO { LightingUBO lighting_ubo; };
@@ -232,9 +232,16 @@ vec4 calc_pbr(MaterialInfo mat_info)
 			vec3 c = point_light.color * attenuation;
 			vec3 l = normalize(point_light.position - mat_info.position);
 
-			vec3 sample_vector = mat_info.position - point_light.position;
-			float depth = texture(point_light_shadow_texture_sampler, sample_vector).x;
-			float shadow = length(sample_vector) < depth ? 1.0 : 0.0;
+			float shadow = 1.0;
+			if (bool(point_light.cast_shadow))
+			{
+				vec3 sample_vector = mat_info.position - point_light.position;
+				float depth = texture(point_light_shadow_texture_samplers[i], sample_vector).x;
+				if (length(sample_vector) > depth)
+				{
+					shadow = 0.0;
+				}
+			}
 
 			color += getLightContribution(pbr_info, n, v, l, c) * shadow;
 		}

@@ -200,4 +200,25 @@ namespace Bamboo
 		desc_writes.push_back(desc_write);
 	}
 
+	void RenderPass::addImagesDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
+		VkDescriptorImageInfo* p_desc_image_info, const std::vector<VmaImageViewSampler>& textures, uint32_t binding)
+	{
+		for (size_t i = 0; i < textures.size(); ++i)
+		{
+			p_desc_image_info[i].imageLayout = textures[i].image_layout;
+			p_desc_image_info[i].imageView = textures[i].view;
+			p_desc_image_info[i].sampler = textures[i].sampler;
+		}
+
+		VkWriteDescriptorSet desc_write{};
+		desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		desc_write.dstSet = 0;
+		desc_write.dstBinding = binding;
+		desc_write.dstArrayElement = 0;
+		desc_write.descriptorType = textures.front().descriptor_type;
+		desc_write.descriptorCount = static_cast<uint32_t>(textures.size());
+		desc_write.pImageInfo = p_desc_image_info;
+		desc_writes.push_back(desc_write);
+	}
+
 }

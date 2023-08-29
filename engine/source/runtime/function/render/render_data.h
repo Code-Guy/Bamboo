@@ -32,7 +32,7 @@ namespace Bamboo
 		VmaImageViewSampler brdf_lut_texture;
 
 		VmaImageViewSampler directional_light_shadow_texture;
-		VmaImageViewSampler point_light_shadow_texture;
+		std::vector<VmaImageViewSampler> point_light_shadow_textures;
 	};
 
 	struct MeshRenderData : public RenderData

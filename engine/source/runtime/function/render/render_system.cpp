@@ -141,7 +141,12 @@ namespace Bamboo
 		lighting_render_data->brdf_lut_texture = m_default_texture_2d->m_image_view_sampler;
 		lighting_render_data->irradiance_texture = m_default_texture_cube->m_image_view_sampler;
 		lighting_render_data->prefilter_texture = m_default_texture_cube->m_image_view_sampler;
-
+		lighting_render_data->directional_light_shadow_texture = m_default_texture_2d->m_image_view_sampler;
+		lighting_render_data->point_light_shadow_textures.resize(MAX_POINT_LIGHT_NUM);
+		for (uint32_t i = 0; i < MAX_POINT_LIGHT_NUM; ++i)
+		{
+			lighting_render_data->point_light_shadow_textures[i] = m_default_texture_cube->m_image_view_sampler;
+		}
 		std::shared_ptr<SkyboxRenderData> skybox_render_data = nullptr;
 
 		// shadow create infos
@@ -150,8 +155,7 @@ namespace Bamboo
 		shadow_cascade_ci.camera_far = camera_component->m_far;
 		shadow_cascade_ci.inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
 
-		ShadowCubeCreateInfo shadow_cube_ci{};
-		shadow_cube_ci.light_near = camera_component->m_near;
+		std::vector<ShadowCubeCreateInfo> shadow_cube_cis;
 
 		// set lighting uniform buffer object
 		LightingUBO lighting_ubo;
@@ -318,8 +322,11 @@ namespace Bamboo
 				point_light.quadratic_attenuation = point_light_component->m_quadratic_attenuation;
 				point_light.cast_shadow = point_light_component->m_cast_shadow;
 
+				ShadowCubeCreateInfo shadow_cube_ci;
 				shadow_cube_ci.light_pos = transform_component->m_position;
 				shadow_cube_ci.light_far =point_light_component->m_radius;
+				shadow_cube_ci.light_near = camera_component->m_near;
+				shadow_cube_cis.push_back(shadow_cube_ci);
 			}
 
 			// get point light component
@@ -364,9 +371,12 @@ namespace Bamboo
 		// point light shadow pass: n mesh datas
 		if (lighting_ubo.point_light_num > 0)
 		{
-			m_point_light_shadow_pass->updateCube(shadow_cube_ci);
-			lighting_render_data->point_light_shadow_texture = m_point_light_shadow_pass->getShadowImageViewSampler();
-
+			m_point_light_shadow_pass->updateCubes(shadow_cube_cis);
+			const auto& point_light_shadow_textures = m_point_light_shadow_pass->getShadowImageViewSamplers();
+			for (size_t i = 0; i < point_light_shadow_textures.size(); ++i)
+			{
+				lighting_render_data->point_light_shadow_textures[i] = point_light_shadow_textures[i];
+			}
 			PointLight point_light = lighting_ubo.point_lights[0];
 			if (point_light.cast_shadow)
 			{

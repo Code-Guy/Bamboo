@@ -2,6 +2,7 @@
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/base/mesh.h"
+#include "runtime/resource/asset/texture_cube.h"
 #include "runtime/core/math/transform.h"
 
 namespace Bamboo
@@ -17,116 +18,106 @@ namespace Bamboo
 	{
 		RenderPass::init();
 
-		// create shadow face uniform buffers
-		m_shadow_cube_ubs.resize(MAX_FRAMES_IN_FLIGHT);
-		for (VmaBuffer& uniform_buffer : m_shadow_cube_ubs)
-		{
-			VulkanUtil::createBuffer(sizeof(ShadowCubeUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer);
-		}
-
 		createResizableObjects(m_size, m_size);
 	}
 
 	void PointLightShadowPass::render()
 	{
-		VkRenderPassBeginInfo render_pass_bi{};
-		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		render_pass_bi.renderPass = m_render_pass;
-		render_pass_bi.framebuffer = m_framebuffer;
-		render_pass_bi.renderArea.offset = { 0, 0 };
-		render_pass_bi.renderArea.extent = { m_size, m_size };
-
-		std::array<VkClearValue, 2> clear_values{};
-		clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-		clear_values[1].depthStencil = { 1.0f, 0 };
-		render_pass_bi.clearValueCount = static_cast<uint32_t>(clear_values.size());
-		render_pass_bi.pClearValues = clear_values.data();
-
- 		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
- 		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
-// 		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
-// 		uint32_t flight_index = 0;
-
-		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
-
-		VkViewport viewport{};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(m_size);
-		viewport.height = static_cast<float>(m_size);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
-
-		VkRect2D scissor{};
-		scissor.offset = { 0, 0 };
-		scissor.extent = { m_size, m_size };
-		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
-
-		for (const auto& render_data : m_render_datas)
+		for (size_t p = 0; p < m_framebuffers.size(); ++p)
 		{
-			std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
-			std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = std::static_pointer_cast<StaticMeshRenderData>(render_data);
-			EMeshType mesh_type = static_mesh_render_data->mesh_type;
-			if (mesh_type == EMeshType::Skeletal)
+			VkRenderPassBeginInfo render_pass_bi{};
+			render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			render_pass_bi.renderPass = m_render_pass;
+			render_pass_bi.framebuffer = m_framebuffers[p];
+			render_pass_bi.renderArea.offset = { 0, 0 };
+			render_pass_bi.renderArea.extent = { m_size, m_size };
+
+			std::array<VkClearValue, 2> clear_values{};
+			clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+			clear_values[1].depthStencil = { 1.0f, 0 };
+			render_pass_bi.clearValueCount = static_cast<uint32_t>(clear_values.size());
+			render_pass_bi.pClearValues = clear_values.data();
+
+			VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
+			uint32_t flight_index = VulkanRHI::get().getFlightIndex();
+			vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
+
+			VkViewport viewport{};
+			viewport.x = 0.0f;
+			viewport.y = 0.0f;
+			viewport.width = static_cast<float>(m_size);
+			viewport.height = static_cast<float>(m_size);
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
+			vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+			VkRect2D scissor{};
+			scissor.offset = { 0, 0 };
+			scissor.extent = { m_size, m_size };
+			vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+			for (const auto& render_data : m_render_datas)
 			{
-				skeletal_mesh_render_data = std::static_pointer_cast<SkeletalMeshRenderData>(render_data);
-			}
-
-			uint32_t pipeline_index = (uint32_t)mesh_type;
-			VkPipeline pipeline = m_pipelines[pipeline_index];
-			VkPipelineLayout pipeline_layout = m_pipeline_layouts[pipeline_index];
-
-			// bind pipeline
-			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-			// bind vertex and index buffer
-			VkBuffer vertexBuffers[] = { static_mesh_render_data->vertex_buffer.buffer };
-			VkDeviceSize offsets[] = { 0 };
-			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(command_buffer, static_mesh_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-			// render all sub meshes
-			std::vector<uint32_t>& index_counts = static_mesh_render_data->index_counts;
-			std::vector<uint32_t>& index_offsets = static_mesh_render_data->index_offsets;
-			size_t sub_mesh_count = index_counts.size();
-			for (size_t i = 0; i < sub_mesh_count; ++i)
-			{
-				// push constants
-				glm::vec4 light_pos = glm::vec4(m_light_pos, 1.0f);
-				updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco, glm::value_ptr(light_pos) });
-
-				// update(push) sub mesh descriptors
-				std::vector<VkWriteDescriptorSet> desc_writes;
-				std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
-				std::array<VkDescriptorImageInfo, 1> desc_image_infos{};
-
-				// bone matrix ubo
+				std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
+				std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = std::static_pointer_cast<StaticMeshRenderData>(render_data);
+				EMeshType mesh_type = static_mesh_render_data->mesh_type;
 				if (mesh_type == EMeshType::Skeletal)
 				{
-					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
+					skeletal_mesh_render_data = std::static_pointer_cast<SkeletalMeshRenderData>(render_data);
 				}
 
-				// shadow face ubo
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_shadow_cube_ubs[flight_index], 1);
-	
-				// base color texture image sampler
-				addImageDescriptorSet(desc_writes, desc_image_infos[0], static_mesh_render_data->pbr_textures[i].base_color_texure, 2);
+				uint32_t pipeline_index = (uint32_t)mesh_type;
+				VkPipeline pipeline = m_pipelines[pipeline_index];
+				VkPipelineLayout pipeline_layout = m_pipeline_layouts[pipeline_index];
 
-				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-					pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+				// bind pipeline
+				vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-				// render sub mesh
-				vkCmdDrawIndexed(command_buffer, index_counts[i], 1, index_offsets[i], 0, 0);
+				// bind vertex and index buffer
+				VkBuffer vertexBuffers[] = { static_mesh_render_data->vertex_buffer.buffer };
+				VkDeviceSize offsets[] = { 0 };
+				vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
+				vkCmdBindIndexBuffer(command_buffer, static_mesh_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+				// render all sub meshes
+				std::vector<uint32_t>& index_counts = static_mesh_render_data->index_counts;
+				std::vector<uint32_t>& index_offsets = static_mesh_render_data->index_offsets;
+				size_t sub_mesh_count = index_counts.size();
+				for (size_t i = 0; i < sub_mesh_count; ++i)
+				{
+					// push constants
+					glm::vec4 light_pos = glm::vec4(m_light_poss[p], 1.0f);
+					updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco, glm::value_ptr(light_pos) });
+
+					// update(push) sub mesh descriptors
+					std::vector<VkWriteDescriptorSet> desc_writes;
+					std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
+					std::array<VkDescriptorImageInfo, 1> desc_image_infos{};
+
+					// bone matrix ubo
+					if (mesh_type == EMeshType::Skeletal)
+					{
+						addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
+					}
+
+					// shadow face ubo
+					addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_shadow_cube_ubss[p][flight_index], 1);
+
+					// base color texture image sampler
+					addImageDescriptorSet(desc_writes, desc_image_infos[0], static_mesh_render_data->pbr_textures[i].base_color_texure, 2);
+
+					VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+						pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+
+					// render sub mesh
+					vkCmdDrawIndexed(command_buffer, index_counts[i], 1, index_offsets[i], 0, 0);
+				}
 			}
+
+			vkCmdEndRenderPass(command_buffer);
 		}
-
-		vkCmdEndRenderPass(command_buffer);
+		
 		m_render_datas.clear();
-
-// 		VulkanUtil::endInstantCommands(command_buffer);
-// 		VulkanUtil::saveImage(m_shadow_image_view_sampler.image(), m_size, m_size, m_formats[0], VK_IMAGE_LAYOUT_UNDEFINED, 
-// 			"D:/Test/point_light_shadow/0.bin", 1, SHADOW_FACE_NUM);
 	}
 
 	void PointLightShadowPass::destroy()
@@ -134,9 +125,12 @@ namespace Bamboo
 		RenderPass::destroy();
 
 		// destroy shadow face uniform buffers
-		for (VmaBuffer& uniform_buffer : m_shadow_cube_ubs)
+		for (auto& shadow_cube_ubs : m_shadow_cube_ubss)
 		{
-			uniform_buffer.destroy();
+			for (VmaBuffer& uniform_buffer : shadow_cube_ubs)
+			{
+				uniform_buffer.destroy();
+			}
 		}
 	}
 
@@ -332,83 +326,120 @@ namespace Bamboo
 
 	void PointLightShadowPass::createFramebuffer()
 	{
-		// create shadow image view sampler
-		VulkanUtil::createImageViewSampler(m_size, m_size, nullptr, 1, SHADOW_FACE_NUM, m_formats[0],
-			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_shadow_image_view_sampler,
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-
 		// create depth image view sampler
 		VulkanUtil::createImageViewSampler(m_size, m_size, nullptr, 1, SHADOW_FACE_NUM, m_formats[1],
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_depth_image_view_sampler,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-
-		// create framebuffer
-		std::vector<VkImageView> attachments = {
-			m_shadow_image_view_sampler.view,
-			m_depth_image_view_sampler.view
-		};
-
-		VkFramebufferCreateInfo framebuffer_ci{};
-		framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_ci.renderPass = m_render_pass;
-		framebuffer_ci.attachmentCount = static_cast<uint32_t>(attachments.size());
-		framebuffer_ci.pAttachments = attachments.data();
-		framebuffer_ci.width = m_size;
-		framebuffer_ci.height = m_size;
-		framebuffer_ci.layers = SHADOW_FACE_NUM;
-
-		VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffer);
-		CHECK_VULKAN_RESULT(result, "create position light shadow framebuffer");
 	}
 
 	void PointLightShadowPass::destroyResizableObjects()
 	{
-		m_shadow_image_view_sampler.destroy();
 		m_depth_image_view_sampler.destroy();
+		for (auto& shadow_image_view_sampler : m_shadow_image_view_samplers)
+		{
+			shadow_image_view_sampler.destroy();
+		}
+		for (auto& framebuffer : m_framebuffers)
+		{
+			vkDestroyFramebuffer(VulkanRHI::get().getDevice(), framebuffer, nullptr);
+		}
 
 		RenderPass::destroyResizableObjects();
 	}
 
-	void PointLightShadowPass::updateCube(const ShadowCubeCreateInfo& shadow_cube_ci)
+	void PointLightShadowPass::updateCubes(const std::vector<ShadowCubeCreateInfo>& shadow_cube_cis)
 	{
-		m_light_pos = shadow_cube_ci.light_pos;
+		createDynamicBuffers(shadow_cube_cis.size());
 
-		ShadowCubeUBO shadow_cube_ubo;
-		glm::mat4 proj = glm::perspectiveRH_ZO(glm::radians(90.0f), 1.0f, shadow_cube_ci.light_near, shadow_cube_ci.light_far);
-		for (uint32_t i = 0; i < SHADOW_FACE_NUM; ++i)
+		for (size_t p = 0; p < shadow_cube_cis.size(); ++p)
 		{
-			glm::mat4 view = glm::mat4(1.0f);
-			switch (i)
+			const ShadowCubeCreateInfo& shadow_cube_ci = shadow_cube_cis[p];
+			m_light_poss[p] = shadow_cube_ci.light_pos;
+
+			ShadowCubeUBO shadow_cube_ubo;
+			glm::mat4 proj = glm::perspectiveRH_ZO(glm::radians(90.0f), 1.0f, shadow_cube_ci.light_near, shadow_cube_ci.light_far);
+			for (uint32_t i = 0; i < SHADOW_FACE_NUM; ++i)
 			{
-			case 0: // POSITIVE_X
-				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-				view = glm::rotate(view, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-				break;
-			case 1:	// NEGATIVE_X
-				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-				view = glm::rotate(view, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-				break;
-			case 2:	// POSITIVE_Y
-				view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-				break;
-			case 3:	// NEGATIVE_Y
-				view = glm::rotate(view, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-				break;
-			case 4:	// POSITIVE_Z
-				view = glm::rotate(view, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-				break;
-			case 5:	// NEGATIVE_Z
-				view = glm::rotate(view, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-				break;
+				glm::mat4 view = glm::mat4(1.0f);
+				switch (i)
+				{
+				case 0: // POSITIVE_X
+					view = glm::rotate(view, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+					view = glm::rotate(view, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					break;
+				case 1:	// NEGATIVE_X
+					view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+					view = glm::rotate(view, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					break;
+				case 2:	// POSITIVE_Y
+					view = glm::rotate(view, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					break;
+				case 3:	// NEGATIVE_Y
+					view = glm::rotate(view, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					break;
+				case 4:	// POSITIVE_Z
+					view = glm::rotate(view, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					break;
+				case 5:	// NEGATIVE_Z
+					view = glm::rotate(view, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+					break;
+				}
+
+				shadow_cube_ubo.face_view_projs[i] = proj * view * glm::translate(glm::mat4(1.0f), -m_light_poss[p]);
 			}
 
-			shadow_cube_ubo.face_view_projs[i] = proj * view * glm::translate(glm::mat4(1.0f), -m_light_pos);
+			// update uniform buffers
+			for (VmaBuffer& uniform_buffer : m_shadow_cube_ubss[p])
+			{
+				VulkanUtil::updateBuffer(uniform_buffer, (void*)&shadow_cube_ubo, sizeof(ShadowCubeUBO));
+			}
 		}
+	}
 
-		// update uniform buffers
-		for (VmaBuffer& uniform_buffer : m_shadow_cube_ubs)
+	const std::vector<Bamboo::VmaImageViewSampler>& PointLightShadowPass::getShadowImageViewSamplers()
+	{
+		return m_shadow_image_view_samplers;
+	}
+
+	void PointLightShadowPass::createDynamicBuffers(size_t size)
+	{
+		size_t last_size = m_framebuffers.size();
+		m_shadow_image_view_samplers.resize(size);
+		m_shadow_cube_ubss.resize(size);
+		m_framebuffers.resize(size);
+		m_light_poss.resize(size);
+
+		for (uint32_t i = last_size; i < size; ++i)
 		{
-			VulkanUtil::updateBuffer(uniform_buffer, (void*)&shadow_cube_ubo, sizeof(ShadowCubeUBO));
+			// create shadow image view sampler
+			VulkanUtil::createImageViewSampler(m_size, m_size, nullptr, 1, SHADOW_FACE_NUM, m_formats[0],
+				VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_shadow_image_view_samplers[i],
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+
+			std::vector<VkImageView> attachments = {
+				m_shadow_image_view_samplers[i].view,
+				m_depth_image_view_sampler.view
+			};
+
+			// create framebuffers
+			VkFramebufferCreateInfo framebuffer_ci{};
+			framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebuffer_ci.renderPass = m_render_pass;
+			framebuffer_ci.attachmentCount = static_cast<uint32_t>(attachments.size());
+			framebuffer_ci.pAttachments = attachments.data();
+			framebuffer_ci.width = m_size;
+			framebuffer_ci.height = m_size;
+			framebuffer_ci.layers = SHADOW_FACE_NUM;
+
+			VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);
+			CHECK_VULKAN_RESULT(result, "create position light shadow framebuffer");
+
+			// create shadow face uniform buffers
+			m_shadow_cube_ubss[i].resize(MAX_FRAMES_IN_FLIGHT);
+			for (VmaBuffer& uniform_buffer : m_shadow_cube_ubss[i])
+			{
+				VulkanUtil::createBuffer(sizeof(ShadowCubeUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer);
+			}
 		}
 	}
 

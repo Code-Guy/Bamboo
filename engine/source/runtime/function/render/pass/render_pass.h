@@ -30,6 +30,8 @@ namespace Bamboo
 			VkDescriptorBufferInfo& desc_buffer_info, VmaBuffer buffer, uint32_t binding);
 		void addImageDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
 			VkDescriptorImageInfo& desc_image_info, VmaImageViewSampler texture, uint32_t binding);
+		void addImagesDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes,
+			VkDescriptorImageInfo* p_desc_image_info, const std::vector<VmaImageViewSampler>& textures, uint32_t binding);
 
 		// vulkan objects
 		VkRenderPass m_render_pass = VK_NULL_HANDLE;

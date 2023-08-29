@@ -20,17 +20,21 @@ namespace Bamboo
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
 
-		void updateCube(const ShadowCubeCreateInfo& shadow_cube_ci);
-		VmaImageViewSampler getShadowImageViewSampler() { return m_shadow_image_view_sampler; }
+		void updateCubes(const std::vector<ShadowCubeCreateInfo>& shadow_cube_cis);
+		const std::vector<VmaImageViewSampler>& getShadowImageViewSamplers();
 
 	private:
+		void createDynamicBuffers(size_t size);
+
 		std::vector<VkFormat> m_formats;
 		uint32_t m_size;
 
 		VmaImageViewSampler m_depth_image_view_sampler;
-		VmaImageViewSampler m_shadow_image_view_sampler;
-		std::vector<VmaBuffer> m_shadow_cube_ubs;
 
-		glm::vec3 m_light_pos;
+		std::vector<VmaImageViewSampler> m_shadow_image_view_samplers;
+		std::vector<VkFramebuffer> m_framebuffers;
+		std::vector<std::vector<VmaBuffer>> m_shadow_cube_ubss;
+
+		std::vector<glm::vec3> m_light_poss;
 	};
 }
