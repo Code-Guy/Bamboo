@@ -28,8 +28,8 @@ namespace Bamboo
 
 	void EditorUI::updateWindowRegion()
 	{
-		uint32_t new_pos_x = ImGui::GetCursorPosX();
-		uint32_t new_pos_y = ImGui::GetCursorPosY();
+		uint32_t new_pos_x = ImGui::GetCursorScreenPos().x;
+		uint32_t new_pos_y = ImGui::GetCursorScreenPos().y;
 		if (m_content_region.x != new_pos_x || m_content_region.y != new_pos_y)
 		{
 			m_content_region.x = new_pos_x;

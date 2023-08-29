@@ -80,7 +80,7 @@ namespace Bamboo
 			std::array<VkDescriptorBufferInfo, 1> desc_buffer_infos{};
 
 			// lighting uniform buffer
-			addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 10);
+			addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 11);
 
 			// input attachments and ibl textures
 			std::vector<VmaImageViewSampler> textures = {
@@ -95,12 +95,14 @@ namespace Bamboo
 				m_lighting_render_data->directional_light_shadow_texture
 			};
 			std::vector<VmaImageViewSampler> point_light_shadow_textures = m_lighting_render_data->point_light_shadow_textures;
-			std::vector<VkDescriptorImageInfo> desc_image_infos(textures.size() + point_light_shadow_textures.size(), VkDescriptorImageInfo{});
+			std::vector<VmaImageViewSampler> spot_light_shadow_textures = m_lighting_render_data->spot_light_shadow_textures;
+			std::vector<VkDescriptorImageInfo> desc_image_infos(textures.size() + point_light_shadow_textures.size() + spot_light_shadow_textures.size(), VkDescriptorImageInfo{});
 			for (size_t i = 0; i < textures.size(); ++i)
 			{
 				addImageDescriptorSet(desc_writes, desc_image_infos[i], textures[i], i);
 			}
 			addImagesDescriptorSet(desc_writes, &desc_image_infos[textures.size()], point_light_shadow_textures, textures.size());
+			addImagesDescriptorSet(desc_writes, &desc_image_infos[textures.size() + point_light_shadow_textures.size()], spot_light_shadow_textures, textures.size() + 1);
 
 			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 				m_pipeline_layouts[2], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
@@ -291,7 +293,8 @@ namespace Bamboo
 			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_POINT_LIGHT_NUM, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{10, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_SPOT_LIGHT_NUM, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{11, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -310,7 +313,8 @@ namespace Bamboo
 			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_POINT_LIGHT_NUM, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{10, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_SPOT_LIGHT_NUM, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{11, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -624,7 +628,7 @@ namespace Bamboo
 			// update(push) sub mesh descriptors
 			std::vector<VkWriteDescriptorSet> desc_writes;
 			std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
-			std::array<VkDescriptorImageInfo, 9> desc_image_infos{};
+			std::array<VkDescriptorImageInfo, 24> desc_image_infos{};
 
 			// bone matrix ubo
 			if (mesh_type == EMeshType::Skeletal)
@@ -636,7 +640,7 @@ namespace Bamboo
 			if (renderer_type == ERendererType::Forward)
 			{
 				// lighting ubo
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 10);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 11);
 
 				// ibl textures
 				std::vector<VmaImageViewSampler> ibl_textures = {
@@ -645,13 +649,14 @@ namespace Bamboo
 					m_lighting_render_data->brdf_lut_texture,
 					m_lighting_render_data->directional_light_shadow_texture,
 				};
-				std::vector<VmaImageViewSampler> point_light_shadow_textures = m_lighting_render_data->point_light_shadow_textures;
 				const uint32_t k_binding_offset = 5;
 				for (size_t t = 0; t < ibl_textures.size(); ++t)
 				{
 					addImageDescriptorSet(desc_writes, desc_image_infos[t], ibl_textures[t], static_cast<uint32_t>(t + k_binding_offset));
 				}
-				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size()], point_light_shadow_textures, ibl_textures.size() + k_binding_offset);
+
+				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size()], m_lighting_render_data->point_light_shadow_textures, ibl_textures.size() + k_binding_offset);
+				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size() + 1], m_lighting_render_data->spot_light_shadow_textures, ibl_textures.size() + k_binding_offset + 1);
 			}
 			
 			// image sampler
@@ -663,7 +668,7 @@ namespace Bamboo
 			};
 			for (size_t t = 0; t < pbr_textures.size(); ++t)
 			{
-				addImageDescriptorSet(desc_writes, desc_image_infos[t + 4], pbr_textures[t], static_cast<uint32_t>(t + 1));
+				addImageDescriptorSet(desc_writes, desc_image_infos[t + 20], pbr_textures[t], static_cast<uint32_t>(t + 1));
 			}
 
 			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,

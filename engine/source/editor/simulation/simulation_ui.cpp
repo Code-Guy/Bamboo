@@ -61,8 +61,7 @@ namespace Bamboo
 		// set camera component
 		auto camera_component = g_runtime_context.worldManager()->getCameraComponent();
 		camera_component->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
-		camera_component->m_key_enabled = !isPoppingUp();		
-		camera_component->m_mouse_enabled = !isPoppingUp() && isMouseFocused();
+		camera_component->m_enabled = !isPoppingUp() && isMouseFocused();
 	}
 
 	void SimulationUI::destroy()

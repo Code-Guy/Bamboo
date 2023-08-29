@@ -12,9 +12,10 @@ layout(set = 0, binding = 7) uniform sampler2D brdf_lut_texture_sampler;
 // shadow textures
 layout(set = 0, binding = 8) uniform sampler2DArray directional_light_shadow_texture_sampler;
 layout(set = 0, binding = 9) uniform samplerCube point_light_shadow_texture_samplers[MAX_POINT_LIGHT_NUM];
+layout(set = 0, binding = 10) uniform sampler2D spot_light_shadow_texture_samplers[MAX_SPOT_LIGHT_NUM];
 
 // lighting ubo
-layout(set = 0, binding = 10) uniform _LightingUBO { LightingUBO lighting_ubo; };
+layout(set = 0, binding = 11) uniform _LightingUBO { LightingUBO lighting_ubo; };
 
 struct PBRInfo
 {
@@ -127,7 +128,7 @@ float textureProj(vec4 shadow_coord, vec2 offset, uint cascade_index)
 	{
 		float depth = texture(directional_light_shadow_texture_sampler, 
 			vec3(shadow_coord.xy + offset, cascade_index)).r;
-		if (depth < shadow_coord.z - SHADOW_BIAS) 
+		if (depth < shadow_coord.z - DIRECTIONAL_LIGHT_SHADOW_BIAS) 
 		{
 			return 0.0;
 		}
@@ -265,7 +266,23 @@ vec4 calc_pbr(MaterialInfo mat_info)
 			vec3 c = point_light.color * pl_attenuation * sl_attenuation;
 			vec3 l = normalize(point_light.position - mat_info.position);
 
-			color += getLightContribution(pbr_info, n, v, l, c);
+			float shadow = 1.0;
+			if (bool(point_light.cast_shadow))
+			{
+				vec4 shadow_coord = (k_shadow_bias_mat * spot_light.view_proj) * vec4(mat_info.position, 1.0);
+				shadow_coord = shadow_coord / shadow_coord.w;
+
+				if (shadow_coord.z > 0.0 && shadow_coord.z < 1.0) 
+				{
+					float depth = texture(spot_light_shadow_texture_samplers[i], shadow_coord.xy).r;
+					if (depth < shadow_coord.z - SPOT_LIGHT_SHADOW_BIAS) 
+					{
+						shadow = 0.0;
+					}
+				}
+			}
+
+			color += getLightContribution(pbr_info, n, v, l, c) * shadow;
 		}
 	}
 

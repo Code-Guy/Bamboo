@@ -96,8 +96,14 @@ namespace Bamboo
 
 	void CameraComponent::onKey(const std::shared_ptr<class Event>& event)
 	{
+		if (!m_enabled)
+		{
+			m_move_forward = m_move_back = m_move_left = m_move_right = m_move_up = m_move_down = false;
+			return;
+		}
+
 		const WindowKeyEvent* key_event = static_cast<const WindowKeyEvent*>(event.get());
-		if (!m_key_enabled || (key_event->action != GLFW_PRESS && key_event->action != GLFW_RELEASE))
+		if (key_event->action != GLFW_PRESS && key_event->action != GLFW_RELEASE)
 		{
 			return;
 		}
@@ -131,15 +137,15 @@ namespace Bamboo
 
 	void CameraComponent::onCursorPos(const std::shared_ptr<class Event>& event)
 	{
-		const WindowCursorPosEvent* cursor_pos_event = static_cast<const WindowCursorPosEvent*>(event.get());
-		if (!m_mouse_right_button_pressed)
+		if (!m_enabled)
 		{
+			m_last_xpos = m_last_ypos = 0.0f;
 			return;
 		}
 
-		if (!m_mouse_enabled)
+		const WindowCursorPosEvent* cursor_pos_event = static_cast<const WindowCursorPosEvent*>(event.get());
+		if (!m_mouse_right_button_pressed)
 		{
-			m_last_xpos = m_last_ypos = 0.0f;
 			return;
 		}
 
@@ -186,7 +192,7 @@ namespace Bamboo
 	void CameraComponent::onScroll(const std::shared_ptr<class Event>& event)
 	{
 		const WindowScrollEvent* scroll_event = static_cast<const WindowScrollEvent*>(event.get());
-		if (m_mouse_enabled)
+		if (m_enabled)
 		{
 			m_transform_component->m_position += m_forward * (float)scroll_event->yoffset * m_zoom_speed;
 		}

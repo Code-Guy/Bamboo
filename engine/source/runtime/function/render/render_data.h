@@ -33,6 +33,7 @@ namespace Bamboo
 
 		VmaImageViewSampler directional_light_shadow_texture;
 		std::vector<VmaImageViewSampler> point_light_shadow_textures;
+		std::vector<VmaImageViewSampler> spot_light_shadow_textures;
 	};
 
 	struct MeshRenderData : public RenderData
@@ -78,6 +79,15 @@ namespace Bamboo
 	struct ShadowCubeCreateInfo
 	{
 		vec3 light_pos;
+		float light_near;
+		float light_far;
+	};
+
+	struct ShadowFrustumCreateInfo
+	{
+		vec3 light_pos;
+		vec3 light_dir;
+		float light_angle;
 		float light_near;
 		float light_far;
 	};

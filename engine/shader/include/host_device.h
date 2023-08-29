@@ -72,6 +72,7 @@ struct SpotLight
 {
     PointLight _pl;
     vec3 direction; float padding0;
+    mat4 view_proj;
 };
 
 struct LightingUBO

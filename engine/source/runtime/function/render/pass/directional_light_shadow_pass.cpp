@@ -270,8 +270,8 @@ namespace Bamboo
 		const auto& shader_manager = g_runtime_context.shaderManager();
 		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = {
 			shader_manager->getShaderStageCI("static_mesh.vert", VK_SHADER_STAGE_VERTEX_BIT),
-			shader_manager->getShaderStageCI("directional_light_depth.geom", VK_SHADER_STAGE_GEOMETRY_BIT),
-			shader_manager->getShaderStageCI("directional_light_depth.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+			shader_manager->getShaderStageCI("directional_light_shadow.geom", VK_SHADER_STAGE_GEOMETRY_BIT),
+			shader_manager->getShaderStageCI("directional_light_shadow.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
 		// create graphics pipeline

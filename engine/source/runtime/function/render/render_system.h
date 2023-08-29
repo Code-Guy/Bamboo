@@ -29,6 +29,7 @@ namespace Bamboo
 
 		std::shared_ptr<class DirectionalLightShadowPass> m_directional_light_shadow_pass;
 		std::shared_ptr<class PointLightShadowPass> m_point_light_shadow_pass;
+		std::shared_ptr<class SpotLightShadowPass> m_spot_light_shadow_pass;
 		std::shared_ptr<class MainPass> m_main_pass;
 		std::shared_ptr<class UIPass> m_ui_pass;
 		std::vector<std::shared_ptr<RenderPass>> m_render_passes;

@@ -35,14 +35,14 @@
                                                         }
                                                     },
                                                     "position": {
-                                                        "x": 2.8344993591308595,
-                                                        "y": 11.03014087677002,
-                                                        "z": -4.616103172302246
+                                                        "x": 1.4790828227996827,
+                                                        "y": 2.450291872024536,
+                                                        "z": -3.074564218521118
                                                     },
                                                     "rotation": {
                                                         "x": 0.0,
-                                                        "y": 93.40045166015625,
-                                                        "z": -57.399871826171878
+                                                        "y": 107.40037536621094,
+                                                        "z": -21.29999351501465
                                                     },
                                                     "scale": {
                                                         "x": 1.0,
@@ -400,13 +400,13 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 0.0,
+                                                        "intensity": 1.0,
                                                         "color": {
                                                             "r": 1.0,
                                                             "g": 1.0,
                                                             "b": 1.0
                                                         },
-                                                        "cast_shadow": false
+                                                        "cast_shadow": true
                                                     },
                                                     "cascade_frustum_near": -50.0
                                                 }
@@ -475,13 +475,13 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 0.0,
+                                                        "intensity": 0.5,
                                                         "color": {
                                                             "r": 1.0,
                                                             "g": 1.0,
                                                             "b": 1.0
                                                         },
-                                                        "cast_shadow": false
+                                                        "cast_shadow": true
                                                     },
                                                     "asset_ref": {
                                                         "ref_urls": [
@@ -557,11 +557,11 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 10.0,
+                                                        "intensity": 5.0,
                                                         "color": {
                                                             "r": 1.0,
-                                                            "g": 0.0,
-                                                            "b": 0.0
+                                                            "g": 1.0,
+                                                            "b": 1.0
                                                         },
                                                         "cast_shadow": true
                                                     },
@@ -633,10 +633,10 @@
                                                                 "tick_interval": 0.0
                                                             }
                                                         },
-                                                        "intensity": 10.0,
+                                                        "intensity": 5.0,
                                                         "color": {
-                                                            "r": 0.0,
-                                                            "g": 0.0,
+                                                            "r": 1.0,
+                                                            "g": 1.0,
                                                             "b": 1.0
                                                         },
                                                         "cast_shadow": true
@@ -644,6 +644,167 @@
                                                     "radius": 128.0,
                                                     "linear_attenuation": 0.14000000059604646,
                                                     "quadratic_attenuation": 0.07000000029802323
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "key": 8,
+                        "value": {
+                            "polymorphic_id": 1073741824,
+                            "ptr_wrapper": {
+                                "id": 2147483676,
+                                "data": {
+                                    "tickable": {
+                                        "tick_enabled": false,
+                                        "tick_interval": 0.0
+                                    },
+                                    "name": "spot_light",
+                                    "id": 8,
+                                    "parent_id": 4294967295,
+                                    "child_ids": [],
+                                    "components": [
+                                        {
+                                            "polymorphic_id": 2,
+                                            "ptr_wrapper": {
+                                                "id": 2147483677,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "x": 1.0,
+                                                        "y": 6.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "rotation": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": -90.0
+                                                    },
+                                                    "scale": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 2147483659,
+                                            "polymorphic_name": "Bamboo::SpotLightComponent",
+                                            "ptr_wrapper": {
+                                                "id": 2147483678,
+                                                "data": {
+                                                    "point_light": {
+                                                        "light": {
+                                                            "component": {
+                                                                "tickable": {
+                                                                    "tick_enabled": false,
+                                                                    "tick_interval": 0.0
+                                                                }
+                                                            },
+                                                            "intensity": 5.0,
+                                                            "color": {
+                                                                "r": 1.0,
+                                                                "g": 1.0,
+                                                                "b": 1.0
+                                                            },
+                                                            "cast_shadow": true
+                                                        },
+                                                        "radius": 64.0,
+                                                        "linear_attenuation": 0.14000000059604646,
+                                                        "quadratic_attenuation": 0.07000000029802323
+                                                    },
+                                                    "inner_cone_angle": 30.0,
+                                                    "outer_cone_angle": 45.0
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "key": 9,
+                        "value": {
+                            "polymorphic_id": 1073741824,
+                            "ptr_wrapper": {
+                                "id": 2147483679,
+                                "data": {
+                                    "tickable": {
+                                        "tick_enabled": false,
+                                        "tick_interval": 0.0
+                                    },
+                                    "name": "spot_light",
+                                    "id": 9,
+                                    "parent_id": 4294967295,
+                                    "child_ids": [],
+                                    "components": [
+                                        {
+                                            "polymorphic_id": 2,
+                                            "ptr_wrapper": {
+                                                "id": 2147483680,
+                                                "data": {
+                                                    "component": {
+                                                        "tickable": {
+                                                            "tick_enabled": false,
+                                                            "tick_interval": 0.0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "x": -4.0,
+                                                        "y": 2.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "rotation": {
+                                                        "x": 0.0,
+                                                        "y": 0.0,
+                                                        "z": 0.0
+                                                    },
+                                                    "scale": {
+                                                        "x": 1.0,
+                                                        "y": 1.0,
+                                                        "z": 1.0
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "polymorphic_id": 11,
+                                            "ptr_wrapper": {
+                                                "id": 2147483681,
+                                                "data": {
+                                                    "point_light": {
+                                                        "light": {
+                                                            "component": {
+                                                                "tickable": {
+                                                                    "tick_enabled": false,
+                                                                    "tick_interval": 0.0
+                                                                }
+                                                            },
+                                                            "intensity": 5.0,
+                                                            "color": {
+                                                                "r": 1.0,
+                                                                "g": 1.0,
+                                                                "b": 1.0
+                                                            },
+                                                            "cast_shadow": true
+                                                        },
+                                                        "radius": 64.0,
+                                                        "linear_attenuation": 0.14000000059604646,
+                                                        "quadratic_attenuation": 0.07000000029802323
+                                                    },
+                                                    "inner_cone_angle": 30.0,
+                                                    "outer_cone_angle": 45.0
                                                 }
                                             }
                                         }

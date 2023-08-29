@@ -27,8 +27,7 @@ namespace Bamboo
 		float m_zoom_speed;
 
 		// enabled
-		bool m_mouse_enabled = false;
-		bool m_key_enabled = false;
+		bool m_enabled = false;
 
 	private:
 		REGISTER_REFLECTION(Component)
