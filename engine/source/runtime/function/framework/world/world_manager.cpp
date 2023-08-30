@@ -120,9 +120,11 @@ namespace Bamboo
 		spot_light_component->m_inner_cone_angle = 60.0f;
 		spot_light_component->m_outer_cone_angle = 90.0f;
 
-		std::shared_ptr<Entity> spot_light_entity = m_current_world->createEntity("spot_light");
-		spot_light_entity->addComponent(transform_component);
-		spot_light_entity->addComponent(spot_light_component);
+// 		std::shared_ptr<Entity> spot_light_entity = m_current_world->createEntity("spot_light");
+// 		spot_light_entity->addComponent(transform_component);
+// 		spot_light_entity->addComponent(spot_light_component);
+
+		m_current_world->removeEntity(1);
 	}
 
 }
