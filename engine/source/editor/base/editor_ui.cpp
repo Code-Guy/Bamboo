@@ -90,6 +90,11 @@ namespace Bamboo
 		return ImGui::GetIO().Fonts->Fonts[1];
 	}
 
+	ImFont* EditorUI::bigIconFont()
+	{
+		return ImGui::GetIO().Fonts->Fonts[2];
+	}
+
 	bool EditorUI::isMouseFocused()
 	{
 		int xpos, ypos;

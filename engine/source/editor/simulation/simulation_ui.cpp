@@ -55,6 +55,78 @@ namespace Bamboo
 			ImGui::EndDragDropTarget();
 		}
 
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.8f));
+		ImGui::SetCursorPos(ImVec2(10, 30));
+		sprintf(m_title_buf, "%s view", ICON_FA_DICE_D6);
+		if (ImGui::Button(m_title_buf, ImVec2(64, 24)))
+		{
+			ImGui::OpenPopup("view");
+		}
+
+		static int view_index = 0;
+		static const std::vector<std::string> views = {
+			"perspective", "top", "bottom", "left", "right", "front", "back"
+		};
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(-2.0f, -2.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 8.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f));
+		constructRadioButtonPopup("view", views, view_index);
+
+		ImGui::SameLine();
+		sprintf(m_title_buf, "%s shader", ICON_FA_BOWLING_BALL);
+		if (ImGui::Button(m_title_buf, ImVec2(75, 24)))
+		{
+			ImGui::OpenPopup("shader");
+		}
+
+		static int shader_index = 0;
+		static const std::vector<std::string> shaders = {
+			"lit", "unlit", "wireframe", "lighting only", "depth", "normal", "base color", "emissive color",
+			"metallic", "roughness", "occlusion", "opacity"
+		};
+		constructRadioButtonPopup("shader", shaders, shader_index);
+
+		ImGui::SameLine();
+		sprintf(m_title_buf, "%s show", ICON_FA_EYE);
+		if (ImGui::Button(m_title_buf, ImVec2(64, 24)))
+		{
+			ImGui::OpenPopup("show");
+		}
+
+		static std::vector<std::pair<std::string, bool>> shows = {
+			{ "anti-aliasing", false }, { "bounding boxes", false }, { "collision", false }, { "grid", false }, 
+			{ "static Meshes", false }, { "skeletal meshes", false }, { "translucency", false }
+		};
+		constructCheckboxPopup("show", shows);
+
+		ImGui::PopStyleVar(3);
+
+		ImGui::SameLine(content_size.x - 130);
+		if (ImGui::Button(ICON_FA_MOUSE_POINTER, ImVec2(24, 24)))
+		{
+
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button(ICON_FA_MOVE, ImVec2(24, 24)))
+		{
+
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button(ICON_FA_SYNC_ALT, ImVec2(24, 24)))
+		{
+
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button(ICON_FA_EXPAND, ImVec2(24, 24)))
+		{
+
+		}
+
+		ImGui::PopStyleColor();
+
 		ImGui::End();
 		ImGui::PopStyleVar();
 
@@ -126,6 +198,49 @@ namespace Bamboo
 
 			entity->setTickEnabled(true);
 			entity->setTickInterval(0.0167f);
+		}
+	}
+
+	bool SimulationUI::constructRadioButtonPopup(const std::string& popup_name, const std::vector<std::string>& values, int& index)
+	{
+		bool is_radio_button_pressed = false;
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+		if (ImGui::BeginPopup(popup_name.c_str()))
+		{
+			for (size_t i = 0; i < values.size(); ++i)
+			{
+				if (ImGui::RadioButton(values[i].c_str(), &index, i))
+				{
+					is_radio_button_pressed = true;
+				}
+				if (i != values.size() - 1)
+				{
+					ImGui::Spacing();
+				}
+			}
+			ImGui::EndPopup();
+		}
+
+		return is_radio_button_pressed;
+	}
+
+	void SimulationUI::constructCheckboxPopup(const std::string& popup_name, std::vector<std::pair<std::string, bool>>& values)
+	{
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
+		if (ImGui::BeginPopup(popup_name.c_str()))
+		{
+			for (size_t i = 0; i < values.size(); ++i)
+			{
+				if (ImGui::Checkbox(values[i].first.c_str(), &values[i].second))
+				{
+					
+				}
+				if (i != values.size() - 1)
+				{
+					ImGui::Spacing();
+				}
+			}
+			ImGui::EndPopup();
 		}
 	}
 

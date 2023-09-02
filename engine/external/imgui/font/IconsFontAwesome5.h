@@ -1011,3 +1011,5 @@
 #define ICON_FA_X_RAY "\xef\x92\x97"	// U+f497
 #define ICON_FA_YEN_SIGN "\xef\x85\x97"	// U+f157
 #define ICON_FA_YIN_YANG "\xef\x9a\xad"	// U+f6ad
+#define ICON_FA_MOVE "\xef\x81\x87"	// U+f047
+#define ICON_FA_FLASH_LIGHT "\xee\xa0\xa2"	// U+e822

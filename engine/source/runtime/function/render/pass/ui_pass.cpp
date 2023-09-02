@@ -3,6 +3,7 @@
 #include "runtime/core/base/macro.h"
 #include "runtime/core/event/event_system.h"
 #include "runtime/function/render/window_system.h"
+#include "runtime/platform/timer/timer.h"
 
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
@@ -18,6 +19,9 @@ namespace Bamboo
 
 	void UIPass::init()
 	{
+		StopWatch stop_watch;
+		stop_watch.start();
+
 		// setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -74,6 +78,12 @@ namespace Bamboo
 		const float k_small_font_size = 12.0f;
 		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/consola.ttf").c_str(), k_small_font_size);
 
+		// add big icon font
+		const float k_big_icon_font_size = 18.0f;
+		icons_config.MergeMode = false;
+		icons_config.GlyphMinAdvanceX = k_big_icon_font_size;
+		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/fa-solid-900.ttf").c_str(), k_big_icon_font_size, &icons_config, icons_ranges);
+
 		// upload fonts
 		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
 		ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
@@ -83,6 +93,8 @@ namespace Bamboo
 		// create swapchain related objects
 		const VkExtent2D& extent = VulkanRHI::get().getSwapchainImageSize();
 		createResizableObjects(extent.width, extent.height);
+
+		LOG_INFO("ui pass init time: {}ms", stop_watch.stop());
 	}
 
 	void UIPass::prepare()
