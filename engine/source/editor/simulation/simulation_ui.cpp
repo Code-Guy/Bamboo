@@ -95,36 +95,12 @@ namespace Bamboo
 
 		static std::vector<std::pair<std::string, bool>> shows = {
 			{ "anti-aliasing", false }, { "bounding boxes", false }, { "collision", false }, { "grid", false }, 
-			{ "static Meshes", false }, { "skeletal meshes", false }, { "translucency", false }
+			{ "static meshes", false }, { "skeletal meshes", false }, { "translucency", false }
 		};
 		constructCheckboxPopup("show", shows);
-
 		ImGui::PopStyleVar(3);
 
-		ImGui::SameLine(content_size.x - 130);
-		if (ImGui::Button(ICON_FA_MOUSE_POINTER, ImVec2(24, 24)))
-		{
-
-		}
-
-		ImGui::SameLine();
-		if (ImGui::Button(ICON_FA_MOVE, ImVec2(24, 24)))
-		{
-
-		}
-
-		ImGui::SameLine();
-		if (ImGui::Button(ICON_FA_SYNC_ALT, ImVec2(24, 24)))
-		{
-
-		}
-
-		ImGui::SameLine();
-		if (ImGui::Button(ICON_FA_EXPAND, ImVec2(24, 24)))
-		{
-
-		}
-
+		constructInteractiveModeButtons();
 		ImGui::PopStyleColor();
 
 		ImGui::End();
@@ -241,6 +217,22 @@ namespace Bamboo
 				}
 			}
 			ImGui::EndPopup();
+		}
+	}
+
+	void SimulationUI::constructInteractiveModeButtons()
+	{
+		static uint32_t index = 0;
+		std::vector<std::string> names = { ICON_FA_MOUSE_POINTER, ICON_FA_MOVE, ICON_FA_SYNC_ALT, ICON_FA_EXPAND };
+		for (size_t i = 0; i < names.size(); ++i)
+		{
+			ImGui::SameLine(i == 0 ? ImGui::GetContentRegionAvail().x - 130 : 0.0f);
+			ImGui::PushStyleColor(ImGuiCol_Button, i == index ? ImVec4(0.26f, 0.59f, 0.98f, 0.8f) : ImVec4(0.4f, 0.4f, 0.4f, 0.8f));
+			if (ImGui::Button(names[i].c_str(), ImVec2(24, 24)))
+			{
+				index = i;
+			}
+			ImGui::PopStyleColor();
 		}
 	}
 
