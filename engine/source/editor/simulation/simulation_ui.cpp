@@ -1,5 +1,6 @@
 #include "simulation_ui.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/function/render/render_system.h"
 #include "runtime/function/render/pass/main_pass.h"
 
@@ -13,7 +14,9 @@
 #include "runtime/function/framework/component/animation_component.h"
 #include "runtime/function/framework/component/animator_component.h"
 
+#include <GLFW/glfw3.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
+#include <imgui/ImGuizmo.h>
 
 namespace Bamboo
 {
@@ -23,6 +26,12 @@ namespace Bamboo
 		m_title = "Simulation";
 		m_color_texture_sampler = VulkanUtil::createSampler(VK_FILTER_LINEAR, VK_FILTER_LINEAR, 1, VK_SAMPLER_ADDRESS_MODE_REPEAT,
 			VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT);
+
+		m_coordinate_mode = ECoordinateMode::Local;
+		m_operation_mode = EOperationMode::Pick;
+		m_camera_component = g_runtime_context.worldManager()->getCameraComponent();
+
+		g_runtime_context.eventSystem()->addListener(EventType::WindowKey, std::bind(&SimulationUI::onKey, this, std::placeholders::_1));
 	}
 
 	void SimulationUI::construct()
@@ -100,16 +109,13 @@ namespace Bamboo
 		constructCheckboxPopup("show", shows);
 		ImGui::PopStyleVar(3);
 
-		constructInteractiveModeButtons();
+		constructOperationModeButtons();
 		ImGui::PopStyleColor();
+
+		constructImGuizmo();
 
 		ImGui::End();
 		ImGui::PopStyleVar();
-
-		// set camera component
-		auto camera_component = g_runtime_context.worldManager()->getCameraComponent();
-		camera_component->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
-		camera_component->m_enabled = !isPoppingUp() && isMouseFocused();
 	}
 
 	void SimulationUI::destroy()
@@ -220,19 +226,78 @@ namespace Bamboo
 		}
 	}
 
-	void SimulationUI::constructInteractiveModeButtons()
+	void SimulationUI::constructOperationModeButtons()
 	{
-		static uint32_t index = 0;
 		std::vector<std::string> names = { ICON_FA_MOUSE_POINTER, ICON_FA_MOVE, ICON_FA_SYNC_ALT, ICON_FA_EXPAND };
 		for (size_t i = 0; i < names.size(); ++i)
 		{
 			ImGui::SameLine(i == 0 ? ImGui::GetContentRegionAvail().x - 130 : 0.0f);
-			ImGui::PushStyleColor(ImGuiCol_Button, i == index ? ImVec4(0.26f, 0.59f, 0.98f, 0.8f) : ImVec4(0.4f, 0.4f, 0.4f, 0.8f));
+			ImGui::PushStyleColor(ImGuiCol_Button, i == (size_t)m_operation_mode ? ImVec4(0.26f, 0.59f, 0.98f, 0.8f) : ImVec4(0.4f, 0.4f, 0.4f, 0.8f));
 			if (ImGui::Button(names[i].c_str(), ImVec2(24, 24)))
 			{
-				index = i;
+				m_operation_mode = (EOperationMode)i;
 			}
 			ImGui::PopStyleColor();
+		}
+	}
+
+	void SimulationUI::constructImGuizmo()
+	{
+		// set camera component
+		m_camera_component->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
+		m_camera_component->m_enabled = isFocused();
+
+		// set translation/rotation/scale gizmos
+		ImGuizmo::SetID(0);
+		ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+		ImGuizmo::SetDrawlist();
+
+		const float* p_view = glm::value_ptr(m_camera_component->getViewMatrix());
+		const float* p_projection = glm::value_ptr(m_camera_component->getPerspectiveMatrixNoInverted());
+		glm::mat4 identity = glm::mat4(1.0f);
+		const float* p_identity = glm::value_ptr(identity);
+
+		static glm::mat4 matrix = glm::mat4(1.0f);
+		if (m_operation_mode != EOperationMode::Pick)
+		{
+			ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
+			if (m_operation_mode == EOperationMode::Rotate)
+			{
+				operation = ImGuizmo::ROTATE;
+			}
+			else if (m_operation_mode == EOperationMode::Scale)
+			{
+				operation = ImGuizmo::SCALE;
+			}
+
+			ImGuizmo::Manipulate(p_view, p_projection, operation, (ImGuizmo::MODE)m_coordinate_mode, glm::value_ptr(matrix), nullptr, nullptr, nullptr, nullptr);
+		}
+	}
+
+	void SimulationUI::onKey(const std::shared_ptr<class Event>& event)
+	{
+		if (!isFocused())
+		{
+			return;
+		}
+
+		const WindowKeyEvent* key_event = static_cast<const WindowKeyEvent*>(event.get());
+		if (key_event->action != GLFW_PRESS)
+		{
+			return;
+		}
+
+		if (key_event->key == GLFW_KEY_W)
+		{
+			m_operation_mode = EOperationMode::Translate;
+		}
+		else if (key_event->key == GLFW_KEY_E)
+		{
+			m_operation_mode = EOperationMode::Rotate;
+		}
+		else if (key_event->key == GLFW_KEY_R)
+		{
+			m_operation_mode = EOperationMode::Scale;
 		}
 	}
 

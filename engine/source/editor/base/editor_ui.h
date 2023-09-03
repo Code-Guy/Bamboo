@@ -38,7 +38,7 @@ namespace Bamboo
 		ImFont* smallFont();
 		ImFont* bigIconFont();
 
-		bool isMouseFocused();
+		bool isFocused();
 		bool isPoppingUp();
 
 		std::string m_title;
@@ -46,6 +46,8 @@ namespace Bamboo
 		glm::uvec4 m_content_region;
 
 	private:
+		bool isMouseFocused();
+
 		std::map<std::string, std::shared_ptr<ImGuiImage>> m_imgui_images;
 	};
 }

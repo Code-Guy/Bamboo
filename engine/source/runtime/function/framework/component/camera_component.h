@@ -12,6 +12,9 @@ namespace Bamboo
 		glm::mat4 getPerspectiveMatrix();
 		glm::mat4 getViewPerspectiveMatrix();
 
+		glm::mat4 getViewMatrixNoTranslation();
+		glm::mat4 getPerspectiveMatrixNoInverted();
+
 		virtual void tick(float delta_time) override;
 		virtual void inflate() override;
 

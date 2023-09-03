@@ -293,7 +293,7 @@ namespace Bamboo
 				skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
 				skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
 				skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
-				skybox_render_data->transform_pco.mvp = camera_component->getPerspectiveMatrix() * glm::mat4(glm::mat3(camera_component->getViewMatrix()));
+				skybox_render_data->transform_pco.mvp = camera_component->getPerspectiveMatrix() * camera_component->getViewMatrixNoTranslation();
 				skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
 
 				// set lighting uniform buffer object

@@ -49,6 +49,16 @@ namespace Bamboo
 		return getPerspectiveMatrix() * getViewMatrix();
 	}
 
+	glm::mat4 CameraComponent::getViewMatrixNoTranslation()
+	{
+		return glm::mat4(glm::mat3(getViewMatrix()));
+	}
+
+	glm::mat4 CameraComponent::getPerspectiveMatrixNoInverted()
+	{
+		return glm::perspectiveRH_ZO(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
+	}
+
 	void CameraComponent::tick(float delta_time)
 	{
 		float offset = m_move_speed * delta_time;

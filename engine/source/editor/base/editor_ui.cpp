@@ -95,18 +95,23 @@ namespace Bamboo
 		return ImGui::GetIO().Fonts->Fonts[2];
 	}
 
-	bool EditorUI::isMouseFocused()
+	bool EditorUI::isFocused()
 	{
-		int xpos, ypos;
-		g_runtime_context.windowSystem()->getMousePos(xpos, ypos);
-		return xpos > m_content_region.x && xpos < m_content_region.x + m_content_region.z &&
-			ypos > m_content_region.y && ypos < m_content_region.y + m_content_region.w;
+		return !isPoppingUp() && isMouseFocused();
 	}
 
 	bool EditorUI::isPoppingUp()
 	{
 		ImGuiContext& g = *GImGui;
 		return !g.OpenPopupStack.empty();
+	}
+
+	bool EditorUI::isMouseFocused()
+	{
+		int xpos, ypos;
+		g_runtime_context.windowSystem()->getMousePos(xpos, ypos);
+		return xpos > m_content_region.x && xpos < m_content_region.x + m_content_region.z &&
+			ypos > m_content_region.y && ypos < m_content_region.y + m_content_region.w;
 	}
 
 }
