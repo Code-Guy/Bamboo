@@ -13,7 +13,7 @@ namespace Bamboo
 		r *= v; g *= v; b *= v;
 	}
 
-	glm::vec3 Color3::toVec3()
+	glm::vec3 Color3::toVec3() const
 	{
 		return glm::vec3(r, g, b);
 	}

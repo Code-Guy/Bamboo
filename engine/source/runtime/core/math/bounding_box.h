@@ -12,6 +12,11 @@ namespace Bamboo
 		glm::vec3 m_max = glm::vec3(std::numeric_limits<float>::min());
 
 		BoundingBox transform(const glm::mat4& m);
+		void combine(const BoundingBox& other);
+		void combine(const glm::vec3& position);
+
+		glm::vec3 center() const;
+		glm::vec3 extent() const;
 
 	private:
 		friend class cereal::access;

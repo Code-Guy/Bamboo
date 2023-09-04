@@ -386,8 +386,6 @@ namespace Bamboo
 			sub_mesh->m_index_offset = index_start;
 			sub_mesh->m_index_count = primitive_index_count;
 			sub_mesh->m_vertex_count = primitive_vertex_count;
-			sub_mesh->m_bounding_box = BoundingBox{ min_position, max_position };
-			sub_mesh->m_bounding_box.transform(matrix);
 
 			// if submesh doesn't have material, use default material
 			std::shared_ptr<Material> material;

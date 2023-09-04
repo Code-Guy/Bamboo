@@ -13,7 +13,6 @@ namespace Bamboo
 		uint32_t m_vertex_count;
 		
 		std::shared_ptr<Material> m_material;
-		BoundingBox m_bounding_box;
 
 	private:
 		friend class cereal::access;
@@ -24,7 +23,6 @@ namespace Bamboo
 			ar(cereal::make_nvp("index_offset", m_index_offset));
 			ar(cereal::make_nvp("index_count", m_index_count));
 			ar(cereal::make_nvp("vertex_count", m_vertex_count));
-			ar(cereal::make_nvp("bounding_box", m_bounding_box));
 		}
 
 		virtual void bindRefs() override;

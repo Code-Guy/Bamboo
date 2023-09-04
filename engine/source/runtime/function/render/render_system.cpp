@@ -3,6 +3,7 @@
 #include "runtime/core/event/event_system.h"
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
+#include "runtime/function/render/debug_draw_manager.h"
 #include "runtime/platform/timer/timer.h"
 
 #include "runtime/core/vulkan/vulkan_rhi.h"
@@ -175,6 +176,10 @@ namespace Bamboo
 		lighting_ubo.has_sky_light = lighting_ubo.has_directional_light = false;
 		lighting_ubo.point_light_num = lighting_ubo.spot_light_num = 0;
 
+		// get debug draw manager
+		const auto& ddm = g_runtime_context.debugDrawSystem();
+		ddm->clear();
+
 		// traverse all entities
 		const auto& entities = current_world->getEntities();
 		for (const auto& iter : entities)
@@ -202,6 +207,10 @@ namespace Bamboo
 
 				if (mesh)
 				{
+					// draw mesh bounding boxes
+					BoundingBox bounding_box = mesh->m_bounding_box.transform(transform_component->getGlobalMatrix());
+					//ddm->drawBox(bounding_box.center(), bounding_box.extent(), k_zero_vector, Color3::Orange);
+
 					// create mesh render data
 					EMeshType mesh_type = static_mesh_component ? EMeshType::Static : EMeshType::Skeletal;
 					std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = nullptr;
@@ -453,6 +462,7 @@ namespace Bamboo
 		{
 			main_pass_render_datas.push_back(skybox_render_data);
 		}
+		m_main_pass->setViewProj(camera_component->getViewPerspectiveMatrix());
 		m_main_pass->setRenderDatas(main_pass_render_datas);
 	}
 

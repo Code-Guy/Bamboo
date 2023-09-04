@@ -24,6 +24,16 @@ namespace Bamboo
 		return rotation_matrix;
 	}
 
+	glm::vec3 Transform::transformPosition(const glm::vec3& position)
+	{
+		return matrix() * glm::vec4(position, 1.0f);
+	}
+
+	glm::vec3 Transform::transformVector(const glm::vec3& vector)
+	{
+		return matrix() * glm::vec4(vector, 0.0f);
+	}
+
 	bool Transform::operator==(const Transform& other) const
 	{
 		return m_position == other.m_position &&

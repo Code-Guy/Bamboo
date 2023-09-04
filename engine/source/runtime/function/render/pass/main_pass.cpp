@@ -2,6 +2,7 @@
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
+#include "runtime/function/render/debug_draw_manager.h"
 #include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/base/mesh.h"
 #include "runtime/function/render/render_data.h"
@@ -111,6 +112,21 @@ namespace Bamboo
 		
 		// 3.forward subpass
 		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
+
+		// debug draw
+		{
+			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[6]);
+
+			// bind vertex and index buffer
+			const auto& ddm = g_runtime_context.debugDrawSystem();
+			VkBuffer vertexBuffers[] = { ddm->getVertexBuffer() };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
+
+			// push constants
+			vkCmdPushConstants(command_buffer, m_pipeline_layouts[6], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &m_view_proj);
+			vkCmdDraw(command_buffer, ddm->getVertexCount(), 1, 0, 0);
+		}
 
 		if (m_render_datas.size() > 1)
 		{
@@ -271,7 +287,7 @@ namespace Bamboo
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 
-		m_desc_set_layouts.resize(6);
+		m_desc_set_layouts.resize(7);
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create gbuffer static mesh descriptor set layout");
 
@@ -337,6 +353,12 @@ namespace Bamboo
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[5]);
 		CHECK_VULKAN_RESULT(result, "create skybox descriptor set layout");
+
+		// debug draw descriptor set layouts
+		desc_set_layout_ci.bindingCount = 0;
+		desc_set_layout_ci.pBindings = nullptr;
+		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[6]);
+		CHECK_VULKAN_RESULT(result, "create debug draw descriptor set layout");
 	}
 
 	void MainPass::createPipelineLayouts()
@@ -356,7 +378,7 @@ namespace Bamboo
 		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
 		pipeline_layout_ci.pPushConstantRanges = m_push_constant_ranges.data();
 
-		m_pipeline_layouts.resize(6);
+		m_pipeline_layouts.resize(7);
 		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create gbuffer static mesh pipeline layout");
 
@@ -387,6 +409,14 @@ namespace Bamboo
 		pipeline_layout_ci.pushConstantRangeCount = 1;
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[5]);
 		CHECK_VULKAN_RESULT(result, "create skybox pipeline layout");
+
+		// debug draw pipeline layouts
+		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[6];
+		VkPushConstantRange push_constant_range = { VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) };
+		pipeline_layout_ci.pPushConstantRanges = &push_constant_range;
+		pipeline_layout_ci.pushConstantRangeCount = 1;
+		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[6]);
+		CHECK_VULKAN_RESULT(result, "create debug draw pipeline layout");
 	}
 
 	void MainPass::createPipelines()
@@ -448,7 +478,7 @@ namespace Bamboo
 		m_pipeline_ci.renderPass = m_render_pass;
 		m_pipeline_ci.subpass = 0;
 
-		m_pipelines.resize(6);
+		m_pipelines.resize(7);
 
 		// create gbuffer static mesh pipeline
 		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[0]);
@@ -518,8 +548,8 @@ namespace Bamboo
 		m_color_blend_attachments[0].blendEnable = VK_FALSE;
 
 		// vertex input state
-		vertex_input_ci = {};
-		vertex_input_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		VkPipelineVertexInputStateCreateInfo composition_vertex_input_ci{};
+		composition_vertex_input_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
 		// shader stages
 		shader_stage_cis = {
@@ -527,10 +557,33 @@ namespace Bamboo
 			shader_manager->getShaderStageCI("deferred_lighting.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
+		m_pipeline_ci.pVertexInputState = &composition_vertex_input_ci;
 		m_pipeline_ci.layout = m_pipeline_layouts[2];
 		m_pipeline_ci.subpass = 1;
 		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[2]);
+		m_pipeline_ci.pVertexInputState = &vertex_input_ci;
 		CHECK_VULKAN_RESULT(result, "create composition graphics pipeline");
+
+		// debug draw pipeline
+		m_input_assembly_state_ci.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+		m_depth_stencil_ci.depthTestEnable = VK_TRUE;
+		m_depth_stencil_ci.depthWriteEnable = VK_TRUE;
+
+		// vertex input
+		vertex_input_binding_descriptions[0].stride = sizeof(DebugDrawVertex);
+		vertex_input_attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertex_input_ci.vertexAttributeDescriptionCount = 2;
+
+		// shader stages
+		shader_stage_cis = {
+			shader_manager->getShaderStageCI("debug_draw.vert", VK_SHADER_STAGE_VERTEX_BIT),
+			shader_manager->getShaderStageCI("debug_draw.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+		};
+
+		m_pipeline_ci.layout = m_pipeline_layouts[6];
+		m_pipeline_ci.subpass = 2;
+		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[6]);
+		CHECK_VULKAN_RESULT(result, "create debug draw graphics pipeline");
 	}
 
 	void MainPass::createFramebuffer()

@@ -22,6 +22,7 @@ namespace Bamboo
             const auto& assetManager() { return m_asset_manager; }
             const auto& worldManager() { return m_world_manager; }
             const auto& renderSystem() { return m_render_system; }
+            const auto& debugDrawSystem() { return m_debug_draw_system; }
 
             void setDeltaTime(float delta_time) { m_delta_time = delta_time; }
             float getDeltaTime() { return m_delta_time; }
@@ -37,6 +38,7 @@ namespace Bamboo
 			std::shared_ptr<class AssetManager> m_asset_manager;
 			std::shared_ptr<class WorldManager> m_world_manager;
 			std::shared_ptr<class RenderSystem> m_render_system;
+			std::shared_ptr<class DebugDrawManager> m_debug_draw_system;
 
             float m_delta_time = 0.0f;
     };

@@ -24,6 +24,9 @@ namespace Bamboo
 		glm::mat4 matrix() const;
 		glm::mat4 rotationMatrix(const glm::mat4& base_matrix = glm::mat4(1.0f)) const;
 
+		glm::vec3 transformPosition(const glm::vec3& position);
+		glm::vec3 transformVector(const glm::vec3& vector);
+
 		bool operator==(const Transform& other) const;
 		bool operator!=(const Transform& other) const;
 	};

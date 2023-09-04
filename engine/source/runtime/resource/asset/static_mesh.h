@@ -12,6 +12,9 @@ namespace Bamboo
 
 		std::vector<StaticVertex> m_vertices;
 
+	protected:
+		virtual void calcBoundingBox() override;
+
 	private:
 		friend class cereal::access;
 		template<class Archive>

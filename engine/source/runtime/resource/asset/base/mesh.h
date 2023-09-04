@@ -50,6 +50,11 @@ namespace Bamboo
 		VmaBuffer m_index_buffer;
 		std::vector<VmaBuffer> m_uniform_buffers;
 		
+		BoundingBox m_bounding_box;
+
+	protected:
+		virtual void calcBoundingBox() = 0;
+
 	private:
 		friend class cereal::access;
 		template<class Archive>

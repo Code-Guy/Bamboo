@@ -18,6 +18,7 @@ namespace Bamboo
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
 
+		void setViewProj(const glm::mat4& view_proj) { m_view_proj = view_proj; }
 		VkImageView getColorImageView() { return m_color_image_view.view; }
 
 	private:
@@ -44,5 +45,6 @@ namespace Bamboo
 
 		// lighting render data
 		std::shared_ptr<LightingRenderData> m_lighting_render_data;
+		glm::mat4 m_view_proj;
 	};
 }

@@ -26,7 +26,7 @@ namespace Bamboo
 		Color3 operator*(float v) const;
 		void operator*=(float v);
 
-		glm::vec3 toVec3();
+		glm::vec3 toVec3() const;
 
 		float* data() { return c; }
 

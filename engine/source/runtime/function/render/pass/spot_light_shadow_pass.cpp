@@ -320,7 +320,7 @@ namespace Bamboo
 		}
 	}
 
-	const std::vector<Bamboo::VmaImageViewSampler>& SpotLightShadowPass::getShadowImageViewSamplers()
+	const std::vector<VmaImageViewSampler>& SpotLightShadowPass::getShadowImageViewSamplers()
 	{
 		return m_shadow_image_view_samplers;
 	}

@@ -28,4 +28,35 @@ namespace Bamboo
 
 		return BoundingBox{tmin, tmax};
 	}
+
+	void BoundingBox::combine(const BoundingBox& other)
+	{
+		m_min.x = std::min(m_min.x, other.m_min.x);
+		m_min.y = std::min(m_min.y, other.m_min.y);
+		m_min.z = std::min(m_min.z, other.m_min.z);
+		m_max.x = std::max(m_max.x, other.m_max.x);
+		m_max.y = std::max(m_max.y, other.m_max.y);
+		m_max.z = std::max(m_max.z, other.m_max.z);
+	}
+
+	void BoundingBox::combine(const glm::vec3& position)
+	{
+		m_min.x = std::min(m_min.x, position.x);
+		m_min.y = std::min(m_min.y, position.y);
+		m_min.z = std::min(m_min.z, position.z);
+		m_max.x = std::max(m_max.x, position.x);
+		m_max.y = std::max(m_max.y, position.y);
+		m_max.z = std::max(m_max.z, position.z);
+	}
+
+	glm::vec3 BoundingBox::center() const
+	{
+		return (m_min + m_max) * 0.5f;
+	}
+
+	glm::vec3 BoundingBox::extent() const
+	{
+		return (m_max - m_min) * 0.5f;
+	}
+
 }

@@ -395,7 +395,7 @@ namespace Bamboo
 		}
 	}
 
-	const std::vector<Bamboo::VmaImageViewSampler>& PointLightShadowPass::getShadowImageViewSamplers()
+	const std::vector<VmaImageViewSampler>& PointLightShadowPass::getShadowImageViewSamplers()
 	{
 		return m_shadow_image_view_samplers;
 	}

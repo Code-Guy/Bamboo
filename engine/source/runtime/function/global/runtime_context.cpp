@@ -7,6 +7,7 @@
 #include "runtime/function/render/window_system.h"
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/function/render/render_system.h"
+#include "runtime/function/render/debug_draw_manager.h"
 #include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
@@ -48,6 +49,9 @@ namespace Bamboo
 
         m_render_system = std::make_shared<RenderSystem>();
         m_render_system->init();
+
+		m_debug_draw_system = std::make_shared<DebugDrawManager>();
+        m_debug_draw_system->init();
     }
 
     void RuntimeContext::destroy()
@@ -56,6 +60,7 @@ namespace Bamboo
         VulkanRHI::get().waitDeviceIdle();
 
         // destroy with reverse initialize order
+        m_debug_draw_system->destroy();
         m_render_system->destroy();
         m_world_manager->destroy();
 		m_asset_manager->destroy();
