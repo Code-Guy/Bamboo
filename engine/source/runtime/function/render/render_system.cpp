@@ -128,10 +128,7 @@ namespace Bamboo
 	void RenderSystem::collectRenderDatas()
 	{
 		// mesh render datas
-		std::vector<std::shared_ptr<RenderData>> directional_light_shadow_pass_render_datas;
-		std::vector<std::shared_ptr<RenderData>> point_light_shadow_pass_render_datas;
-		std::vector<std::shared_ptr<RenderData>> spot_light_shadow_pass_render_datas;
-		std::vector<std::shared_ptr<RenderData>> main_pass_render_datas;
+		std::vector<std::shared_ptr<RenderData>> mesh_render_datas;
 
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
@@ -143,6 +140,7 @@ namespace Bamboo
 
 		// set render datas
 		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();
+		lighting_render_data->camera_view_proj = camera_component->getViewPerspectiveMatrix();
 		lighting_render_data->brdf_lut_texture = m_default_texture_2d->m_image_view_sampler;
 		lighting_render_data->irradiance_texture = m_default_texture_cube->m_image_view_sampler;
 		lighting_render_data->prefilter_texture = m_default_texture_cube->m_image_view_sampler;
@@ -280,10 +278,7 @@ namespace Bamboo
 						});
 					}
 
-					directional_light_shadow_pass_render_datas.push_back(static_mesh_render_data);
-					point_light_shadow_pass_render_datas.push_back(static_mesh_render_data);
-					spot_light_shadow_pass_render_datas.push_back(static_mesh_render_data);
-					main_pass_render_datas.push_back(static_mesh_render_data);
+					mesh_render_datas.push_back(static_mesh_render_data);
 				}
 			}
 
@@ -393,7 +388,7 @@ namespace Bamboo
 
 			if (lighting_ubo.directional_light.cast_shadow)
 			{
-				m_directional_light_shadow_pass->setRenderDatas(directional_light_shadow_pass_render_datas);
+				m_directional_light_shadow_pass->setRenderDatas(mesh_render_datas);
 			}
 		}
 
@@ -419,7 +414,7 @@ namespace Bamboo
 
 			if (cast_shadow)
 			{
-				m_point_light_shadow_pass->setRenderDatas(point_light_shadow_pass_render_datas);
+				m_point_light_shadow_pass->setRenderDatas(mesh_render_datas);
 			}
 		}
 
@@ -445,7 +440,7 @@ namespace Bamboo
 
 			if (cast_shadow)
 			{
-				m_spot_light_shadow_pass->setRenderDatas(spot_light_shadow_pass_render_datas);
+				m_spot_light_shadow_pass->setRenderDatas(mesh_render_datas);
 			}
 		}
 
@@ -456,14 +451,10 @@ namespace Bamboo
 		}
 		lighting_render_data->lighting_ubs = m_lighting_ubs;
 
-		// main pass: 1 light data + n mesh datas(opaque or transparent) + 1 skybox render data(optional)
-		main_pass_render_datas.insert(main_pass_render_datas.begin(), lighting_render_data);
-		if (skybox_render_data)
-		{
-			main_pass_render_datas.push_back(skybox_render_data);
-		}
-		m_main_pass->setViewProj(camera_component->getViewPerspectiveMatrix());
-		m_main_pass->setRenderDatas(main_pass_render_datas);
+		// main pass
+		m_main_pass->setLightingRenderData(lighting_render_data);
+		m_main_pass->setSkyboxRenderData(skybox_render_data);
+		m_main_pass->setRenderDatas(mesh_render_datas);
 	}
 
 }

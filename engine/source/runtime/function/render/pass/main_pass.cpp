@@ -24,11 +24,6 @@ namespace Bamboo
 
 	void MainPass::render()
 	{
-		ASSERT(!m_render_datas.empty(), "main pass render datas should not be empty!");
-
-		// get lighting render data, which is the first element of render datas
-		m_lighting_render_data = std::static_pointer_cast<LightingRenderData>(m_render_datas.front());
-
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		render_pass_bi.renderPass = m_render_pass;
@@ -65,7 +60,7 @@ namespace Bamboo
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
 		// 1.deferred subpass
-		for (size_t i = 1; i < m_render_datas.size() - 1; ++i)
+		for (size_t i = 0; i < m_render_datas.size(); ++i)
 		{
 			render_mesh(m_render_datas[i], ERendererType::Deferred);
 		}
@@ -73,7 +68,7 @@ namespace Bamboo
 		// 2.composition subpass
 		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
 
-		if (m_render_datas.size() > 2)
+		if (!m_render_datas.empty())
 		{
 			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[2]);
 
@@ -113,49 +108,50 @@ namespace Bamboo
 		// 3.forward subpass
 		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
 
-		// debug draw
+		// 3.1 debug draw
+		const auto& ddm = g_runtime_context.debugDrawSystem();
+		if (!ddm->empty())
 		{
 			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[6]);
 
 			// bind vertex and index buffer
-			const auto& ddm = g_runtime_context.debugDrawSystem();
+
 			VkBuffer vertexBuffers[] = { ddm->getVertexBuffer() };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
 
 			// push constants
-			vkCmdPushConstants(command_buffer, m_pipeline_layouts[6], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &m_view_proj);
+			vkCmdPushConstants(command_buffer, m_pipeline_layouts[6], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &m_lighting_render_data->camera_view_proj);
 			vkCmdDraw(command_buffer, ddm->getVertexCount(), 1, 0, 0);
 		}
 
-		if (m_render_datas.size() > 1)
+		// 3.2 render skybox
+		if (m_skybox_render_data)
 		{
-			// render skybox
 			// bind pipeline
 			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[5]);
 
 			// bind vertex and index buffer
-			std::shared_ptr<SkyboxRenderData> skybox_render_data = std::static_pointer_cast<SkyboxRenderData>(m_render_datas.back());
-			VkBuffer vertexBuffers[] = { skybox_render_data->vertex_buffer.buffer };
+			VkBuffer vertexBuffers[] = { m_skybox_render_data->vertex_buffer.buffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(command_buffer, skybox_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindIndexBuffer(command_buffer, m_skybox_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 			// push constants
-			vkCmdPushConstants(command_buffer, m_pipeline_layouts[5], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO), &skybox_render_data->transform_pco);
+			vkCmdPushConstants(command_buffer, m_pipeline_layouts[5], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO), &m_skybox_render_data->transform_pco);
 
 			// update(push) sub mesh descriptors
 			std::vector<VkWriteDescriptorSet> desc_writes;
 			VkDescriptorImageInfo desc_image_info{};
-			addImageDescriptorSet(desc_writes, desc_image_info, skybox_render_data->env_texture, 0);
+			addImageDescriptorSet(desc_writes, desc_image_info, m_skybox_render_data->env_texture, 0);
 
 			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 				m_pipeline_layouts[5], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
-			vkCmdDrawIndexed(command_buffer, skybox_render_data->index_count, 1, 0, 0, 0);
-
-			// render transparency mesh in final step
-			//render_mesh(m_render_datas[m_render_datas.size() - 2], ERendererType::Forward);
+			vkCmdDrawIndexed(command_buffer, m_skybox_render_data->index_count, 1, 0, 0, 0);
 		}
+
+		// 3.3 render transparency meshes
+		//render_mesh(m_render_datas[m_render_datas.size() - 1], ERendererType::Forward);
 
 		vkCmdEndRenderPass(command_buffer);
 	}
@@ -287,7 +283,7 @@ namespace Bamboo
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 
-		m_desc_set_layouts.resize(7);
+		m_desc_set_layouts.resize(8);
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create gbuffer static mesh descriptor set layout");
 
@@ -354,6 +350,10 @@ namespace Bamboo
 		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[5]);
 		CHECK_VULKAN_RESULT(result, "create skybox descriptor set layout");
 
+		// billboard descriptor set layouts
+		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[7]);
+		CHECK_VULKAN_RESULT(result, "create billboard descriptor set layout");
+
 		// debug draw descriptor set layouts
 		desc_set_layout_ci.bindingCount = 0;
 		desc_set_layout_ci.pBindings = nullptr;
@@ -378,7 +378,7 @@ namespace Bamboo
 		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
 		pipeline_layout_ci.pPushConstantRanges = m_push_constant_ranges.data();
 
-		m_pipeline_layouts.resize(7);
+		m_pipeline_layouts.resize(8);
 		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create gbuffer static mesh pipeline layout");
 
@@ -417,6 +417,18 @@ namespace Bamboo
 		pipeline_layout_ci.pushConstantRangeCount = 1;
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[6]);
 		CHECK_VULKAN_RESULT(result, "create debug draw pipeline layout");
+
+		// billboard pipeline layouts
+		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[7];
+		std::vector<VkPushConstantRange> push_constant_ranges =
+		{
+			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4) },
+			{ VK_SHADER_STAGE_GEOMETRY_BIT, sizeof(glm::vec4), sizeof(glm::vec2) }
+		};
+		pipeline_layout_ci.pPushConstantRanges = push_constant_ranges.data();
+		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(push_constant_ranges.size());;
+		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[7]);
+		CHECK_VULKAN_RESULT(result, "create billboard pipeline layout");
 	}
 
 	void MainPass::createPipelines()
@@ -478,7 +490,7 @@ namespace Bamboo
 		m_pipeline_ci.renderPass = m_render_pass;
 		m_pipeline_ci.subpass = 0;
 
-		m_pipelines.resize(7);
+		m_pipelines.resize(8);
 
 		// create gbuffer static mesh pipeline
 		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[0]);
@@ -561,13 +573,30 @@ namespace Bamboo
 		m_pipeline_ci.layout = m_pipeline_layouts[2];
 		m_pipeline_ci.subpass = 1;
 		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[2]);
-		m_pipeline_ci.pVertexInputState = &vertex_input_ci;
 		CHECK_VULKAN_RESULT(result, "create composition graphics pipeline");
+
+		// billboard pipeline
+		m_depth_stencil_ci.depthTestEnable = VK_TRUE;
+		m_depth_stencil_ci.depthWriteEnable = VK_TRUE;
+		m_color_blend_attachments[0].blendEnable = VK_TRUE;
+
+		// shader stages
+		shader_stage_cis = {
+			shader_manager->getShaderStageCI("billboard.vert", VK_SHADER_STAGE_VERTEX_BIT),
+			shader_manager->getShaderStageCI("billboard.geom", VK_SHADER_STAGE_GEOMETRY_BIT),
+			shader_manager->getShaderStageCI("billboard.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+		};
+
+		m_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());
+		m_pipeline_ci.pStages = shader_stage_cis.data();
+		m_pipeline_ci.layout = m_pipeline_layouts[7];
+		m_pipeline_ci.subpass = 2;
+		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[7]);
+		CHECK_VULKAN_RESULT(result, "create billboard graphics pipeline");
 
 		// debug draw pipeline
 		m_input_assembly_state_ci.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-		m_depth_stencil_ci.depthTestEnable = VK_TRUE;
-		m_depth_stencil_ci.depthWriteEnable = VK_TRUE;
+		m_color_blend_attachments[0].blendEnable = VK_FALSE;
 
 		// vertex input
 		vertex_input_binding_descriptions[0].stride = sizeof(DebugDrawVertex);
@@ -580,6 +609,9 @@ namespace Bamboo
 			shader_manager->getShaderStageCI("debug_draw.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
+		m_pipeline_ci.pVertexInputState = &vertex_input_ci;
+		m_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());
+		m_pipeline_ci.pStages = shader_stage_cis.data();
 		m_pipeline_ci.layout = m_pipeline_layouts[6];
 		m_pipeline_ci.subpass = 2;
 		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[6]);

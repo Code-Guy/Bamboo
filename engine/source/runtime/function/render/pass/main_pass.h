@@ -18,7 +18,9 @@ namespace Bamboo
 		virtual void createFramebuffer() override;
 		virtual void destroyResizableObjects() override;
 
-		void setViewProj(const glm::mat4& view_proj) { m_view_proj = view_proj; }
+		void setLightingRenderData(const std::shared_ptr<LightingRenderData>& lighting_render_data) { m_lighting_render_data = lighting_render_data; }
+		void setSkyboxRenderData(const std::shared_ptr<SkyboxRenderData>& skybox_render_data) { m_skybox_render_data = skybox_render_data; }
+
 		VkImageView getColorImageView() { return m_color_image_view.view; }
 
 	private:
@@ -43,8 +45,8 @@ namespace Bamboo
 		// depth stencil attachment
 		VmaImageViewSampler m_depth_stencil_texture_sampler;
 
-		// lighting render data
+		// extra render data
 		std::shared_ptr<LightingRenderData> m_lighting_render_data;
-		glm::mat4 m_view_proj;
+		std::shared_ptr<SkyboxRenderData> m_skybox_render_data;
 	};
 }

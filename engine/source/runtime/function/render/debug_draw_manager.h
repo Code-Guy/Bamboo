@@ -35,6 +35,7 @@ namespace Bamboo
 		void drawCapsule(const glm::vec3& center, float half_height = 2.0f, float radius = 1.0f, const Color3& color = Color3::White);
 		void drawFrustum(const glm::mat4& view, const glm::mat4& proj, const Color3& color = Color3::White);
 
+		bool empty() { return m_vertex_count == 0; }
 		VkBuffer getVertexBuffer() { return m_vertex_buffer.buffer; }
 		uint32_t getVertexCount() { return m_vertex_count; }
 

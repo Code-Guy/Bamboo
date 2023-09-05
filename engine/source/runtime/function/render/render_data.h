@@ -25,6 +25,8 @@ namespace Bamboo
 
 	struct LightingRenderData : public RenderData
 	{
+		glm::mat4 camera_view_proj;
+
 		std::vector<VmaBuffer> lighting_ubs;
 
 		VmaImageViewSampler irradiance_texture;
@@ -64,6 +66,13 @@ namespace Bamboo
 		uint32_t index_count;
 		TransformPCO transform_pco;
 		VmaImageViewSampler env_texture;
+	};
+
+	struct BillboardRenderData : public RenderData
+	{
+		vec4 position;
+		vec2 size;
+		VmaImageViewSampler texture;
 	};
 
 	struct ShadowCascadeCreateInfo
