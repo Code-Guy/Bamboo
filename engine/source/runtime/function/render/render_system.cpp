@@ -454,6 +454,9 @@ namespace Bamboo
 		// main pass
 		m_main_pass->setLightingRenderData(lighting_render_data);
 		m_main_pass->setSkyboxRenderData(skybox_render_data);
+		m_main_pass->setTransparencyRenderDatas({mesh_render_datas.back()});
+
+		mesh_render_datas.pop_back();
 		m_main_pass->setRenderDatas(mesh_render_datas);
 	}
 

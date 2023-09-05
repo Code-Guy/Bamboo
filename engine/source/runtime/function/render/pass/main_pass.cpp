@@ -60,9 +60,9 @@ namespace Bamboo
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
 		// 1.deferred subpass
-		for (size_t i = 0; i < m_render_datas.size(); ++i)
+		for (const auto& render_data : m_render_datas)
 		{
-			render_mesh(m_render_datas[i], ERendererType::Deferred);
+			render_mesh(render_data, ERendererType::Deferred);
 		}
 
 		// 2.composition subpass
@@ -151,7 +151,12 @@ namespace Bamboo
 		}
 
 		// 3.3 render transparency meshes
-		//render_mesh(m_render_datas[m_render_datas.size() - 1], ERendererType::Forward);
+		for (const auto& render_data : m_transparency_render_datas)
+		{
+			render_mesh(render_data, ERendererType::Forward);
+		}
+
+		// 3.4 render billboards
 
 		vkCmdEndRenderPass(command_buffer);
 	}
@@ -675,7 +680,7 @@ namespace Bamboo
 		RenderPass::destroyResizableObjects();
 	}
 
-	void MainPass::render_mesh(std::shared_ptr<RenderData>& render_data, ERendererType renderer_type)
+	void MainPass::render_mesh(const std::shared_ptr<RenderData>& render_data, ERendererType renderer_type)
 	{
 		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
 		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
@@ -741,7 +746,8 @@ namespace Bamboo
 				}
 
 				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size()], m_lighting_render_data->point_light_shadow_textures, ibl_textures.size() + k_binding_offset);
-				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size() + 1], m_lighting_render_data->spot_light_shadow_textures, ibl_textures.size() + k_binding_offset + 1);
+				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size() + m_lighting_render_data->point_light_shadow_textures.size()], 
+					m_lighting_render_data->spot_light_shadow_textures, ibl_textures.size() + k_binding_offset + 1);
 			}
 			
 			// image sampler

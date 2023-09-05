@@ -20,6 +20,12 @@ namespace Bamboo
 
 		void setLightingRenderData(const std::shared_ptr<LightingRenderData>& lighting_render_data) { m_lighting_render_data = lighting_render_data; }
 		void setSkyboxRenderData(const std::shared_ptr<SkyboxRenderData>& skybox_render_data) { m_skybox_render_data = skybox_render_data; }
+		void setBillboardRenderDatas(const std::vector<std::shared_ptr<BillboardRenderData>>& billboard_render_datas) {
+			m_billboard_render_datas = billboard_render_datas;
+		}
+		void setTransparencyRenderDatas(const std::vector<std::shared_ptr<RenderData>>& transparency_render_datas) {
+			m_transparency_render_datas = transparency_render_datas;
+		}
 
 		VkImageView getColorImageView() { return m_color_image_view.view; }
 
@@ -29,7 +35,7 @@ namespace Bamboo
 			Deferred, Forward
 		};
 
-		void render_mesh(std::shared_ptr<RenderData>& render_data, ERendererType renderer_type);
+		void render_mesh(const std::shared_ptr<RenderData>& render_data, ERendererType renderer_type);
 
 		std::vector<VkFormat> m_formats;
 
@@ -46,7 +52,9 @@ namespace Bamboo
 		VmaImageViewSampler m_depth_stencil_texture_sampler;
 
 		// extra render data
+		std::vector<std::shared_ptr<RenderData>> m_transparency_render_datas;
 		std::shared_ptr<LightingRenderData> m_lighting_render_data;
 		std::shared_ptr<SkyboxRenderData> m_skybox_render_data;
+		std::vector<std::shared_ptr<BillboardRenderData>> m_billboard_render_datas;
 	};
 }
