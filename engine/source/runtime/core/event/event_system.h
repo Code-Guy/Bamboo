@@ -5,7 +5,7 @@
 
 namespace Bamboo
 {
-	enum class EventType
+	enum class EEventType
 	{
 		WindowReset, WindowKey, WindowChar, WindowCharMods, WindowMouseButton,
 		WindowCursorPos, WindowCursorEnter, WindowScroll, WindowDrop, WindowSize, WindowClose,
@@ -16,31 +16,31 @@ namespace Bamboo
 	class Event
 	{
 	public:
-		explicit Event(EventType type) : type(type) {}
+		explicit Event(EEventType type) : type(type) {}
 
-		EventType type;
+		EEventType type;
 	};
 	using EventPointer = std::shared_ptr<Event>;
 
 	struct EventPolicy
 	{
-		static EventType getEvent(const EventPointer& event) 
+		static EEventType getEvent(const EventPointer& event) 
 		{
 			return event->type;
 		}
 	};
-	using EventQueue = eventpp::EventQueue<EventType, void(const EventPointer&), EventPolicy>;
+	using EventQueue = eventpp::EventQueue<EEventType, void(const EventPointer&), EventPolicy>;
 
 	class WindowResetEvent : public Event
 	{
 	public:
-		WindowResetEvent() : Event(EventType::WindowReset) {}
+		WindowResetEvent() : Event(EEventType::WindowReset) {}
 	};
 
 	class WindowKeyEvent : public Event
 	{
 	public:
-		WindowKeyEvent(int key, int scancode, int action, int mods) : Event(EventType::WindowKey),
+		WindowKeyEvent(int key, int scancode, int action, int mods) : Event(EEventType::WindowKey),
 			key(key), scancode(scancode), action(action), mods(mods)
 		{
 		}
@@ -54,7 +54,7 @@ namespace Bamboo
 	class WindowCharEvent : public Event
 	{
 	public:
-		WindowCharEvent(unsigned int codepoint) : Event(EventType::WindowChar),
+		WindowCharEvent(unsigned int codepoint) : Event(EEventType::WindowChar),
 			codepoint(codepoint)
 		{
 		}
@@ -65,7 +65,7 @@ namespace Bamboo
 	class WindowCharModsEvent : public Event
 	{
 	public:
-		WindowCharModsEvent(unsigned int codepoint, int mods) : Event(EventType::WindowCharMods),
+		WindowCharModsEvent(unsigned int codepoint, int mods) : Event(EEventType::WindowCharMods),
 			codepoint(codepoint), mods(mods)
 		{
 		}
@@ -77,7 +77,7 @@ namespace Bamboo
 	class WindowMouseButtonEvent : public Event
 	{
 	public:
-		WindowMouseButtonEvent(int button, int action, int mods) : Event(EventType::WindowMouseButton),
+		WindowMouseButtonEvent(int button, int action, int mods) : Event(EEventType::WindowMouseButton),
 			button(button), action(action), mods(mods)
 		{
 		}
@@ -90,7 +90,7 @@ namespace Bamboo
 	class WindowCursorPosEvent : public Event
 	{
 	public:
-		WindowCursorPosEvent(double xpos, double ypos) : Event(EventType::WindowCursorPos),
+		WindowCursorPosEvent(double xpos, double ypos) : Event(EEventType::WindowCursorPos),
 			xpos(xpos), ypos(ypos)
 		{
 		}
@@ -102,7 +102,7 @@ namespace Bamboo
 	class WindowCursorEnterEvent : public Event
 	{
 	public:
-		WindowCursorEnterEvent(int entered) : Event(EventType::WindowCursorEnter),
+		WindowCursorEnterEvent(int entered) : Event(EEventType::WindowCursorEnter),
 			entered(entered)
 		{
 		}
@@ -113,7 +113,7 @@ namespace Bamboo
 	class WindowScrollEvent : public Event
 	{
 	public:
-		WindowScrollEvent(double xoffset, double yoffset) : Event(EventType::WindowScroll),
+		WindowScrollEvent(double xoffset, double yoffset) : Event(EEventType::WindowScroll),
 			xoffset(xoffset), yoffset(yoffset)
 		{
 		}
@@ -125,7 +125,7 @@ namespace Bamboo
 	class WindowDropEvent : public Event
 	{
 	public:
-		WindowDropEvent(int count, const char** paths, double xpos, double ypos) : Event(EventType::WindowDrop),
+		WindowDropEvent(int count, const char** paths, double xpos, double ypos) : Event(EEventType::WindowDrop),
 			xpos(xpos), ypos(ypos)
 		{
 			for (int i = 0; i < count; ++i)
@@ -142,7 +142,7 @@ namespace Bamboo
 	class WindowSizeEvent : public Event
 	{
 	public:
-		WindowSizeEvent(int width, int height) : Event(EventType::WindowSize),
+		WindowSizeEvent(int width, int height) : Event(EEventType::WindowSize),
 			width(width), height(height)
 		{
 		}
@@ -154,7 +154,7 @@ namespace Bamboo
 	class WindowCloseEvent : public Event
 	{
 	public:
-		WindowCloseEvent() : Event(EventType::WindowClose)
+		WindowCloseEvent() : Event(EEventType::WindowClose)
 		{
 		}
 	};
@@ -162,7 +162,7 @@ namespace Bamboo
 	class RenderCreateSwapchainObjectsEvent : public Event
 	{
 	public:
-		RenderCreateSwapchainObjectsEvent(uint32_t width, uint32_t height) : Event(EventType::RenderCreateSwapchainObjects),
+		RenderCreateSwapchainObjectsEvent(uint32_t width, uint32_t height) : Event(EEventType::RenderCreateSwapchainObjects),
 			width(width), height(height)
 		{
 		}
@@ -174,7 +174,7 @@ namespace Bamboo
 	class RenderDestroySwapchainObjectsEvent : public Event
 	{
 	public:
-		RenderDestroySwapchainObjectsEvent() : Event(EventType::RenderDestroySwapchainObjects)
+		RenderDestroySwapchainObjectsEvent() : Event(EEventType::RenderDestroySwapchainObjects)
 		{
 		}
 	};
@@ -182,7 +182,7 @@ namespace Bamboo
 	class RenderRecordFrameEvent : public Event
 	{
 	public:
-		RenderRecordFrameEvent() : Event(EventType::RenderRecordFrame)
+		RenderRecordFrameEvent() : Event(EEventType::RenderRecordFrame)
 		{
 		}
 	};
@@ -190,7 +190,7 @@ namespace Bamboo
 	class RenderConstructUIEvent : public Event
 	{
 	public:
-		RenderConstructUIEvent() : Event(EventType::RenderConstructUI)
+		RenderConstructUIEvent() : Event(EEventType::RenderConstructUI)
 		{
 		}
 	};
@@ -198,7 +198,7 @@ namespace Bamboo
 	class UISelectEntityEvent : public Event
 	{
 	public:
-		UISelectEntityEvent(uint32_t entity_id) : Event(EventType::UISelectEntity),
+		UISelectEntityEvent(uint32_t entity_id) : Event(EEventType::UISelectEntity),
 			entity_id(entity_id)
 		{
 		}
@@ -213,7 +213,7 @@ namespace Bamboo
 		void tick();
 		void destroy() {}
 
-		void addListener(EventType event_type, const std::function<void(const EventPointer& event_pointer)>& callback);
+		void addListener(EEventType event_type, const std::function<void(const EventPointer& event_pointer)>& callback);
 		void asyncDispatch(const EventPointer& event_pointer);
 		void syncDispatch(const EventPointer& event_pointer);
 

@@ -157,6 +157,21 @@ namespace Bamboo
 		}
 
 		// 3.4 render billboards
+		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[7]);
+		for (const auto& render_data : m_billboard_render_datas)
+		{
+			// push constants
+			vkCmdPushConstants(command_buffer, m_pipeline_layouts[7], VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT,
+				0, sizeof(glm::vec4) + sizeof(glm::vec2), render_data.get());
+
+			std::vector<VkWriteDescriptorSet> desc_writes;
+			VkDescriptorImageInfo desc_image_info{};
+			addImageDescriptorSet(desc_writes, desc_image_info, render_data->texture, 0);
+
+			VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+				m_pipeline_layouts[7], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+			vkCmdDraw(command_buffer, 1, 1, 0, 0);
+		}
 
 		vkCmdEndRenderPass(command_buffer);
 	}
@@ -425,13 +440,7 @@ namespace Bamboo
 
 		// billboard pipeline layouts
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[7];
-		std::vector<VkPushConstantRange> push_constant_ranges =
-		{
-			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4) },
-			{ VK_SHADER_STAGE_GEOMETRY_BIT, sizeof(glm::vec4), sizeof(glm::vec2) }
-		};
-		pipeline_layout_ci.pPushConstantRanges = push_constant_ranges.data();
-		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(push_constant_ranges.size());;
+		push_constant_range = { VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, 0, sizeof(glm::vec4) + sizeof(glm::vec2) };
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[7]);
 		CHECK_VULKAN_RESULT(result, "create billboard pipeline layout");
 	}
@@ -581,6 +590,7 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create composition graphics pipeline");
 
 		// billboard pipeline
+		m_input_assembly_state_ci.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		m_depth_stencil_ci.depthTestEnable = VK_TRUE;
 		m_depth_stencil_ci.depthWriteEnable = VK_TRUE;
 		m_color_blend_attachments[0].blendEnable = VK_TRUE;

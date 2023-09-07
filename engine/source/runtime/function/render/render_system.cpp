@@ -1,6 +1,7 @@
 #include "render_system.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/core/event/event_system.h"
+#include "runtime/core/math/math_util.h"
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/render/debug_draw_manager.h"
@@ -45,11 +46,11 @@ namespace Bamboo
 		}
 
 		// set vulkan rhi callback functions
-		g_runtime_context.eventSystem()->addListener(EventType::RenderCreateSwapchainObjects, 
+		g_runtime_context.eventSystem()->addListener(EEventType::RenderCreateSwapchainObjects, 
 			std::bind(&RenderSystem::onCreateSwapchainObjects, this, std::placeholders::_1));
-		g_runtime_context.eventSystem()->addListener(EventType::RenderDestroySwapchainObjects,
+		g_runtime_context.eventSystem()->addListener(EEventType::RenderDestroySwapchainObjects,
 			std::bind(&RenderSystem::onDestroySwapchainObjects, this, std::placeholders::_1));
-		g_runtime_context.eventSystem()->addListener(EventType::RenderRecordFrame,
+		g_runtime_context.eventSystem()->addListener(EEventType::RenderRecordFrame,
 			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1));
 
 		// get dummy texture2d
@@ -63,6 +64,12 @@ namespace Bamboo
 		{
 			VulkanUtil::createBuffer(sizeof(LightingUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer);
 		}
+		m_lighting_icons = {
+			{ ELightType::DirectionalLight, as->loadAsset<Texture2D>("asset/engine/texture/gizmo/tex_directional_light.tex") },
+			{ ELightType::SkyLight, as->loadAsset<Texture2D>("asset/engine/texture/gizmo/tex_sky_light.tex") },
+			{ ELightType::PointLight, as->loadAsset<Texture2D>("asset/engine/texture/gizmo/tex_point_light.tex") },
+			{ ELightType::SpotLight, as->loadAsset<Texture2D>("asset/engine/texture/gizmo/tex_spot_light.tex") }
+		};
 	}
 
 	void RenderSystem::tick(float delta_time)
@@ -88,6 +95,11 @@ namespace Bamboo
 		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
 		{
 			uniform_buffer.destroy();
+		}
+
+		for (auto& iter : m_lighting_icons)
+		{
+			iter.second.reset();
 		}
 
 		m_default_texture_2d.reset();
@@ -129,6 +141,7 @@ namespace Bamboo
 	{
 		// mesh render datas
 		std::vector<std::shared_ptr<RenderData>> mesh_render_datas;
+		std::vector<std::shared_ptr<BillboardRenderData>> billboard_render_datas;
 
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
@@ -282,10 +295,30 @@ namespace Bamboo
 				}
 			}
 
+			// get directional light component
+			auto directional_light_component = entity->getComponent(DirectionalLightComponent);
+			if (directional_light_component)
+			{
+				auto transform_component = entity->getComponent(TransformComponent);
+
+				// set lighting uniform buffer object
+				lighting_ubo.has_directional_light = true;
+				lighting_ubo.directional_light.direction = transform_component->getForwardVector();
+				lighting_ubo.directional_light.color = directional_light_component->getColor();
+				lighting_ubo.directional_light.cast_shadow = directional_light_component->m_cast_shadow;
+
+				shadow_cascade_ci.light_dir = transform_component->getForwardVector();
+				shadow_cascade_ci.light_cascade_frustum_near = directional_light_component->m_cascade_frustum_near;
+
+				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::SpotLight));
+			}
+
 			// get sky light component
 			auto sky_light_component = entity->getComponent(SkyLightComponent);
 			if (sky_light_component)
 			{
+				auto transform_component = entity->getComponent(TransformComponent);
+
 				// set lighting render data
 				lighting_render_data->brdf_lut_texture = sky_light_component->m_brdf_lut_texture_sampler;
 				lighting_render_data->irradiance_texture = sky_light_component->m_irradiance_texture_sampler;
@@ -304,22 +337,8 @@ namespace Bamboo
 				lighting_ubo.has_sky_light = true;
 				lighting_ubo.sky_light.color = sky_light_component->getColor();
 				lighting_ubo.sky_light.prefilter_mip_levels = sky_light_component->m_prefilter_mip_levels;
-			}
 
-			// get directional light component
-			auto directional_light_component = entity->getComponent(DirectionalLightComponent);
-			if (directional_light_component)
-			{
-				auto transform_component = entity->getComponent(TransformComponent);
-
-				// set lighting uniform buffer object
-				lighting_ubo.has_directional_light = true;
-				lighting_ubo.directional_light.direction = transform_component->getForwardVector();
-				lighting_ubo.directional_light.color = directional_light_component->getColor();
-				lighting_ubo.directional_light.cast_shadow = directional_light_component->m_cast_shadow;
-
-				shadow_cascade_ci.light_dir = transform_component->getForwardVector();
-				shadow_cascade_ci.light_cascade_frustum_near = directional_light_component->m_cascade_frustum_near;
+				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::SkyLight));
 			}
 
 			// get point light component
@@ -342,6 +361,8 @@ namespace Bamboo
 				shadow_cube_ci.light_far =point_light_component->m_radius;
 				shadow_cube_ci.light_near = camera_component->m_near;
 				shadow_cube_cis.push_back(shadow_cube_ci);
+
+				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::PointLight));
 			}
 
 			// get point light component
@@ -371,6 +392,8 @@ namespace Bamboo
 				shadow_frustum_ci.light_far = spot_light_component->m_radius;
 				shadow_frustum_ci.light_near = camera_component->m_near;
 				shadow_frustum_cis.push_back(shadow_frustum_ci);
+
+				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::SpotLight));
 			}
 		}
 
@@ -455,9 +478,34 @@ namespace Bamboo
 		m_main_pass->setLightingRenderData(lighting_render_data);
 		m_main_pass->setSkyboxRenderData(skybox_render_data);
 		m_main_pass->setTransparencyRenderDatas({mesh_render_datas.back()});
+		m_main_pass->setBillboardRenderDatas(billboard_render_datas);
 
 		mesh_render_datas.pop_back();
 		m_main_pass->setRenderDatas(mesh_render_datas);
+	}
+
+	std::shared_ptr<Bamboo::BillboardRenderData> RenderSystem::createBillboardRenderData(
+		std::shared_ptr<class TransformComponent> transform_component, 
+		std::shared_ptr<class CameraComponent> camera_component, 
+		ELightType light_type)
+	{
+		std::shared_ptr<BillboardRenderData> billboard_render_data = std::make_shared<BillboardRenderData>();
+		const glm::vec3& billboard_pos = transform_component->m_position;
+		const glm::vec3& camera_pos = camera_component->getPosition();
+
+		const float k_min_size = 0.005f;
+		const float k_max_size = 0.05f;
+		const float k_min_dist = 5.0f;
+		const float k_max_dist = 100.0f;
+
+		float dist = glm::distance(billboard_pos, camera_pos);
+		float size = MathUtil::mapRangeValueClamped(dist, k_min_dist, k_max_dist, k_max_size, k_min_size);
+		billboard_render_data->position = camera_component->getViewPerspectiveMatrix() * glm::vec4(billboard_pos, 1.0f);
+		billboard_render_data->position /= billboard_render_data->position.w;
+		billboard_render_data->size = glm::vec2(size, size * camera_component->m_aspect_ratio);
+		billboard_render_data->texture = m_lighting_icons[light_type]->m_image_view_sampler;
+
+		return billboard_render_data;
 	}
 
 }

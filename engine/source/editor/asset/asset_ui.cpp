@@ -30,7 +30,7 @@ namespace Bamboo
 		m_non_empty_folder_image = loadImGuiImageFromFile(fs->absolute("asset/engine/texture/asset/non_empty_folder.png"));
 
 		// register drop callback
-		g_runtime_context.eventSystem()->addListener(EventType::WindowDrop, std::bind(&AssetUI::onDropFiles, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EEventType::WindowDrop, std::bind(&AssetUI::onDropFiles, this, std::placeholders::_1));
 	}
 
 	void AssetUI::construct()

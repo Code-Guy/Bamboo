@@ -31,7 +31,7 @@ namespace Bamboo
 		m_operation_mode = EOperationMode::Pick;
 		m_camera_component = g_runtime_context.worldManager()->getCameraComponent();
 
-		g_runtime_context.eventSystem()->addListener(EventType::WindowKey, std::bind(&SimulationUI::onKey, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EEventType::WindowKey, std::bind(&SimulationUI::onKey, this, std::placeholders::_1));
 	}
 
 	void SimulationUI::construct()

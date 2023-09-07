@@ -36,7 +36,7 @@ namespace Bamboo
 		}
 
         // set construct ui function to UIPass through RenderSystem
-        g_runtime_context.eventSystem()->addListener(EventType::RenderConstructUI, [this](const EventPointer& event) {
+        g_runtime_context.eventSystem()->addListener(EEventType::RenderConstructUI, [this](const EventPointer& event) {
             for (auto& editor_ui : m_editor_uis)
             {
                 editor_ui->construct();

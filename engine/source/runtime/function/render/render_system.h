@@ -8,6 +8,11 @@
 
 namespace Bamboo
 {
+	enum class ELightType
+	{
+		DirectionalLight, SkyLight, PointLight, SpotLight
+	};
+
 	class RenderSystem
 	{
 	public:
@@ -23,6 +28,10 @@ namespace Bamboo
 		void onRecordFrame(const std::shared_ptr<class Event>& event);
 
 		void collectRenderDatas();
+		std::shared_ptr<BillboardRenderData> createBillboardRenderData(
+			std::shared_ptr<class TransformComponent> transform_component,
+			std::shared_ptr<class CameraComponent> camera_component,
+			ELightType light_type);
 
 		std::shared_ptr<class Texture2D> m_default_texture_2d;
 		std::shared_ptr<class TextureCube> m_default_texture_cube;
@@ -35,5 +44,6 @@ namespace Bamboo
 		std::vector<std::shared_ptr<RenderPass>> m_render_passes;
 
 		std::vector<VmaBuffer> m_lighting_ubs;
+		std::map<ELightType, std::shared_ptr<class Texture2D>> m_lighting_icons;
 	};
 }

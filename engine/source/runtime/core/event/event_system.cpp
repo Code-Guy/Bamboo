@@ -7,7 +7,7 @@ namespace Bamboo
 		m_event_queue.process();
 	}
 
-	void EventSystem::addListener(EventType event_type, const std::function<void(const EventPointer& event_pointer)>& callback)
+	void EventSystem::addListener(EEventType event_type, const std::function<void(const EventPointer& event_pointer)>& callback)
 	{
 		m_event_queue.appendListener(event_type, callback);
 	}

@@ -8,6 +8,7 @@ namespace Bamboo
 	class CameraComponent : public Component
 	{
 	public:
+		glm::vec3 getPosition();
 		glm::mat4 getViewMatrix();
 		glm::mat4 getPerspectiveMatrix();
 		glm::mat4 getViewPerspectiveMatrix();
