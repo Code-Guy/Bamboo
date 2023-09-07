@@ -52,6 +52,10 @@ namespace Bamboo
 			std::bind(&RenderSystem::onDestroySwapchainObjects, this, std::placeholders::_1));
 		g_runtime_context.eventSystem()->addListener(EEventType::RenderRecordFrame,
 			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EEventType::PickEntity,
+			[this](const std::shared_ptr<class Event>& event) {
+				m_picking_entity = true;
+			});
 
 		// get dummy texture2d
 		const auto& as = g_runtime_context.assetManager();
@@ -310,7 +314,7 @@ namespace Bamboo
 				shadow_cascade_ci.light_dir = transform_component->getForwardVector();
 				shadow_cascade_ci.light_cascade_frustum_near = directional_light_component->m_cascade_frustum_near;
 
-				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::SpotLight));
+				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::DirectionalLight));
 			}
 
 			// get sky light component

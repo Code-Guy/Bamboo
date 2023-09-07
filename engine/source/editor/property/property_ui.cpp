@@ -23,7 +23,7 @@ namespace Bamboo
 			{ EPropertyValueType::Asset, std::bind(&PropertyUI::constructPropertyAsset, this, std::placeholders::_1, std::placeholders::_2) },
 		};
 
-		g_runtime_context.eventSystem()->addListener(EEventType::UISelectEntity, std::bind(&PropertyUI::onSelectEntity, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EEventType::SelectEntity, std::bind(&PropertyUI::onSelectEntity, this, std::placeholders::_1));
 
 		// get dummy texture2d
 		std::shared_ptr<Texture2D> m_dummy_texture = g_runtime_context.assetManager()->loadAsset<Texture2D>(DEFAULT_TEXTURE_2D_URL);
@@ -68,7 +68,7 @@ namespace Bamboo
 
 	void PropertyUI::onSelectEntity(const std::shared_ptr<class Event>& event)
 	{
-		const UISelectEntityEvent* p_event = static_cast<const UISelectEntityEvent*>(event.get());
+		const SelectEntityEvent* p_event = static_cast<const SelectEntityEvent*>(event.get());
 
 		const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
 		m_selected_entity = current_world->getEntity(p_event->entity_id);

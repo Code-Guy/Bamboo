@@ -66,7 +66,7 @@ namespace Bamboo
 			{
 				m_selected_entity_id = entity_id;
 
-				g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<UISelectEntityEvent>(m_selected_entity_id));
+				g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(m_selected_entity_id));
 			}
 		}
 

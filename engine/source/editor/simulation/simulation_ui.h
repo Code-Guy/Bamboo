@@ -31,6 +31,7 @@ namespace Bamboo
 		void constructImGuizmo();
 
 		void onKey(const std::shared_ptr<class Event>& event);
+		void onMouseButton(const std::shared_ptr<class Event>& event);
 
 		VkSampler m_color_texture_sampler;
 		VkDescriptorSet m_color_texture_desc_set = VK_NULL_HANDLE;

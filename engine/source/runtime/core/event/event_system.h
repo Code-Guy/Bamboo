@@ -10,7 +10,7 @@ namespace Bamboo
 		WindowReset, WindowKey, WindowChar, WindowCharMods, WindowMouseButton,
 		WindowCursorPos, WindowCursorEnter, WindowScroll, WindowDrop, WindowSize, WindowClose,
 		RenderCreateSwapchainObjects, RenderDestroySwapchainObjects, RenderRecordFrame, RenderConstructUI,
-		UISelectEntity
+		SelectEntity, PickEntity
 	};
 
 	class Event
@@ -195,15 +195,23 @@ namespace Bamboo
 		}
 	};
 	
-	class UISelectEntityEvent : public Event
+	class SelectEntityEvent : public Event
 	{
 	public:
-		UISelectEntityEvent(uint32_t entity_id) : Event(EEventType::UISelectEntity),
+		SelectEntityEvent(uint32_t entity_id) : Event(EEventType::SelectEntity),
 			entity_id(entity_id)
 		{
 		}
 
 		uint32_t entity_id;
+	};
+
+	class PickEntityEvent : public Event
+	{
+	public:
+		PickEntityEvent() : Event(EEventType::PickEntity)
+		{
+		}
 	};
 
 	class EventSystem

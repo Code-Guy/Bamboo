@@ -32,6 +32,7 @@ namespace Bamboo
 		m_camera_component = g_runtime_context.worldManager()->getCameraComponent();
 
 		g_runtime_context.eventSystem()->addListener(EEventType::WindowKey, std::bind(&SimulationUI::onKey, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EEventType::WindowMouseButton, std::bind(&SimulationUI::onMouseButton, this, std::placeholders::_1));
 	}
 
 	void SimulationUI::construct()
@@ -298,6 +299,15 @@ namespace Bamboo
 		else if (key_event->key == GLFW_KEY_R)
 		{
 			m_operation_mode = EOperationMode::Scale;
+		}
+	}
+
+	void SimulationUI::onMouseButton(const std::shared_ptr<class Event>& event)
+	{
+		const WindowMouseButtonEvent* mouse_button_event = static_cast<const WindowMouseButtonEvent*>(event.get());
+		if (mouse_button_event->action == GLFW_PRESS && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
+		{
+			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>());
 		}
 	}
 

@@ -45,5 +45,8 @@ namespace Bamboo
 
 		std::vector<VmaBuffer> m_lighting_ubs;
 		std::map<ELightType, std::shared_ptr<class Texture2D>> m_lighting_icons;
+
+		// pick entity
+		bool m_picking_entity;
 	};
 }
