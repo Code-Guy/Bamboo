@@ -155,11 +155,13 @@ namespace Bamboo
 		return m_width > 0 && m_height > 0;
 	}
 
-	void RenderPass::updatePushConstants(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, const std::vector<const void*>& pcos)
+	void RenderPass::updatePushConstants(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, 
+		const std::vector<const void*>& pcos, std::vector<VkPushConstantRange> push_constant_ranges)
 	{
-		for (size_t c = 0; c < m_push_constant_ranges.size(); ++c)
+		const std::vector<VkPushConstantRange>& pcrs = push_constant_ranges.empty() ? m_push_constant_ranges : push_constant_ranges;
+		for (size_t c = 0; c < pcrs.size(); ++c)
 		{
-			const VkPushConstantRange& push_constant_range = m_push_constant_ranges[c];
+			const VkPushConstantRange& push_constant_range = pcrs[c];
 			vkCmdPushConstants(command_buffer, pipeline_layout, push_constant_range.stageFlags, push_constant_range.offset, push_constant_range.size, pcos[c]);
 		}
 	}

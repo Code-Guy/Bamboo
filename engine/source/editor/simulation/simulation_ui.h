@@ -39,5 +39,8 @@ namespace Bamboo
 		ECoordinateMode m_coordinate_mode;
 		EOperationMode m_operation_mode;
 		std::shared_ptr<class CameraComponent> m_camera_component;
+
+		uint32_t m_mouse_x;
+		uint32_t m_mouse_y;
 	};
 }

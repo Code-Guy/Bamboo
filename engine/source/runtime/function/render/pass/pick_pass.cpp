@@ -3,34 +3,42 @@
 #include "runtime/resource/shader/shader_manager.h"
 #include "runtime/resource/asset/base/mesh.h"
 #include "runtime/platform/timer/timer.h"
+#include "runtime/core/event/event_system.h"
+
+#include <limits>
 
 namespace Bamboo
 {
-	
+
 	PickPass::PickPass()
 	{
 		m_formats[0] = VK_FORMAT_R8G8B8A8_UNORM;
 		m_formats[1] = VulkanRHI::get().getDepthFormat();
+
+		m_enabled = false;
 	}
 
 	void PickPass::render()
 	{
+		StopWatch stop_watch;
+		stop_watch.start();
+
 		// render to framebuffer
-		VkClearValue clear_values[1];
+		VkClearValue clear_values[2];
 		clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clear_values[1].depthStencil = { 1.0f, 0 };
 
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		render_pass_bi.renderPass = m_render_pass;
 		render_pass_bi.renderArea.extent.width = m_width;
 		render_pass_bi.renderArea.extent.height = m_height;
-		render_pass_bi.clearValueCount = 1;
+		render_pass_bi.clearValueCount = 2;
 		render_pass_bi.pClearValues = clear_values;
 		render_pass_bi.framebuffer = m_framebuffer;
 
 		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
 		uint32_t flight_index = 0;
-		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkViewport viewport{};
 		viewport.width = static_cast<float>(m_width);
@@ -45,7 +53,10 @@ namespace Bamboo
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
+		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
+
 		// render meshes
+		uint32_t entity_index = 0;
 		for (const auto& render_data : m_render_datas)
 		{
 			std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
@@ -73,34 +84,62 @@ namespace Bamboo
 			std::vector<uint32_t>& index_counts = static_mesh_render_data->index_counts;
 			std::vector<uint32_t>& index_offsets = static_mesh_render_data->index_offsets;
 			size_t sub_mesh_count = index_counts.size();
+			glm::vec4 color = encodeEntityID(m_entity_ids[entity_index++]);
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
 				// push constants
-				updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco });
-
-				// update(push) sub mesh descriptors
-				std::vector<VkWriteDescriptorSet> desc_writes;
-				std::array<VkDescriptorBufferInfo, 1> desc_buffer_infos{};
+				updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco, &color });
 
 				// bone matrix ubo
 				if (mesh_type == EMeshType::Skeletal)
 				{
-					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
-				}
+					// update(push) sub mesh descriptors
+					std::vector<VkWriteDescriptorSet> desc_writes;
+					std::array<VkDescriptorBufferInfo, 1> desc_buffer_infos{};
 
-				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-					pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
+
+					VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+						pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+				}
 
 				// render sub mesh
 				vkCmdDrawIndexed(command_buffer, index_counts[i], 1, index_offsets[i], 0, 0);
 			}
 		}
-		
+
 		// render billboards
+		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[2]);
+		for (const auto& render_data : m_billboard_render_datas)
+		{
+			// push constants
+			glm::vec4 color = encodeEntityID(m_entity_ids[entity_index++]);
+			updatePushConstants(command_buffer, m_pipeline_layouts[2], { render_data.get(), &color }, m_billboard_push_constant_ranges);
+
+			vkCmdDraw(command_buffer, 1, 1, 0, 0);
+		}
 
 		vkCmdEndRenderPass(command_buffer);
 
 		VulkanUtil::endInstantCommands(command_buffer);
+
+		std::vector<uint8_t> image_data;
+		VulkanUtil::extractImage(m_color_image_view.image(), m_width, m_height,
+			m_formats[0], VK_IMAGE_LAYOUT_UNDEFINED, image_data);
+
+		uint32_t entity_id = decodeEntityID(&image_data[(m_mouse_y * m_width + m_mouse_x) * 4]);
+		if (entity_id == UINT_MAX)
+		{
+			LOG_INFO("pick nothing elapsed time : {}ms", stop_watch.stop());
+		}
+		else
+		{
+			LOG_INFO("pick entity {} elapsed time : {}ms", entity_id, stop_watch.stop());
+
+			g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(entity_id));
+		}
+
+		m_enabled = false;
 	}
 
 	void PickPass::createRenderPass()
@@ -129,13 +168,12 @@ namespace Bamboo
 		VkAttachmentReference depth_reference = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
 		// subpass
-		std::array<VkSubpassDescription, 2> subpass_descs = {};
-		subpass_descs[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass_descs[0].colorAttachmentCount = 1;
-		subpass_descs[0].pColorAttachments = &color_reference;
-
-		subpass_descs[1].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass_descs[1].pDepthStencilAttachment = &depth_reference;
+		VkSubpassDescription subpass_desc{};
+		subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass_desc.colorAttachmentCount = 1;
+		subpass_desc.pColorAttachments = &color_reference;
+		subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass_desc.pDepthStencilAttachment = &depth_reference;
 
 		// subpass dependencies
 		VkSubpassDependency dependency{};
@@ -151,8 +189,8 @@ namespace Bamboo
 		render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		render_pass_ci.attachmentCount = 2;
 		render_pass_ci.pAttachments = attachments.data();
-		render_pass_ci.subpassCount = 2;
-		render_pass_ci.pSubpasses = subpass_descs.data();
+		render_pass_ci.subpassCount = 1;
+		render_pass_ci.pSubpasses = &subpass_desc;
 		render_pass_ci.dependencyCount = 1;
 		render_pass_ci.pDependencies = &dependency;
 
@@ -184,7 +222,7 @@ namespace Bamboo
 		m_push_constant_ranges =
 		{
 			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO) },
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(glm::vec4) }
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TransformPCO), sizeof(glm::vec4) }
 		};
 
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
@@ -204,7 +242,13 @@ namespace Bamboo
 
 		// billboard pipeline layouts
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[0];
-		m_push_constant_ranges[0] = { VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, 0, sizeof(glm::vec4) + sizeof(glm::vec2) };
+		m_billboard_push_constant_ranges = {
+			{ VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT, 0, sizeof(glm::vec4) + sizeof(glm::vec2) },
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(glm::vec4) * 2, sizeof(glm::vec4) }
+		};
+		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_billboard_push_constant_ranges.size());
+		pipeline_layout_ci.pPushConstantRanges = m_billboard_push_constant_ranges.data();
+
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[2]);
 		CHECK_VULKAN_RESULT(result, "create billboard pipeline layout");
 	}
@@ -249,7 +293,7 @@ namespace Bamboo
 		const auto& shader_manager = g_runtime_context.shaderManager();
 		std::vector<VkPipelineShaderStageCreateInfo> shader_stage_cis = {
 			shader_manager->getShaderStageCI("static_mesh.vert", VK_SHADER_STAGE_VERTEX_BIT),
-			shader_manager->getShaderStageCI("pick.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+			shader_manager->getShaderStageCI("pick_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
 		// create graphics pipeline
@@ -260,7 +304,7 @@ namespace Bamboo
 		m_pipeline_ci.renderPass = m_render_pass;
 		m_pipeline_ci.subpass = 0;
 
-		m_pipelines.resize(2);
+		m_pipelines.resize(3);
 		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[0]);
 		CHECK_VULKAN_RESULT(result, "create pick pass's static mesh graphics pipeline");
 
@@ -294,9 +338,13 @@ namespace Bamboo
 		shader_stage_cis = {
 			shader_manager->getShaderStageCI("billboard.vert", VK_SHADER_STAGE_VERTEX_BIT),
 			shader_manager->getShaderStageCI("billboard.geom", VK_SHADER_STAGE_GEOMETRY_BIT),
-			shader_manager->getShaderStageCI("pick.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+			shader_manager->getShaderStageCI("pick_billboard.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 
+		VkPipelineVertexInputStateCreateInfo billboard_vertex_input_ci{};
+		billboard_vertex_input_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+		m_pipeline_ci.pVertexInputState = &billboard_vertex_input_ci;
 		m_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());
 		m_pipeline_ci.pStages = shader_stage_cis.data();
 		m_pipeline_ci.layout = m_pipeline_layouts[2];
@@ -308,7 +356,7 @@ namespace Bamboo
 	{
 		// 1.create color/depth images and view
 		VulkanUtil::createImageAndView(m_width, m_height, 1, 1, VK_SAMPLE_COUNT_1_BIT, m_formats[0],
-			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
+			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
 			VK_IMAGE_ASPECT_COLOR_BIT, m_color_image_view);
 		VulkanUtil::createImageAndView(m_width, m_height, 1, 1, VK_SAMPLE_COUNT_1_BIT, m_formats[1],
@@ -341,6 +389,31 @@ namespace Bamboo
 		m_depth_image_view.destroy();
 
 		RenderPass::destroyResizableObjects();
+	}
+
+	void PickPass::pick(uint32_t mouse_x, uint32_t mouse_y)
+	{
+		m_mouse_x = mouse_x;
+		m_mouse_y = mouse_y;
+		m_enabled = true;
+	}
+
+	glm::vec4 PickPass::encodeEntityID(uint32_t id)
+	{
+		glm::vec4 color;
+		id += 1;
+		color.r = (id & 0xFF) / 255.0;
+		color.g = ((id >> 8) & 0xFF) / 255.0;
+		color.b = ((id >> 16) & 0xFF) / 255.0;
+
+		return color;
+	}
+
+	uint32_t PickPass::decodeEntityID(const uint8_t* color)
+	{
+		uint32_t id;
+		id = color[0] + (color[1] << 8) + (color[2] << 16) - 1;
+		return id;
 	}
 
 }

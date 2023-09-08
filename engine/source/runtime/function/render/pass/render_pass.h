@@ -22,10 +22,11 @@ namespace Bamboo
 
 		void setRenderDatas(const std::vector<std::shared_ptr<RenderData>>& render_datas) { m_render_datas = render_datas; }
 		void onResize(uint32_t width, uint32_t height);
-		bool isEnabled();
+		virtual bool isEnabled();
 
 	protected:
-		void updatePushConstants(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, const std::vector<const void*>& pcos);
+		void updatePushConstants(VkCommandBuffer command_buffer, VkPipelineLayout pipeline_layout, 
+			const std::vector<const void*>& pcos, std::vector<VkPushConstantRange> push_constant_ranges = {});
 		void addBufferDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 
 			VkDescriptorBufferInfo& desc_buffer_info, VmaBuffer buffer, uint32_t binding);
 		void addImageDescriptorSet(std::vector<VkWriteDescriptorSet>& desc_writes, 

@@ -11,6 +11,7 @@
 #include "runtime/function/render/pass/directional_light_shadow_pass.h"
 #include "runtime/function/render/pass/point_light_shadow_pass.h"
 #include "runtime/function/render/pass/spot_light_shadow_pass.h"
+#include "runtime/function/render/pass/pick_pass.h"
 #include "runtime/function/render/pass/main_pass.h"
 #include "runtime/function/render/pass/ui_pass.h"
 
@@ -31,6 +32,7 @@ namespace Bamboo
 		m_directional_light_shadow_pass = std::make_shared<DirectionalLightShadowPass>();
 		m_point_light_shadow_pass = std::make_shared<PointLightShadowPass>();
 		m_spot_light_shadow_pass = std::make_shared<SpotLightShadowPass>();
+		m_pick_pass = std::make_shared<class PickPass>();
 		m_main_pass = std::make_shared<MainPass>();
 		m_ui_pass = std::make_shared<UIPass>();
 
@@ -38,7 +40,9 @@ namespace Bamboo
 			m_directional_light_shadow_pass, 
 			m_point_light_shadow_pass,
 			m_spot_light_shadow_pass,
-			m_main_pass, m_ui_pass
+			m_pick_pass,
+			m_main_pass, 
+			m_ui_pass
 		};
 		for (auto& render_pass : m_render_passes)
 		{
@@ -53,9 +57,7 @@ namespace Bamboo
 		g_runtime_context.eventSystem()->addListener(EEventType::RenderRecordFrame,
 			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1));
 		g_runtime_context.eventSystem()->addListener(EEventType::PickEntity,
-			[this](const std::shared_ptr<class Event>& event) {
-				m_picking_entity = true;
-			});
+			std::bind(&RenderSystem::onPickEntity, this, std::placeholders::_1));
 
 		// get dummy texture2d
 		const auto& as = g_runtime_context.assetManager();
@@ -110,6 +112,17 @@ namespace Bamboo
 		m_default_texture_cube.reset();
 	}
 
+	void RenderSystem::resize(uint32_t width, uint32_t height)
+	{
+		m_main_pass->onResize(width, height);
+		m_pick_pass->onResize(width, height);
+	}
+
+	VkImageView RenderSystem::getColorImageView()
+	{
+		return m_main_pass->getColorImageView();
+	}
+
 	void RenderSystem::onCreateSwapchainObjects(const std::shared_ptr<class Event>& event)
 	{
 		const RenderCreateSwapchainObjectsEvent* p_event = static_cast<const RenderCreateSwapchainObjectsEvent*>(event.get());
@@ -141,11 +154,18 @@ namespace Bamboo
 		}
 	}
 
+	void RenderSystem::onPickEntity(const std::shared_ptr<class Event>& event)
+	{
+		const PickEntityEvent* p_event = static_cast<const PickEntityEvent*>(event.get());
+		m_pick_pass->pick(p_event->mouse_x, p_event->mouse_y);
+	}
+
 	void RenderSystem::collectRenderDatas()
 	{
 		// mesh render datas
 		std::vector<std::shared_ptr<RenderData>> mesh_render_datas;
 		std::vector<std::shared_ptr<BillboardRenderData>> billboard_render_datas;
+		std::vector<uint32_t> mesh_entity_ids, billboard_entity_ids;
 
 		// get current active world
 		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
@@ -297,6 +317,8 @@ namespace Bamboo
 
 					mesh_render_datas.push_back(static_mesh_render_data);
 				}
+
+				mesh_entity_ids.push_back(entity->getID());
 			}
 
 			// get directional light component
@@ -315,6 +337,7 @@ namespace Bamboo
 				shadow_cascade_ci.light_cascade_frustum_near = directional_light_component->m_cascade_frustum_near;
 
 				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::DirectionalLight));
+				billboard_entity_ids.push_back(entity->getID());
 			}
 
 			// get sky light component
@@ -343,6 +366,7 @@ namespace Bamboo
 				lighting_ubo.sky_light.prefilter_mip_levels = sky_light_component->m_prefilter_mip_levels;
 
 				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::SkyLight));
+				billboard_entity_ids.push_back(entity->getID());
 			}
 
 			// get point light component
@@ -367,6 +391,7 @@ namespace Bamboo
 				shadow_cube_cis.push_back(shadow_cube_ci);
 
 				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::PointLight));
+				billboard_entity_ids.push_back(entity->getID());
 			}
 
 			// get point light component
@@ -398,6 +423,7 @@ namespace Bamboo
 				shadow_frustum_cis.push_back(shadow_frustum_ci);
 
 				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::SpotLight));
+				billboard_entity_ids.push_back(entity->getID());
 			}
 		}
 
@@ -477,6 +503,15 @@ namespace Bamboo
 			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
 		}
 		lighting_render_data->lighting_ubs = m_lighting_ubs;
+
+		// pick pass
+		if (m_pick_pass->isEnabled())
+		{
+			m_pick_pass->setRenderDatas(mesh_render_datas);
+			m_pick_pass->setBillboardRenderDatas(billboard_render_datas);
+			mesh_entity_ids.insert(mesh_entity_ids.end(), billboard_entity_ids.begin(), billboard_entity_ids.end());
+			m_pick_pass->setEntityIDs(mesh_entity_ids);
+		}
 
 		// main pass
 		m_main_pass->setLightingRenderData(lighting_render_data);

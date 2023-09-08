@@ -59,6 +59,7 @@ namespace Bamboo
 
 		// compile glsl shader if necessary
 		std::vector<std::string> glsl_filenames = fs->traverse(fs->getShaderDir());
+		auto removing_shader_filenames = m_shader_filenames;
 		for (const std::string& glsl_filename : glsl_filenames)
 		{
 			if (fs->isDir(glsl_filename))
@@ -68,6 +69,7 @@ namespace Bamboo
 
 			std::string glsl_basename = fs->filename(glsl_filename);
 			std::string modified_time = fs->modifiedTime(glsl_filename);
+			removing_shader_filenames.erase(glsl_basename);
 
 			bool need_compile = spv_basename_modified_time_map.find(glsl_basename) == spv_basename_modified_time_map.end() ||
 				modified_time != spv_basename_modified_time_map[glsl_basename] || need_compile_all;
@@ -94,6 +96,12 @@ namespace Bamboo
 
 				m_shader_filenames[glsl_basename] = spv_filename;
 			}
+		}
+
+		// remove all spv files whose corresponding glsl file has been removed
+		for (const auto& iter : removing_shader_filenames)
+		{
+			fs->removeFile(iter.second);
 		}
 	}
 

@@ -209,9 +209,13 @@ namespace Bamboo
 	class PickEntityEvent : public Event
 	{
 	public:
-		PickEntityEvent() : Event(EEventType::PickEntity)
+		PickEntityEvent(uint32_t mouse_x, uint32_t mouse_y) : Event(EEventType::PickEntity),
+			mouse_x(mouse_x), mouse_y(mouse_y)
 		{
 		}
+
+		uint32_t mouse_x;
+		uint32_t mouse_y;
 	};
 
 	class EventSystem

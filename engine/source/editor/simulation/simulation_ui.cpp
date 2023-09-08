@@ -2,7 +2,6 @@
 #include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/core/event/event_system.h"
 #include "runtime/function/render/render_system.h"
-#include "runtime/function/render/pass/main_pass.h"
 
 #include "runtime/platform/timer/timer.h"
 #include "runtime/resource/asset/asset_manager.h"
@@ -48,6 +47,8 @@ namespace Bamboo
 		}
 		updateWindowRegion();
 
+		m_mouse_x = ImGui::GetMousePos().x - ImGui::GetCursorScreenPos().x;
+		m_mouse_y = ImGui::GetMousePos().y - ImGui::GetCursorScreenPos().y;
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		ImGui::Image(m_color_texture_desc_set, ImVec2{content_size.x, content_size.y});
 
@@ -130,15 +131,14 @@ namespace Bamboo
 	void SimulationUI::onWindowResize()
 	{
 		// resize render pass
-		const auto& main_pass = g_runtime_context.renderSystem()->getMainPass();
-		main_pass->onResize(m_content_region.z, m_content_region.w);
+		g_runtime_context.renderSystem()->resize(m_content_region.z, m_content_region.w);
 
 		// recreate color image and view
 		if (m_color_texture_desc_set != VK_NULL_HANDLE)
 		{
 			ImGui_ImplVulkan_RemoveTexture(m_color_texture_desc_set);
 		}
-		m_color_texture_desc_set = ImGui_ImplVulkan_AddTexture(m_color_texture_sampler, main_pass->getColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		m_color_texture_desc_set = ImGui_ImplVulkan_AddTexture(m_color_texture_sampler, g_runtime_context.renderSystem()->getColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	void SimulationUI::loadAsset(const std::string& url)
@@ -305,9 +305,9 @@ namespace Bamboo
 	void SimulationUI::onMouseButton(const std::shared_ptr<class Event>& event)
 	{
 		const WindowMouseButtonEvent* mouse_button_event = static_cast<const WindowMouseButtonEvent*>(event.get());
-		if (mouse_button_event->action == GLFW_PRESS && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
+		if (mouse_button_event->action == GLFW_RELEASE && mouse_button_event->button == GLFW_MOUSE_BUTTON_LEFT)
 		{
-			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>());
+			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>(m_mouse_x, m_mouse_y));
 		}
 	}
 

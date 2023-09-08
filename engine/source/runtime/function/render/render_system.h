@@ -20,12 +20,14 @@ namespace Bamboo
 		void tick(float delta_time);
 		void destroy();
 
-		const std::shared_ptr<class MainPass>& getMainPass() { return m_main_pass; }
+		void resize(uint32_t width, uint32_t height);
+		VkImageView getColorImageView();
 
 	private:
 		void onCreateSwapchainObjects(const std::shared_ptr<class Event>& event);
 		void onDestroySwapchainObjects(const std::shared_ptr<class Event>& event);
 		void onRecordFrame(const std::shared_ptr<class Event>& event);
+		void onPickEntity(const std::shared_ptr<class Event>& event);
 
 		void collectRenderDatas();
 		std::shared_ptr<BillboardRenderData> createBillboardRenderData(
@@ -39,14 +41,12 @@ namespace Bamboo
 		std::shared_ptr<class DirectionalLightShadowPass> m_directional_light_shadow_pass;
 		std::shared_ptr<class PointLightShadowPass> m_point_light_shadow_pass;
 		std::shared_ptr<class SpotLightShadowPass> m_spot_light_shadow_pass;
+		std::shared_ptr<class PickPass> m_pick_pass;
 		std::shared_ptr<class MainPass> m_main_pass;
 		std::shared_ptr<class UIPass> m_ui_pass;
 		std::vector<std::shared_ptr<RenderPass>> m_render_passes;
 
 		std::vector<VmaBuffer> m_lighting_ubs;
 		std::map<ELightType, std::shared_ptr<class Texture2D>> m_lighting_icons;
-
-		// pick entity
-		bool m_picking_entity;
 	};
 }
