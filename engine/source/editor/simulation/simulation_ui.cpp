@@ -27,11 +27,13 @@ namespace Bamboo
 			VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 
 		m_coordinate_mode = ECoordinateMode::Local;
-		m_operation_mode = EOperationMode::Pick;
+		m_operation_mode = EOperationMode::Translate;
 		m_camera_component = g_runtime_context.worldManager()->getCameraComponent();
+		m_mouse_right_button_pressed = false;
 
 		g_runtime_context.eventSystem()->addListener(EEventType::WindowKey, std::bind(&SimulationUI::onKey, this, std::placeholders::_1));
 		g_runtime_context.eventSystem()->addListener(EEventType::WindowMouseButton, std::bind(&SimulationUI::onMouseButton, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EEventType::SelectEntity, std::bind(&SimulationUI::onSelectEntity, this, std::placeholders::_1));
 	}
 
 	void SimulationUI::construct()
@@ -248,6 +250,11 @@ namespace Bamboo
 		m_camera_component->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
 		m_camera_component->m_enabled = isFocused();
 
+ 		if (!m_selected_entity.lock())
+ 		{
+ 			return;
+ 		}
+
 		// set translation/rotation/scale gizmos
 		ImGuizmo::SetID(0);
 		ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
@@ -255,10 +262,9 @@ namespace Bamboo
 
 		const float* p_view = glm::value_ptr(m_camera_component->getViewMatrix());
 		const float* p_projection = glm::value_ptr(m_camera_component->getPerspectiveMatrixNoInverted());
-		glm::mat4 identity = glm::mat4(1.0f);
-		const float* p_identity = glm::value_ptr(identity);
 
-		static glm::mat4 matrix = glm::mat4(1.0f);
+		auto transform_component = m_selected_entity.lock()->getComponent(TransformComponent);
+		glm::mat4 matrix = transform_component->getGlobalMatrix();
 		if (m_operation_mode != EOperationMode::Pick)
 		{
 			ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
@@ -271,44 +277,91 @@ namespace Bamboo
 				operation = ImGuizmo::SCALE;
 			}
 
-			ImGuizmo::Manipulate(p_view, p_projection, operation, (ImGuizmo::MODE)m_coordinate_mode, glm::value_ptr(matrix), nullptr, nullptr, nullptr, nullptr);
+			glm::mat4 delta_matrix = glm::mat4(1.0);
+			bool manipulating = ImGuizmo::Manipulate(p_view, p_projection, operation, (ImGuizmo::MODE)m_coordinate_mode, 
+				glm::value_ptr(matrix), glm::value_ptr(delta_matrix), nullptr, nullptr, nullptr);
+
+			glm::vec3 translation, rotation, scale;
+			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(delta_matrix), glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
+
+			if (m_operation_mode == EOperationMode::Translate)
+			{
+				transform_component->m_position += translation;
+			}
+			else if (m_operation_mode == EOperationMode::Rotate)
+			{
+				transform_component->m_rotation += rotation;
+			}
+			else if (m_operation_mode == EOperationMode::Scale)
+			{
+				transform_component->m_scale *= scale;
+			}
 		}
 	}
 
 	void SimulationUI::onKey(const std::shared_ptr<class Event>& event)
 	{
-		if (!isFocused())
-		{
-			return;
-		}
-
 		const WindowKeyEvent* key_event = static_cast<const WindowKeyEvent*>(event.get());
 		if (key_event->action != GLFW_PRESS)
 		{
 			return;
 		}
 
-		if (key_event->key == GLFW_KEY_W)
+		if (key_event->key == GLFW_KEY_ESCAPE)
 		{
-			m_operation_mode = EOperationMode::Translate;
+			g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(UINT_MAX));
 		}
-		else if (key_event->key == GLFW_KEY_E)
+
+		if (!isFocused())
 		{
-			m_operation_mode = EOperationMode::Rotate;
+			return;
 		}
-		else if (key_event->key == GLFW_KEY_R)
+
+		if (m_selected_entity.lock() && !m_mouse_right_button_pressed)
 		{
-			m_operation_mode = EOperationMode::Scale;
+			if (key_event->key == GLFW_KEY_Q)
+			{
+				m_operation_mode = EOperationMode::Pick;
+			}
+			else if (key_event->key == GLFW_KEY_W)
+			{
+				m_operation_mode = EOperationMode::Translate;
+			}
+			else if (key_event->key == GLFW_KEY_E)
+			{
+				m_operation_mode = EOperationMode::Rotate;
+			}
+			else if (key_event->key == GLFW_KEY_R)
+			{
+				m_operation_mode = EOperationMode::Scale;
+			}
 		}
 	}
 
 	void SimulationUI::onMouseButton(const std::shared_ptr<class Event>& event)
 	{
 		const WindowMouseButtonEvent* mouse_button_event = static_cast<const WindowMouseButtonEvent*>(event.get());
-		if (mouse_button_event->action == GLFW_RELEASE && mouse_button_event->button == GLFW_MOUSE_BUTTON_LEFT)
+		if (mouse_button_event->action == GLFW_PRESS && mouse_button_event->button == GLFW_MOUSE_BUTTON_LEFT && !ImGuizmo::IsOver())
 		{
 			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>(m_mouse_x, m_mouse_y));
 		}
+
+		if (mouse_button_event->action == GLFW_PRESS && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
+		{
+			m_mouse_right_button_pressed = true;
+		}
+		else if (mouse_button_event->action == GLFW_RELEASE && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
+		{
+			m_mouse_right_button_pressed = false;
+		}
+	}
+
+	void SimulationUI::onSelectEntity(const std::shared_ptr<class Event>& event)
+	{
+		const SelectEntityEvent* p_event = static_cast<const SelectEntityEvent*>(event.get());
+
+		const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
+		m_selected_entity = current_world->getEntity(p_event->entity_id);
 	}
 
 }

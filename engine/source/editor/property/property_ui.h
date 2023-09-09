@@ -27,7 +27,6 @@ namespace Bamboo
 	public:
 		virtual void init() override;
 		virtual void construct() override;
-		virtual void destroy() override;
 
 	private:
 		void onSelectEntity(const std::shared_ptr<class Event>& event);
@@ -49,7 +48,7 @@ namespace Bamboo
 
 		EPropertyType getPropertyType(const rttr::type& type);
 
-		std::shared_ptr<class Entity> m_selected_entity;
+		std::weak_ptr<class Entity> m_selected_entity;
 		std::shared_ptr<ImGuiImage> m_dummy_image;
 		std::map<EPropertyValueType, std::function<void(const std::string&, rttr::variant&)>> m_property_constructors;
 	};

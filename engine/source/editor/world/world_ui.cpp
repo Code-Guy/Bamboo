@@ -62,7 +62,7 @@ namespace Bamboo
 		}
 		
 		ImGui::TreeNodeEx(entity->getName().c_str(), tree_node_flags);
-		if (m_selected_entity_id == UINT_MAX || (m_selected_entity_id != entity_id && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()))
+		if (m_selected_entity_id != entity_id && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 		{
 			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<SelectEntityEvent>(entity_id));
 		}

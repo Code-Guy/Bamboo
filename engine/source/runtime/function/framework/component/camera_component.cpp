@@ -111,7 +111,7 @@ namespace Bamboo
 
 	void CameraComponent::onKey(const std::shared_ptr<class Event>& event)
 	{
-		if (!m_enabled)
+		if (!m_enabled || !m_mouse_right_button_pressed)
 		{
 			m_move_forward = m_move_back = m_move_left = m_move_right = m_move_up = m_move_down = false;
 			return;
@@ -197,7 +197,7 @@ namespace Bamboo
 		{
 			m_mouse_right_button_pressed = true;
 		}
-		if (mouse_button_event->action == GLFW_RELEASE && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
+		else if (mouse_button_event->action == GLFW_RELEASE && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
 		{
 			m_mouse_right_button_pressed = false;
 			m_last_xpos = m_last_ypos = 0.0;

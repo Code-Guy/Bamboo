@@ -4,6 +4,8 @@
 #include "runtime/function/framework/world/world_manager.h"
 #include "runtime/core/color/color.h"
 
+#define DRAG_SPEED 0.1f
+
 namespace Bamboo
 {
 
@@ -32,7 +34,8 @@ namespace Bamboo
 
 	void PropertyUI::construct()
 	{
-		std::string entity_name = m_selected_entity ? m_selected_entity->getName() : "";
+		auto selected_entity = m_selected_entity.lock();
+		std::string entity_name = selected_entity ? selected_entity->getName() : "";
 		sprintf(m_title_buf, "%s %s###%s", ICON_FA_STREAM, (entity_name.empty() ? m_title : entity_name).c_str(), m_title.c_str());
 		if (!ImGui::Begin(m_title_buf))
 		{
@@ -40,7 +43,7 @@ namespace Bamboo
 			return;
 		}
 
-		if (m_selected_entity)
+		if (selected_entity)
 		{
 			ImGuiTableFlags table_flags = ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_Resizable;
 			if (ImGui::BeginTable("components", 2, table_flags))
@@ -48,22 +51,26 @@ namespace Bamboo
 				ImGui::TableSetupColumn("column_0", ImGuiTableColumnFlags_WidthFixed, 100.0f);
 				ImGui::TableSetupColumn("column_1", ImGuiTableColumnFlags_WidthStretch);
 
-				for (const auto& component : m_selected_entity->getComponents())
+				for (const auto& component : selected_entity->getComponents())
 				{
 					constructComponent(component);
 				}
 				ImGui::EndTable();
 			}
 		}
+		else
+		{
+			const char* hint_text = "select any entity to display properties";
+			float window_width = ImGui::GetWindowSize().x;
+			float window_height = ImGui::GetWindowSize().y;
+			float text_width = ImGui::CalcTextSize(hint_text).x;
+
+			ImGui::SetCursorPosX((window_width - text_width) * 0.5f);
+			ImGui::SetCursorPosY(window_height * 0.2f);
+			ImGui::Text(hint_text);
+		}
 
 		ImGui::End();
-	}
-
-	void PropertyUI::destroy()
-	{
-		m_selected_entity.reset();
-		EditorUI::destroy();
-
 	}
 
 	void PropertyUI::onSelectEntity(const std::shared_ptr<class Event>& event)
@@ -193,7 +200,7 @@ namespace Bamboo
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		std::string label = "##" + name;
 		glm::vec2& vec2 = variant.get_value<glm::vec2>();
-		ImGui::DragFloat2(label.c_str(), glm::value_ptr(vec2));
+		ImGui::DragFloat2(label.c_str(), glm::value_ptr(vec2), DRAG_SPEED);
 		ImGui::PopItemWidth();
 	}
 
@@ -205,7 +212,7 @@ namespace Bamboo
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		std::string label = "##" + name;
 		glm::vec3& vec3 = variant.get_value<glm::vec3>();
-		ImGui::DragFloat3(label.c_str(), glm::value_ptr(vec3));
+		ImGui::DragFloat3(label.c_str(), glm::value_ptr(vec3), DRAG_SPEED);
 		ImGui::PopItemWidth();
 	}
 
@@ -217,7 +224,7 @@ namespace Bamboo
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		std::string label = "##" + name;
 		glm::vec4& vec4 = variant.get_value<glm::vec4>();
-		ImGui::DragFloat4(label.c_str(), glm::value_ptr(vec4));
+		ImGui::DragFloat4(label.c_str(), glm::value_ptr(vec4), DRAG_SPEED);
 		ImGui::PopItemWidth();
 	}
 
