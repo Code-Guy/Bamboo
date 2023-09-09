@@ -8,6 +8,8 @@ namespace Bamboo
 	void WorldUI::init()
 	{
 		m_title = "World";
+
+		g_runtime_context.eventSystem()->addListener(EEventType::SelectEntity, std::bind(&WorldUI::onSelectEntity, this, std::placeholders::_1));
 	}
 
 	void WorldUI::construct()
@@ -60,14 +62,9 @@ namespace Bamboo
 		}
 		
 		ImGui::TreeNodeEx(entity->getName().c_str(), tree_node_flags);
-		if (m_selected_entity_id == UINT_MAX || (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()))
+		if (m_selected_entity_id == UINT_MAX || (m_selected_entity_id != entity_id && ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()))
 		{
-			if (m_selected_entity_id != entity_id)
-			{
-				m_selected_entity_id = entity_id;
-
-				g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(m_selected_entity_id));
-			}
+			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<SelectEntityEvent>(entity_id));
 		}
 
 		for (const auto& child : entity->getChildren())
@@ -77,4 +74,11 @@ namespace Bamboo
 
 		ImGui::TreePop();
 	}
+
+	void WorldUI::onSelectEntity(const std::shared_ptr<class Event>& event)
+	{
+		const SelectEntityEvent* p_event = static_cast<const SelectEntityEvent*>(event.get());
+		m_selected_entity_id = p_event->entity_id;
+	}
+
 }

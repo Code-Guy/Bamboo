@@ -16,6 +16,7 @@ namespace Bamboo
 		virtual void createPipelineLayouts() override;
 		virtual void createPipelines() override;
 		virtual void createFramebuffer() override;
+		virtual void createResizableObjects(uint32_t width, uint32_t height) override;
 		virtual void destroyResizableObjects() override;
 
 		void pick(uint32_t mouse_x, uint32_t mouse_y);
@@ -41,5 +42,6 @@ namespace Bamboo
 		bool m_enabled;
 		uint32_t m_mouse_x;
 		uint32_t m_mouse_y;
+		float m_scale_ratio;
 	};
 }

@@ -7,6 +7,8 @@
 
 #include <limits>
 
+#define MAX_SIZE 512u
+
 namespace Bamboo
 {
 
@@ -128,17 +130,12 @@ namespace Bamboo
 			m_formats[0], VK_IMAGE_LAYOUT_UNDEFINED, image_data);
 
 		uint32_t entity_id = decodeEntityID(&image_data[(m_mouse_y * m_width + m_mouse_x) * 4]);
-		if (entity_id == UINT_MAX)
+		if (entity_id != UINT_MAX)
 		{
-			LOG_INFO("pick nothing elapsed time : {}ms", stop_watch.stop());
-		}
-		else
-		{
-			LOG_INFO("pick entity {} elapsed time : {}ms", entity_id, stop_watch.stop());
-
 			g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(entity_id));
 		}
 
+		//LOG_INFO("pick entity {} elapsed time : {}ms", entity_id, stop_watch.stop());
 		m_enabled = false;
 	}
 
@@ -383,6 +380,24 @@ namespace Bamboo
 		CHECK_VULKAN_RESULT(result, "create pick pass frame buffer");
 	}
 
+	void PickPass::createResizableObjects(uint32_t width, uint32_t height)
+	{
+		if (width > height)
+		{
+			m_width = std::min(width, MAX_SIZE);
+			m_height = m_width * height / width;
+			m_scale_ratio = (float)m_width / width;
+		}
+		else
+		{
+			m_height = std::min(height, MAX_SIZE);
+			m_width = m_height * width / height;
+			m_scale_ratio = (float)m_height / height;
+		}
+
+		createFramebuffer();
+	}
+
 	void PickPass::destroyResizableObjects()
 	{
 		m_color_image_view.destroy();
@@ -393,9 +408,13 @@ namespace Bamboo
 
 	void PickPass::pick(uint32_t mouse_x, uint32_t mouse_y)
 	{
-		m_mouse_x = mouse_x;
-		m_mouse_y = mouse_y;
-		m_enabled = true;
+		m_mouse_x = (uint32_t)(mouse_x * m_scale_ratio);
+		m_mouse_y = (uint32_t)(mouse_y * m_scale_ratio);
+
+		if (m_mouse_x < m_width && m_mouse_y < m_height)
+		{
+			m_enabled = true;
+		}
 	}
 
 	glm::vec4 PickPass::encodeEntityID(uint32_t id)
