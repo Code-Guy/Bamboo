@@ -278,23 +278,23 @@ namespace Bamboo
 			}
 
 			glm::mat4 delta_matrix = glm::mat4(1.0);
-			bool manipulating = ImGuizmo::Manipulate(p_view, p_projection, operation, (ImGuizmo::MODE)m_coordinate_mode, 
+			ImGuizmo::Manipulate(p_view, p_projection, operation, (ImGuizmo::MODE)m_coordinate_mode, 
 				glm::value_ptr(matrix), glm::value_ptr(delta_matrix), nullptr, nullptr, nullptr);
 
 			glm::vec3 translation, rotation, scale;
-			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(delta_matrix), glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
+			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(matrix), glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
 
 			if (m_operation_mode == EOperationMode::Translate)
 			{
-				transform_component->m_position += translation;
+				transform_component->m_position = translation;
 			}
 			else if (m_operation_mode == EOperationMode::Rotate)
 			{
-				transform_component->m_rotation += rotation;
+				transform_component->m_rotation = rotation;
 			}
 			else if (m_operation_mode == EOperationMode::Scale)
 			{
-				transform_component->m_scale *= scale;
+				transform_component->m_scale = scale;
 			}
 		}
 	}
