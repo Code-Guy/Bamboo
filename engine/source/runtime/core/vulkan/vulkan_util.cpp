@@ -611,8 +611,8 @@ namespace Bamboo
 	}
 
 	void VulkanUtil::extractImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
-		VkImageLayout initial_layout, std::vector<uint8_t>& image_data, uint32_t mip_levels,
-		uint32_t layers, VkImageLayout final_layout)
+		std::vector<uint8_t>& image_data, VkImageLayout initial_layout, 
+		uint32_t mip_levels, uint32_t layers, VkImageLayout final_layout)
 	{
 		// create staging buffer
 		VmaBuffer staging_buffer;
@@ -663,11 +663,11 @@ namespace Bamboo
 	}
 
 	void VulkanUtil::saveImage(VkImage image, uint32_t width, uint32_t height, VkFormat format, 
-		VkImageLayout initial_layout, const std::string& filename, uint32_t mip_levels, 
-		uint32_t layers, VkImageLayout final_layout)
+		const std::string& filename, VkImageLayout initial_layout, 
+		uint32_t mip_levels, uint32_t layers, VkImageLayout final_layout)
 	{
 		std::vector<uint8_t> image_data;
-		extractImage(image, width, height, format, initial_layout, image_data, mip_levels, layers, final_layout);
+		extractImage(image, width, height, format, image_data, initial_layout, mip_levels, layers, final_layout);
 
 		std::ofstream ofs(filename, std::ios::binary);
 		ofs.write((const char*)image_data.data(), image_data.size());

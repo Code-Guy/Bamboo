@@ -5,9 +5,9 @@
 
 namespace Bamboo
 {
-	enum class EMeshType
+	enum class ERenderDataType
 	{
-		Static, Skeletal
+		Base, Lighting, StaticMesh, SkeletalMesh, Skybox, Billboard
 	};
 
 	struct PBRTexture
@@ -20,11 +20,13 @@ namespace Bamboo
 
 	struct RenderData
 	{
-		// empty content for base render data
+		ERenderDataType type = ERenderDataType::Base;
 	};
 
 	struct LightingRenderData : public RenderData
 	{
+		LightingRenderData() { type = ERenderDataType::Lighting; }
+
 		glm::mat4 camera_view_proj;
 
 		std::vector<VmaBuffer> lighting_ubs;
@@ -40,7 +42,6 @@ namespace Bamboo
 
 	struct MeshRenderData : public RenderData
 	{
-		EMeshType mesh_type;
 		VmaBuffer vertex_buffer;
 		VmaBuffer index_buffer;
 		std::vector<uint32_t> index_counts;
@@ -50,17 +51,23 @@ namespace Bamboo
 
 	struct StaticMeshRenderData : public MeshRenderData
 	{
+		StaticMeshRenderData() { type = ERenderDataType::StaticMesh; }
+
 		std::vector<MaterialPCO> material_pcos;
 		std::vector<PBRTexture> pbr_textures;
 	};
 
 	struct SkeletalMeshRenderData : public StaticMeshRenderData
 	{
+		SkeletalMeshRenderData() { type = ERenderDataType::SkeletalMesh; }
+
 		std::vector<VmaBuffer> bone_ubs;
 	};
 
 	struct SkyboxRenderData : public RenderData
 	{
+		SkyboxRenderData() { type = ERenderDataType::Skybox; }
+
 		VmaBuffer vertex_buffer;
 		VmaBuffer index_buffer;
 		uint32_t index_count;
@@ -70,6 +77,8 @@ namespace Bamboo
 
 	struct BillboardRenderData : public RenderData
 	{
+		BillboardRenderData() { type = ERenderDataType::Billboard; }
+
 		vec4 position;
 		vec2 size;
 		VmaImageViewSampler texture;

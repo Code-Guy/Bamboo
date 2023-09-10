@@ -12,6 +12,7 @@
 #include "runtime/function/render/pass/point_light_shadow_pass.h"
 #include "runtime/function/render/pass/spot_light_shadow_pass.h"
 #include "runtime/function/render/pass/pick_pass.h"
+#include "runtime/function/render/pass/outline_pass.h"
 #include "runtime/function/render/pass/main_pass.h"
 #include "runtime/function/render/pass/ui_pass.h"
 
@@ -32,7 +33,8 @@ namespace Bamboo
 		m_directional_light_shadow_pass = std::make_shared<DirectionalLightShadowPass>();
 		m_point_light_shadow_pass = std::make_shared<PointLightShadowPass>();
 		m_spot_light_shadow_pass = std::make_shared<SpotLightShadowPass>();
-		m_pick_pass = std::make_shared<class PickPass>();
+		m_pick_pass = std::make_shared<PickPass>();
+		m_outline_pass = std::make_shared<OutlinePass>();
 		m_main_pass = std::make_shared<MainPass>();
 		m_ui_pass = std::make_shared<UIPass>();
 
@@ -41,6 +43,7 @@ namespace Bamboo
 			m_point_light_shadow_pass,
 			m_spot_light_shadow_pass,
 			m_pick_pass,
+			m_outline_pass,
 			m_main_pass, 
 			m_ui_pass
 		};
@@ -58,6 +61,8 @@ namespace Bamboo
 			std::bind(&RenderSystem::onRecordFrame, this, std::placeholders::_1));
 		g_runtime_context.eventSystem()->addListener(EEventType::PickEntity,
 			std::bind(&RenderSystem::onPickEntity, this, std::placeholders::_1));
+		g_runtime_context.eventSystem()->addListener(EEventType::SelectEntity,
+			std::bind(&RenderSystem::onSelectEntity, this, std::placeholders::_1));
 
 		// get dummy texture2d
 		const auto& as = g_runtime_context.assetManager();
@@ -114,8 +119,9 @@ namespace Bamboo
 
 	void RenderSystem::resize(uint32_t width, uint32_t height)
 	{
-		m_main_pass->onResize(width, height);
 		m_pick_pass->onResize(width, height);
+		m_outline_pass->onResize(width, height);
+		m_main_pass->onResize(width, height);
 	}
 
 	VkImageView RenderSystem::getColorImageView()
@@ -160,11 +166,18 @@ namespace Bamboo
 		m_pick_pass->pick(p_event->mouse_x, p_event->mouse_y);
 	}
 
+	void RenderSystem::onSelectEntity(const std::shared_ptr<class Event>& event)
+	{
+		const SelectEntityEvent* p_event = static_cast<const SelectEntityEvent*>(event.get());
+
+		m_selected_entity_ids = { p_event->entity_id };
+	}
+
 	void RenderSystem::collectRenderDatas()
 	{
 		// mesh render datas
-		std::vector<std::shared_ptr<RenderData>> mesh_render_datas;
-		std::vector<std::shared_ptr<BillboardRenderData>> billboard_render_datas;
+		std::vector<std::shared_ptr<RenderData>> mesh_render_datas, selected_mesh_render_datas;
+		std::vector<std::shared_ptr<BillboardRenderData>> billboard_render_datas, selected_billboard_render_datas;
 		std::vector<uint32_t> mesh_entity_ids, billboard_entity_ids;
 
 		// get current active world
@@ -247,33 +260,26 @@ namespace Bamboo
 					//ddm->drawBox(bounding_box.center(), bounding_box.extent(), k_zero_vector, Color3::Orange);
 
 					// create mesh render data
-					EMeshType mesh_type = static_mesh_component ? EMeshType::Static : EMeshType::Skeletal;
+					bool is_skeletal_mesh = skeletal_mesh_component != nullptr;
 					std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = nullptr;
 					std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
 
-					switch (mesh_type)
-					{
-					case EMeshType::Static:
-					{
-						static_mesh_render_data = std::make_shared<StaticMeshRenderData>();
-					}
-						break;
-					case EMeshType::Skeletal:
+					if (is_skeletal_mesh)
 					{
 						skeletal_mesh_render_data = std::make_shared<SkeletalMeshRenderData>();
 						static_mesh_render_data = skeletal_mesh_render_data;
 					}
-						break;
-					default:
-						break;
+					else
+					{
+						static_mesh_render_data = std::make_shared<StaticMeshRenderData>();
 					}
-					
-					static_mesh_render_data->mesh_type = mesh_type;
+
+					static_mesh_render_data->type = is_skeletal_mesh ? ERenderDataType::SkeletalMesh : ERenderDataType::StaticMesh;
 					static_mesh_render_data->vertex_buffer = mesh->m_vertex_buffer;
 					static_mesh_render_data->index_buffer = mesh->m_index_buffer;
 
 					// update uniform buffers
-					if (mesh_type == EMeshType::Skeletal)
+					if (is_skeletal_mesh)
 					{
 						skeletal_mesh_render_data->bone_ubs = mesh->m_uniform_buffers;
 					}
@@ -316,6 +322,10 @@ namespace Bamboo
 					}
 
 					mesh_render_datas.push_back(static_mesh_render_data);
+					if (std::find(m_selected_entity_ids.begin(), m_selected_entity_ids.end(), entity->getID()) != m_selected_entity_ids.end())
+					{
+						selected_mesh_render_datas.push_back(static_mesh_render_data);
+					}
 				}
 
 				mesh_entity_ids.push_back(entity->getID());
@@ -336,8 +346,8 @@ namespace Bamboo
 				shadow_cascade_ci.light_dir = transform_component->getForwardVector();
 				shadow_cascade_ci.light_cascade_frustum_near = directional_light_component->m_cascade_frustum_near;
 
-				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::DirectionalLight));
-				billboard_entity_ids.push_back(entity->getID());
+				addBillboardRenderData(transform_component, camera_component, billboard_render_datas,
+					selected_billboard_render_datas, billboard_entity_ids, ELightType::DirectionalLight);
 			}
 
 			// get sky light component
@@ -365,8 +375,8 @@ namespace Bamboo
 				lighting_ubo.sky_light.color = sky_light_component->getColor();
 				lighting_ubo.sky_light.prefilter_mip_levels = sky_light_component->m_prefilter_mip_levels;
 
-				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::SkyLight));
-				billboard_entity_ids.push_back(entity->getID());
+				addBillboardRenderData(transform_component, camera_component, billboard_render_datas,
+					selected_billboard_render_datas, billboard_entity_ids, ELightType::SkyLight);
 			}
 
 			// get point light component
@@ -390,8 +400,8 @@ namespace Bamboo
 				shadow_cube_ci.light_near = camera_component->m_near;
 				shadow_cube_cis.push_back(shadow_cube_ci);
 
-				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::PointLight));
-				billboard_entity_ids.push_back(entity->getID());
+				addBillboardRenderData(transform_component, camera_component, billboard_render_datas,
+					selected_billboard_render_datas, billboard_entity_ids, ELightType::PointLight);
 			}
 
 			// get point light component
@@ -422,8 +432,8 @@ namespace Bamboo
 				shadow_frustum_ci.light_near = camera_component->m_near;
 				shadow_frustum_cis.push_back(shadow_frustum_ci);
 
-				billboard_render_datas.push_back(createBillboardRenderData(transform_component, camera_component, ELightType::SpotLight));
-				billboard_entity_ids.push_back(entity->getID());
+				addBillboardRenderData(transform_component, camera_component, billboard_render_datas, 
+					selected_billboard_render_datas, billboard_entity_ids, ELightType::SpotLight);
 			}
 		}
 
@@ -513,6 +523,10 @@ namespace Bamboo
 			m_pick_pass->setEntityIDs(mesh_entity_ids);
 		}
 
+		// outline pass
+		m_outline_pass->setRenderDatas(selected_mesh_render_datas);
+		m_outline_pass->setBillboardRenderDatas(selected_billboard_render_datas);
+
 		// main pass
 		m_main_pass->setLightingRenderData(lighting_render_data);
 		m_main_pass->setSkyboxRenderData(skybox_render_data);
@@ -523,9 +537,12 @@ namespace Bamboo
 		m_main_pass->setRenderDatas(mesh_render_datas);
 	}
 
-	std::shared_ptr<Bamboo::BillboardRenderData> RenderSystem::createBillboardRenderData(
-		std::shared_ptr<class TransformComponent> transform_component, 
-		std::shared_ptr<class CameraComponent> camera_component, 
+	void RenderSystem::addBillboardRenderData(
+		std::shared_ptr<class TransformComponent> transform_component,
+		std::shared_ptr<class CameraComponent> camera_component,
+		std::vector<std::shared_ptr<BillboardRenderData>>& billboard_render_datas,
+		std::vector<std::shared_ptr<BillboardRenderData>>& selected_billboard_render_datas,
+		std::vector<uint32_t>& billboard_entity_ids,
 		ELightType light_type)
 	{
 		std::shared_ptr<BillboardRenderData> billboard_render_data = std::make_shared<BillboardRenderData>();
@@ -544,7 +561,13 @@ namespace Bamboo
 		billboard_render_data->size = glm::vec2(size, size * camera_component->m_aspect_ratio);
 		billboard_render_data->texture = m_lighting_icons[light_type]->m_image_view_sampler;
 
-		return billboard_render_data;
+		uint32_t entity_id = transform_component->getParent().lock()->getID();
+		billboard_render_datas.push_back(billboard_render_data);
+		if (std::find(m_selected_entity_ids.begin(), m_selected_entity_ids.end(), entity_id) != m_selected_entity_ids.end())
+		{
+			selected_billboard_render_datas.push_back(billboard_render_data);
+		}
+		billboard_entity_ids.push_back(entity_id);
 	}
 
 }

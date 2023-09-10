@@ -28,11 +28,15 @@ namespace Bamboo
 		void onDestroySwapchainObjects(const std::shared_ptr<class Event>& event);
 		void onRecordFrame(const std::shared_ptr<class Event>& event);
 		void onPickEntity(const std::shared_ptr<class Event>& event);
+		void onSelectEntity(const std::shared_ptr<class Event>& event);
 
 		void collectRenderDatas();
-		std::shared_ptr<BillboardRenderData> createBillboardRenderData(
+		void addBillboardRenderData(
 			std::shared_ptr<class TransformComponent> transform_component,
 			std::shared_ptr<class CameraComponent> camera_component,
+			std::vector<std::shared_ptr<BillboardRenderData>>& billboard_render_datas, 
+			std::vector<std::shared_ptr<BillboardRenderData>>& selected_billboard_render_datas,
+			std::vector<uint32_t>& billboard_entity_ids,
 			ELightType light_type);
 
 		std::shared_ptr<class Texture2D> m_default_texture_2d;
@@ -42,11 +46,13 @@ namespace Bamboo
 		std::shared_ptr<class PointLightShadowPass> m_point_light_shadow_pass;
 		std::shared_ptr<class SpotLightShadowPass> m_spot_light_shadow_pass;
 		std::shared_ptr<class PickPass> m_pick_pass;
+		std::shared_ptr<class OutlinePass> m_outline_pass;
 		std::shared_ptr<class MainPass> m_main_pass;
 		std::shared_ptr<class UIPass> m_ui_pass;
 		std::vector<std::shared_ptr<RenderPass>> m_render_passes;
 
 		std::vector<VmaBuffer> m_lighting_ubs;
 		std::map<ELightType, std::shared_ptr<class Texture2D>> m_lighting_icons;
+		std::vector<uint32_t> m_selected_entity_ids;
 	};
 }

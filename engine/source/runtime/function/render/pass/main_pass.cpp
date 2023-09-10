@@ -162,7 +162,7 @@ namespace Bamboo
 		{
 			// push constants
 			vkCmdPushConstants(command_buffer, m_pipeline_layouts[7], VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT,
-				0, sizeof(glm::vec4) + sizeof(glm::vec2), render_data.get());
+				0, sizeof(glm::vec4) + sizeof(glm::vec2), &render_data->position);
 
 			std::vector<VkWriteDescriptorSet> desc_writes;
 			VkDescriptorImageInfo desc_image_info{};
@@ -697,13 +697,13 @@ namespace Bamboo
 
 		std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
 		std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = std::static_pointer_cast<StaticMeshRenderData>(render_data);
-		EMeshType mesh_type = static_mesh_render_data->mesh_type;
-		if (mesh_type == EMeshType::Skeletal)
+		bool is_skeletal_mesh = render_data->type == ERenderDataType::SkeletalMesh;;
+		if (is_skeletal_mesh)
 		{
 			skeletal_mesh_render_data = std::static_pointer_cast<SkeletalMeshRenderData>(render_data);
 		}
 
-		uint32_t pipeline_index = (uint32_t)mesh_type + (renderer_type == ERendererType::Deferred ? 0 : 3);
+		uint32_t pipeline_index = (uint32_t)is_skeletal_mesh + (renderer_type == ERendererType::Deferred ? 0 : 3);
 		VkPipeline pipeline = m_pipelines[pipeline_index];
 		VkPipelineLayout pipeline_layout = m_pipeline_layouts[pipeline_index];
 
@@ -731,7 +731,7 @@ namespace Bamboo
 			std::array<VkDescriptorImageInfo, 24> desc_image_infos{};
 
 			// bone matrix ubo
-			if (mesh_type == EMeshType::Skeletal)
+			if (is_skeletal_mesh)
 			{
 				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
 			}
