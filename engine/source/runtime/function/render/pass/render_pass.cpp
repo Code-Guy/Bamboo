@@ -89,7 +89,7 @@ namespace Bamboo
 		color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
 		color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-		color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+		color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 		m_color_blend_attachments.push_back(color_blend_attachment);
 

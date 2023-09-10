@@ -68,29 +68,32 @@ namespace Bamboo
 	{
 		float offset = m_move_speed * delta_time;
 
-		if (m_move_forward)
+		if (m_mouse_right_button_pressed)
 		{
-			m_transform_component->m_position += m_forward * offset;
-		}
-		if (m_move_back)
-		{
-			m_transform_component->m_position -= m_forward * offset;
-		}
-		if (m_move_left)
-		{
-			m_transform_component->m_position -= m_right * offset;
-		}
-		if (m_move_right)
-		{
-			m_transform_component->m_position += m_right * offset;
-		}
-		if (m_move_up)
-		{
-			m_transform_component->m_position += k_up_vector * offset;
-		}
-		if (m_move_down)
-		{
-			m_transform_component->m_position -= k_up_vector * offset;
+			if (m_move_forward)
+			{
+				m_transform_component->m_position += m_forward * offset;
+			}
+			if (m_move_back)
+			{
+				m_transform_component->m_position -= m_forward * offset;
+			}
+			if (m_move_left)
+			{
+				m_transform_component->m_position -= m_right * offset;
+			}
+			if (m_move_right)
+			{
+				m_transform_component->m_position += m_right * offset;
+			}
+			if (m_move_up)
+			{
+				m_transform_component->m_position += k_up_vector * offset;
+			}
+			if (m_move_down)
+			{
+				m_transform_component->m_position -= k_up_vector * offset;
+			}
 		}
 	}
 
@@ -111,12 +114,6 @@ namespace Bamboo
 
 	void CameraComponent::onKey(const std::shared_ptr<class Event>& event)
 	{
-		if (!m_enabled || !m_mouse_right_button_pressed)
-		{
-			m_move_forward = m_move_back = m_move_left = m_move_right = m_move_up = m_move_down = false;
-			return;
-		}
-
 		const WindowKeyEvent* key_event = static_cast<const WindowKeyEvent*>(event.get());
 		if (key_event->action != GLFW_PRESS && key_event->action != GLFW_RELEASE)
 		{
@@ -152,15 +149,10 @@ namespace Bamboo
 
 	void CameraComponent::onCursorPos(const std::shared_ptr<class Event>& event)
 	{
-		if (!m_enabled)
-		{
-			m_last_xpos = m_last_ypos = 0.0f;
-			return;
-		}
-
 		const WindowCursorPosEvent* cursor_pos_event = static_cast<const WindowCursorPosEvent*>(event.get());
 		if (!m_mouse_right_button_pressed)
 		{
+			m_last_xpos = m_last_ypos = 0.0f;
 			return;
 		}
 
