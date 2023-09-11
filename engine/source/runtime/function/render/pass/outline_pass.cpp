@@ -125,7 +125,7 @@ namespace Bamboo
 		vkCmdEndRenderPass(command_buffer);
 
 		VulkanUtil::endInstantCommands(command_buffer);
-		VulkanUtil::saveImage(m_color_image_view.image(), m_width, m_height, m_format, "D:/Test/outline/0.bin");
+		//VulkanUtil::saveImage(m_color_image_view.image(), m_width, m_height, m_format, "D:/Test/outline/0.bin");
 	}
 
 	void OutlinePass::createRenderPass()

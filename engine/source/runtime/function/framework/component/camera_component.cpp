@@ -16,7 +16,8 @@ rttr::registration::class_<Bamboo::CameraComponent>("CameraComponent")
 	 .property("far", &Bamboo::CameraComponent::m_far)
 	 .property("move_speed", &Bamboo::CameraComponent::m_move_speed)
 	 .property("turn_speed", &Bamboo::CameraComponent::m_turn_speed)
-	 .property("zoom_speed", &Bamboo::CameraComponent::m_zoom_speed);
+	 .property("zoom_speed", &Bamboo::CameraComponent::m_zoom_speed)
+	 .property("exposure", &Bamboo::CameraComponent::m_exposure);
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::CameraComponent)

@@ -78,7 +78,8 @@ struct SpotLight
 struct LightingUBO
 {
     // camera
-    vec3 camera_pos; float padding0;
+    vec3 camera_pos;
+    float exposure;
     mat4 camera_view;
     mat4 inv_camera_view_proj;
 

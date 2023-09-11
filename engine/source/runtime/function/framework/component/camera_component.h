@@ -30,6 +30,9 @@ namespace Bamboo
 		float m_turn_speed;
 		float m_zoom_speed;
 
+		// postprocessing
+		float m_exposure;
+
 		// enabled
 		bool m_enabled = false;
 
@@ -51,6 +54,9 @@ namespace Bamboo
 			ar(cereal::make_nvp("move_speed", m_move_speed));
 			ar(cereal::make_nvp("turn_speed", m_turn_speed));
 			ar(cereal::make_nvp("zoom_speed", m_zoom_speed));
+
+			// postprocessing
+			ar(cereal::make_nvp("exposure", m_exposure));
 		}
 
 		void onKey(const std::shared_ptr<class Event>& event);

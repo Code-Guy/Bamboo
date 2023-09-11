@@ -360,8 +360,11 @@ namespace Bamboo
 	{
 		const SelectEntityEvent* p_event = static_cast<const SelectEntityEvent*>(event.get());
 
-		const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
-		m_selected_entity = current_world->getEntity(p_event->entity_id);
+		if (p_event->entity_id != m_camera_component->getParent().lock()->getID())
+		{
+			const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
+			m_selected_entity = current_world->getEntity(p_event->entity_id);
+		}
 	}
 
 }

@@ -219,6 +219,7 @@ namespace Bamboo
 		// set lighting uniform buffer object
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
+		lighting_ubo.exposure = camera_component->m_exposure;
 		lighting_ubo.camera_view = camera_component->getViewMatrix();
 		lighting_ubo.inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
 		lighting_ubo.has_sky_light = lighting_ubo.has_directional_light = false;

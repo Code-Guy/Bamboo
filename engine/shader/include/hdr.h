@@ -22,6 +22,11 @@ vec3 tonemap(vec3 color)
 	return pow(uncharted_color, vec3(1.0f / STD_GAMMA));
 }
 
+vec3 tonemap(vec3 color, float exposure)
+{
+	return vec3(1.0) - exp(-color * exposure);
+}
+
 vec3 srgb_to_linear(vec3 srgb)
 {
 	return pow(srgb, vec3(STD_GAMMA));
