@@ -25,4 +25,6 @@
 #define PCF_DELTA_SCALE 0.75
 #define PCF_SAMPLE_RANGE 1
 
+#define OUTLINE_THICKNESS 3
+
 #endif

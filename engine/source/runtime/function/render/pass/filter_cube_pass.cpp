@@ -438,11 +438,10 @@ namespace Bamboo
 		for (int i = 0; i < 2; ++i)
 		{
 			m_color_image_views[i].destroy();
-		}
-
-		for (int i = 0; i < 2; ++i)
-		{
-			vkDestroyFramebuffer(VulkanRHI::get().getDevice(), m_framebuffers[i], nullptr);
+			if (m_color_image_views[i].view)
+			{
+				vkDestroyFramebuffer(VulkanRHI::get().getDevice(), m_framebuffers[i], nullptr);
+			}
 		}
 
 		RenderPass::destroyResizableObjects();

@@ -20,19 +20,15 @@ namespace Bamboo
 
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		render_pass_bi.renderPass = m_render_pass;
+		render_pass_bi.renderPass = m_render_passes[0];
 		render_pass_bi.renderArea.extent.width = m_width;
 		render_pass_bi.renderArea.extent.height = m_height;
 		render_pass_bi.clearValueCount = 1;
 		render_pass_bi.pClearValues = clear_values;
-		render_pass_bi.framebuffer = m_framebuffer;
+		render_pass_bi.framebuffer = m_framebuffers[0];
 
-		// 		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
-		// 		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
-		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
-		uint32_t flight_index = 0;
-
-		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
+		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
+		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
 
 		VkViewport viewport{};
 		viewport.width = static_cast<float>(m_width);
@@ -46,6 +42,8 @@ namespace Bamboo
 
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
 		// render meshes
 		for (const auto& render_data : m_render_datas)
@@ -124,8 +122,32 @@ namespace Bamboo
 
 		vkCmdEndRenderPass(command_buffer);
 
-		VulkanUtil::endInstantCommands(command_buffer);
-		//VulkanUtil::saveImage(m_color_image_view.image(), m_width, m_height, m_format, "D:/Test/outline/0.bin");
+		// blur pass
+		render_pass_bi.renderPass = m_render_passes[1];
+		render_pass_bi.framebuffer = m_framebuffers[1];
+		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[3]);
+
+		std::vector<VkWriteDescriptorSet> desc_writes;
+		std::array<VkDescriptorImageInfo, 1> desc_image_infos{};
+
+		// base color texture image sampler
+		addImageDescriptorSet(desc_writes, desc_image_infos[0], m_color_texture_samplers[0], 0);
+
+		VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+			m_pipeline_layouts[3], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
+		vkCmdDraw(command_buffer, 3, 1, 0, 0);
+		vkCmdEndRenderPass(command_buffer);
+	}
+
+	void OutlinePass::destroy()
+	{
+		RenderPass::destroy();
+
+		for (uint32_t i = 0; i < 2; ++i)
+		{
+			vkDestroyRenderPass(VulkanRHI::get().getDevice(), m_render_passes[i], nullptr);
+		}
 	}
 
 	void OutlinePass::createRenderPass()
@@ -139,7 +161,7 @@ namespace Bamboo
 		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		VkAttachmentReference color_reference = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
 		// subpass
@@ -149,26 +171,55 @@ namespace Bamboo
 		subpass_desc.pColorAttachments = &color_reference;
 
 		// subpass dependencies
-		VkSubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.srcAccessMask = 0;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		std::array<VkSubpassDependency, 2> dependencies;
+		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass = 0;
+		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[0].srcAccessMask = 0;
+		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-		// create render pass
+		dependencies[1].srcSubpass = 0;
+		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		// create outline render pass
 		VkRenderPassCreateInfo render_pass_ci{};
 		render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		render_pass_ci.attachmentCount = 1;
 		render_pass_ci.pAttachments = attachments.data();
 		render_pass_ci.subpassCount = 1;
 		render_pass_ci.pSubpasses = &subpass_desc;
-		render_pass_ci.dependencyCount = 1;
-		render_pass_ci.pDependencies = &dependency;
+		render_pass_ci.dependencyCount = 2;
+		render_pass_ci.pDependencies = dependencies.data();
 
-		VkResult result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
+		VkResult result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_passes[0]);
 		CHECK_VULKAN_RESULT(result, "create outline render pass");
+
+		// create blur render pass
+		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass = 0;
+		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		dependencies[1].srcSubpass = 0;
+		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_passes[1]);
+		CHECK_VULKAN_RESULT(result, "create blur render pass");
 	}
 
 	void OutlinePass::createDescriptorSetLayouts()
@@ -183,7 +234,7 @@ namespace Bamboo
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 
-		m_desc_set_layouts.resize(2);
+		m_desc_set_layouts.resize(3);
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create static mesh/billboard descriptor set layout");
 
@@ -192,6 +243,14 @@ namespace Bamboo
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);
 		CHECK_VULKAN_RESULT(result, "create skeletal mesh descriptor set layout");
+
+		desc_set_layout_bindings = {
+			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}
+		};
+		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
+		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
+		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[2]);
+		CHECK_VULKAN_RESULT(result, "create blur descriptor set layout");
 	}
 
 	void OutlinePass::createPipelineLayouts()
@@ -208,7 +267,7 @@ namespace Bamboo
 		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
 		pipeline_layout_ci.pPushConstantRanges = m_push_constant_ranges.data();
 
-		m_pipeline_layouts.resize(3);
+		m_pipeline_layouts.resize(4);
 		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create static mesh pipeline layout");
 
@@ -225,6 +284,14 @@ namespace Bamboo
 		pipeline_layout_ci.pPushConstantRanges = m_billboard_push_constant_ranges.data();
 
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[2]);
+		CHECK_VULKAN_RESULT(result, "create billboard pipeline layout");
+
+		// blur pipeline layouts
+		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[2];
+		pipeline_layout_ci.pushConstantRangeCount = 0;
+		pipeline_layout_ci.pPushConstantRanges = nullptr;
+
+		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[3]);
 		CHECK_VULKAN_RESULT(result, "create billboard pipeline layout");
 	}
 
@@ -276,10 +343,10 @@ namespace Bamboo
 		m_pipeline_ci.pStages = shader_stage_cis.data();
 		m_pipeline_ci.pVertexInputState = &vertex_input_ci;
 		m_pipeline_ci.layout = m_pipeline_layouts[0];
-		m_pipeline_ci.renderPass = m_render_pass;
+		m_pipeline_ci.renderPass = m_render_passes[0];
 		m_pipeline_ci.subpass = 0;
 
-		m_pipelines.resize(3);
+		m_pipelines.resize(4);
 		VkResult result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[0]);
 		CHECK_VULKAN_RESULT(result, "create outline pass's static mesh graphics pipeline");
 
@@ -325,33 +392,68 @@ namespace Bamboo
 		m_pipeline_ci.layout = m_pipeline_layouts[2];
 		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[2]);
 		CHECK_VULKAN_RESULT(result, "create billboard graphics pipeline");
+
+		// blur pipeline
+		// disable culling and depth testing
+		m_rasterize_state_ci.cullMode = VK_CULL_MODE_NONE;
+		m_input_assembly_state_ci.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		m_depth_stencil_ci.depthTestEnable = VK_FALSE;
+		m_depth_stencil_ci.depthWriteEnable = VK_FALSE;
+		m_color_blend_attachments[0].blendEnable = VK_FALSE;
+
+		// vertex input state
+		VkPipelineVertexInputStateCreateInfo blur_vertex_input_ci{};
+		blur_vertex_input_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+		// shader stages
+		shader_stage_cis = {
+			shader_manager->getShaderStageCI("screen.vert", VK_SHADER_STAGE_VERTEX_BIT),
+			shader_manager->getShaderStageCI("box_blur.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+		};
+
+		m_pipeline_ci.renderPass = m_render_passes[1];
+		m_pipeline_ci.pVertexInputState = &blur_vertex_input_ci;
+		m_pipeline_ci.layout = m_pipeline_layouts[3];
+		m_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());
+		m_pipeline_ci.pStages = shader_stage_cis.data();
+		result = vkCreateGraphicsPipelines(VulkanRHI::get().getDevice(), m_pipeline_cache, 1, &m_pipeline_ci, nullptr, &m_pipelines[3]);
+		CHECK_VULKAN_RESULT(result, "create blur graphics pipeline");
 	}
 
 	void OutlinePass::createFramebuffer()
 	{
-		// 1.create color images and view
-		VulkanUtil::createImageAndView(m_width, m_height, 1, 1, VK_SAMPLE_COUNT_1_BIT, m_format,
-			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-			VK_IMAGE_ASPECT_COLOR_BIT, m_color_image_view);
+		for (uint32_t i = 0; i < 2; ++i)
+		{
+			// 1.create color images and view
+			VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_format,
+				VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_color_texture_samplers[i],
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
-		// 2.create framebuffer
-		VkFramebufferCreateInfo framebuffer_ci{};
-		framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_ci.renderPass = m_render_pass;
-		framebuffer_ci.attachmentCount = 1;
-		framebuffer_ci.pAttachments = &m_color_image_view.view;
-		framebuffer_ci.width = m_width;
-		framebuffer_ci.height = m_height;
-		framebuffer_ci.layers = 1;
+			// 2.create framebuffer
+			VkFramebufferCreateInfo framebuffer_ci{};
+			framebuffer_ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebuffer_ci.renderPass = m_render_passes[i];
+			framebuffer_ci.attachmentCount = 1;
+			framebuffer_ci.pAttachments = &m_color_texture_samplers[i].view;
+			framebuffer_ci.width = m_width;
+			framebuffer_ci.height = m_height;
+			framebuffer_ci.layers = 1;
 
-		VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffer);
-		CHECK_VULKAN_RESULT(result, "create outline pass frame buffer");
+			VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);
+			CHECK_VULKAN_RESULT(result, "create outline pass frame buffer");
+		}
 	}
 
 	void OutlinePass::destroyResizableObjects()
 	{
-		m_color_image_view.destroy();
+		for (uint32_t i = 0; i < 2; ++i)
+		{
+			m_color_texture_samplers[i].destroy();
+			if (m_color_texture_samplers[i].view)
+			{
+				vkDestroyFramebuffer(VulkanRHI::get().getDevice(), m_framebuffers[i], nullptr);
+			}
+		}
 
 		RenderPass::destroyResizableObjects();
 	}

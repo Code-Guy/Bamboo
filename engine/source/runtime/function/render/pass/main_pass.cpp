@@ -115,7 +115,6 @@ namespace Bamboo
 			vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[6]);
 
 			// bind vertex and index buffer
-
 			VkBuffer vertexBuffers[] = { ddm->getVertexBuffer() };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);

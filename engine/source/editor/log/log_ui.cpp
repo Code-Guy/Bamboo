@@ -33,7 +33,10 @@ namespace Bamboo
 			}
 		}
 
-		ImGui::SetScrollHereY(1.0f);
+		if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+		{
+			ImGui::SetScrollHereY(1.0f);
+		}
 
 		ImGui::PopFont();
 		ImGui::End();

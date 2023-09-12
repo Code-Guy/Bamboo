@@ -327,7 +327,7 @@ namespace Bamboo
 	{
 		// create depth image view sampler
 		VulkanUtil::createImageViewSampler(m_size, m_size, nullptr, 1, SHADOW_FACE_NUM, m_formats[1],
-			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_depth_image_view_sampler,
+			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_depth_image_view_sampler,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	}
 

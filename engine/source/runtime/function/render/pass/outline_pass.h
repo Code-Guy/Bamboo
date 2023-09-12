@@ -10,6 +10,7 @@ namespace Bamboo
 		OutlinePass();
 
 		virtual void render() override;
+		virtual void destroy() override;
 
 		virtual void createRenderPass() override;
 		virtual void createDescriptorSetLayouts() override;
@@ -26,7 +27,9 @@ namespace Bamboo
 
 	private:
 		VkFormat m_format;
-		VmaImageView m_color_image_view;
+		VmaImageViewSampler m_color_texture_samplers[2];
+		VkFramebuffer m_framebuffers[2];
+		VkRenderPass m_render_passes[2];
 
 		std::vector<VkPushConstantRange> m_billboard_push_constant_ranges;
 		std::vector<std::shared_ptr<BillboardRenderData>> m_billboard_render_datas;
