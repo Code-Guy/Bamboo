@@ -9,14 +9,14 @@ namespace Bamboo
 
 	OutlinePass::OutlinePass()
 	{
-		m_format = VK_FORMAT_R8G8B8A8_SRGB;
+		m_format = VK_FORMAT_R8G8B8A8_UNORM;
 	}
 
 	void OutlinePass::render()
 	{
 		// render to framebuffer
 		VkClearValue clear_values[1];
-		clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+		clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
 
 		VkRenderPassBeginInfo render_pass_bi{};
 		render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

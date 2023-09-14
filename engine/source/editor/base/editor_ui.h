@@ -11,13 +11,10 @@ namespace Bamboo
 {
 	struct ImGuiImage
 	{
-		uint32_t width;
-		uint32_t height;
-		uint32_t channels = 4;
-		bool is_from_file = false;
-
 		VmaImageViewSampler image_view_sampler;
 		VkDescriptorSet tex_id;
+
+		bool is_from_file;
 
 		void destroy();
 	};

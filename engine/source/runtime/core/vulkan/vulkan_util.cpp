@@ -2,6 +2,7 @@
 #include "vulkan_util.h"
 #include "runtime/core/vulkan/vulkan_rhi.h"
 
+#include <tinygltf/stb_image.h>
 #include <fstream>
 
 namespace Bamboo
@@ -179,6 +180,24 @@ namespace Bamboo
 		vmaUnmapMemory(VulkanRHI::get().getAllocator(), buffer.allocation);
 	}
 
+	VmaImageViewSampler VulkanUtil::loadImageViewSampler(const std::string& filename,
+		uint32_t mip_levels, uint32_t layers, VkFormat format, VkFilter min_filter, VkFilter mag_filter, 
+			VkSamplerAddressMode address_mode, VkImageUsageFlags ext_use_flags)
+	{
+		int width, height;
+		const int k_channels = 4;
+		const auto& fs = g_runtime_context.fileSystem();
+		uint8_t* image_data = stbi_load(fs->absolute(filename).c_str(), &width, &height, 0, k_channels);
+		ASSERT(image_data != nullptr, "failed to load image {}", filename);
+
+		VmaImageViewSampler image_view_sampler;
+		VulkanUtil::createImageViewSampler(width, height, image_data, mip_levels, layers, format,
+			min_filter, mag_filter, address_mode, image_view_sampler, ext_use_flags);
+		stbi_image_free(image_data);
+
+		return image_view_sampler;
+	}
+
 	void VulkanUtil::createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
 		uint32_t mip_levels, uint32_t layers, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
 		VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler, VkImageUsageFlags ext_use_flags)
@@ -236,6 +255,16 @@ namespace Bamboo
 			// generate image mipmaps, and transition image to READ_ONLY_OPT state for shader reading
 			createImageMipmaps(image, format, width, height, mip_levels);
 		}
+	}
+
+	void VulkanUtil::loadImageData(const std::string& filename, uint32_t& width, uint32_t& height, std::vector<uint8_t>& image_data)
+	{
+		const int k_channels = 4;
+		const auto& fs = g_runtime_context.fileSystem();
+		uint8_t* p_image_data = stbi_load(fs->absolute(filename).c_str(), (int*)&width, (int*)&height, 0, k_channels);
+		ASSERT(p_image_data != nullptr, "failed to load image {}", filename);
+		image_data = std::vector<uint8_t>(p_image_data, p_image_data + width * height * k_channels);
+		stbi_image_free(p_image_data);
 	}
 
 	void VulkanUtil::createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layers, VkSampleCountFlagBits num_samples,

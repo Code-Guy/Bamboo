@@ -13,10 +13,10 @@ namespace Bamboo
 	MainPass::MainPass()
 	{
 		m_formats = {
-			VK_FORMAT_R8G8B8A8_SRGB,
+			VK_FORMAT_R8G8B8A8_UNORM,
 			VK_FORMAT_R16G16B16A16_SFLOAT,
-			VK_FORMAT_R8G8B8A8_SRGB,
-			VK_FORMAT_R8G8B8A8_SRGB,
+			VK_FORMAT_R8G8B8A8_UNORM,
+			VK_FORMAT_R8G8B8A8_UNORM,
 			VK_FORMAT_R8G8B8A8_UNORM,
 			VulkanRHI::get().getDepthFormat()
 		};
@@ -634,17 +634,16 @@ namespace Bamboo
 
 	void MainPass::createFramebuffer()
 	{
-		// 1.create color images and view
-		VulkanUtil::createImageAndView(m_width, m_height, 1, 1, VK_SAMPLE_COUNT_1_BIT, m_formats[0],
-			VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-			VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, VK_IMAGE_ASPECT_COLOR_BIT, m_color_image_view);
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[0],
+			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_color_texture_sampler,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[1], 
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_normal_texture_sampler, 
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[2], 
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_base_color_texture_sampler, 
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[3], 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[3],
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_emissive_texture_sampler, 
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[4], 
@@ -656,7 +655,7 @@ namespace Bamboo
 
 		// 2.create framebuffer
 		std::vector<VkImageView> attachments = {
-			m_color_image_view.view,
+			m_color_texture_sampler.view,
 			m_normal_texture_sampler.view,
 			m_base_color_texture_sampler.view,
 			m_emissive_texture_sampler.view,
@@ -679,7 +678,7 @@ namespace Bamboo
 
 	void MainPass::destroyResizableObjects()
 	{
-		m_color_image_view.destroy();
+		m_color_texture_sampler.destroy();
 		m_normal_texture_sampler.destroy();
 		m_base_color_texture_sampler.destroy();
 		m_emissive_texture_sampler.destroy();

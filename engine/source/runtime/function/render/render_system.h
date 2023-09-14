@@ -39,20 +39,24 @@ namespace Bamboo
 			std::vector<uint32_t>& billboard_entity_ids,
 			ELightType light_type);
 
-		std::shared_ptr<class Texture2D> m_default_texture_2d;
-		std::shared_ptr<class TextureCube> m_default_texture_cube;
-
+		// render passes
 		std::shared_ptr<class DirectionalLightShadowPass> m_directional_light_shadow_pass;
 		std::shared_ptr<class PointLightShadowPass> m_point_light_shadow_pass;
 		std::shared_ptr<class SpotLightShadowPass> m_spot_light_shadow_pass;
 		std::shared_ptr<class PickPass> m_pick_pass;
 		std::shared_ptr<class OutlinePass> m_outline_pass;
 		std::shared_ptr<class MainPass> m_main_pass;
+		std::shared_ptr<class PostprocessPass> m_postprocess_pass;
 		std::shared_ptr<class UIPass> m_ui_pass;
 		std::vector<std::shared_ptr<RenderPass>> m_render_passes;
 
+		// render datas
 		std::vector<VmaBuffer> m_lighting_ubs;
+		std::shared_ptr<class Texture2D> m_default_texture_2d;
+		std::shared_ptr<class TextureCube> m_default_texture_cube;
 		std::map<ELightType, std::shared_ptr<class Texture2D>> m_lighting_icons;
+
+		// select
 		std::vector<uint32_t> m_selected_entity_ids;
 	};
 }

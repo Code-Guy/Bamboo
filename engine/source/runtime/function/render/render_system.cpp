@@ -14,6 +14,7 @@
 #include "runtime/function/render/pass/pick_pass.h"
 #include "runtime/function/render/pass/outline_pass.h"
 #include "runtime/function/render/pass/main_pass.h"
+#include "runtime/function/render/pass/postprocess_pass.h"
 #include "runtime/function/render/pass/ui_pass.h"
 
 #include "runtime/function/framework/component/camera_component.h"
@@ -36,6 +37,7 @@ namespace Bamboo
 		m_pick_pass = std::make_shared<PickPass>();
 		m_outline_pass = std::make_shared<OutlinePass>();
 		m_main_pass = std::make_shared<MainPass>();
+		m_postprocess_pass = std::make_shared<class PostprocessPass>();
 		m_ui_pass = std::make_shared<UIPass>();
 
 		m_render_passes = {
@@ -44,7 +46,8 @@ namespace Bamboo
 			m_spot_light_shadow_pass,
 			m_pick_pass,
 			m_outline_pass,
-			m_main_pass, 
+			m_main_pass,
+			m_postprocess_pass,
 			m_ui_pass
 		};
 		for (auto& render_pass : m_render_passes)
@@ -86,12 +89,7 @@ namespace Bamboo
 	void RenderSystem::tick(float delta_time)
 	{
 		// collect render data from entities of current world
-// 		StopWatch stop_watch;
-// 		stop_watch.start();
-
 		collectRenderDatas();
-
-		//LOG_INFO("collect render datas elapsed time: {}ms", stop_watch.stopHP());
 
 		// vulkan rendering
 		VulkanRHI::get().render();
@@ -122,11 +120,12 @@ namespace Bamboo
 		m_pick_pass->onResize(width, height);
 		m_outline_pass->onResize(width, height);
 		m_main_pass->onResize(width, height);
+		m_postprocess_pass->onResize(width, height);
 	}
 
 	VkImageView RenderSystem::getColorImageView()
 	{
-		return m_main_pass->getColorImageView();
+		return m_postprocess_pass->getColorTexture().view;
 	}
 
 	void RenderSystem::onCreateSwapchainObjects(const std::shared_ptr<class Event>& event)
@@ -536,6 +535,12 @@ namespace Bamboo
 
 		mesh_render_datas.pop_back();
 		m_main_pass->setRenderDatas(mesh_render_datas);
+
+		// postprocess pass
+		std::shared_ptr<PostProcessRenderData> postprocess_render_data = std::make_shared<PostProcessRenderData>();
+		postprocess_render_data->p_color_texture = &m_main_pass->getColorTexture();
+		postprocess_render_data->outline_texture = &m_outline_pass->getColorTexture();
+		m_postprocess_pass->setRenderDatas({postprocess_render_data});
 	}
 
 	void RenderSystem::addBillboardRenderData(

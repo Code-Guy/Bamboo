@@ -18,10 +18,9 @@ namespace Bamboo
 		m_layout_path = g_runtime_context.fileSystem()->absolute("asset/engine/layout/" + layout_name);
 		ImGui::LoadIniSettingsFromDisk(m_layout_path.c_str());
 
-		const auto& fs = g_runtime_context.fileSystem();
 		m_template_worlds = {
-			{ "Empty", "asset/engine/world/empty.world", loadImGuiImageFromFile(fs->absolute("asset/engine/world/empty.png"))},
-			{ "Basic", "asset/engine/world/basic.world", loadImGuiImageFromFile(fs->absolute("asset/engine/world/basic.png"))}
+			{ "Empty", "asset/engine/world/empty.world", loadImGuiImageFromFile("asset/engine/world/empty.png")},
+			{ "Basic", "asset/engine/world/basic.world", loadImGuiImageFromFile("asset/engine/world/basic.png")}
 		};
 		for (const auto& template_world : m_template_worlds)
 		{

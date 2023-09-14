@@ -75,9 +75,14 @@ namespace Bamboo
 		static void copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 		static void updateBuffer(VmaBuffer& buffer, void* data, size_t size);
 
+		static VmaImageViewSampler loadImageViewSampler(const std::string& filename,
+			uint32_t mip_levels = 1, uint32_t layers = 1, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, 
+			VkFilter min_filter = VK_FILTER_LINEAR, VkFilter mag_filter = VK_FILTER_LINEAR,
+			VkSamplerAddressMode address_mode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkImageUsageFlags ext_use_flags = 0);
 		static void createImageViewSampler(uint32_t width, uint32_t height, uint8_t* image_data,
 			uint32_t mip_levels, uint32_t layers, VkFormat format, VkFilter min_filter, VkFilter mag_filter,
 			VkSamplerAddressMode address_mode, VmaImageViewSampler& vma_image_view_sampler, VkImageUsageFlags ext_use_flags = 0);
+		static void loadImageData(const std::string& filename, uint32_t& width, uint32_t& height, std::vector<uint8_t>& image_data);
 
 		static void createImageAndView(uint32_t width, uint32_t height, uint32_t mip_levels, uint32_t layers, VkSampleCountFlagBits num_samples,
 			VkFormat format, VkImageTiling tiling, VkImageUsageFlags image_usage, VmaMemoryUsage memory_usage, VkImageAspectFlags aspect_flags, VmaImageView& vma_image_view);

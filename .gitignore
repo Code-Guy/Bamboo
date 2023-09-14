@@ -7,8 +7,7 @@ engine/asset/*
 !engine/asset/engine/
 engine/asset/engine/mesh/
 engine/asset/engine/spv/
-engine/asset/engine/texture/ibl/
-engine/asset/engine/texture/gizmo/
+engine/asset/engine/texture
 
 # mac
 cpm_modules/

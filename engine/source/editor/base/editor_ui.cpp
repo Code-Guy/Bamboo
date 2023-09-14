@@ -3,7 +3,6 @@
 
 #include <imgui/backends/imgui_impl_vulkan.h>
 #include <imgui/imgui_internal.h>
-#include <tinygltf/stb_image.h>
 
 namespace Bamboo
 {
@@ -58,16 +57,9 @@ namespace Bamboo
 		}
 
 		std::shared_ptr<ImGuiImage> image = std::make_shared<ImGuiImage>();
-		image->is_from_file = true;
-
-		uint8_t* image_data = stbi_load(filename.c_str(), (int*)&image->width, (int*)&image->height, 0, image->channels);
-		ASSERT(image_data != nullptr, "failed to load imgui image");
-
-		VulkanUtil::createImageViewSampler(image->width, image->height, image_data, 1, 1, VK_FORMAT_R8G8B8A8_SRGB,
-			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, image->image_view_sampler);
-		stbi_image_free(image_data);
-
+		image->image_view_sampler = VulkanUtil::loadImageViewSampler(filename);
 		image->tex_id = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		image->is_from_file = true;
 		m_imgui_images[filename] = image;
 
 		return image;
@@ -76,10 +68,9 @@ namespace Bamboo
 	std::shared_ptr<ImGuiImage> EditorUI::loadImGuiImageFromTexture2D(std::shared_ptr<class Texture2D>& texture)
 	{
 		std::shared_ptr<ImGuiImage> image = std::make_shared<ImGuiImage>();
-		image->width = texture->m_width;
-		image->height = texture->m_height;
 		image->image_view_sampler = texture->m_image_view_sampler;
 		image->tex_id = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		image->is_from_file = false;
 		m_imgui_images[texture->getURL()] = image;
 
 		return image;

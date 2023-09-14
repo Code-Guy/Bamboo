@@ -25,4 +25,6 @@ void main()
 	}
 
 	o_color /= samples * samples;
+	float alpha = texture(color_texture_sampler, f_tex_coord).a;
+	o_color.a = alpha > 0.5 ? 1.0 : 0.5;
 }

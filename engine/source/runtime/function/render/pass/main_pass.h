@@ -27,7 +27,7 @@ namespace Bamboo
 			m_transparency_render_datas = transparency_render_datas;
 		}
 
-		VkImageView getColorImageView() { return m_color_image_view.view; }
+		const VmaImageViewSampler& getColorTexture() { return m_color_texture_sampler; }
 
 	private:
 		enum class ERendererType
@@ -40,7 +40,7 @@ namespace Bamboo
 		std::vector<VkFormat> m_formats;
 
 		// color attachment
-		VmaImageView m_color_image_view;
+		VmaImageViewSampler m_color_texture_sampler;
 
 		// gbuffer attachment
 		VmaImageViewSampler m_normal_texture_sampler;

@@ -7,7 +7,7 @@ namespace Bamboo
 {
 	enum class ERenderDataType
 	{
-		Base, Lighting, StaticMesh, SkeletalMesh, Skybox, Billboard
+		Base, Lighting, StaticMesh, SkeletalMesh, Skybox, Billboard, PostProcess
 	};
 
 	struct PBRTexture
@@ -82,6 +82,14 @@ namespace Bamboo
 		vec4 position;
 		vec2 size;
 		VmaImageViewSampler texture;
+	};
+
+	struct PostProcessRenderData : public RenderData
+	{
+		PostProcessRenderData() { type = ERenderDataType::PostProcess; }
+
+		const VmaImageViewSampler* p_color_texture;
+		const VmaImageViewSampler* outline_texture;
 	};
 
 	struct ShadowCascadeCreateInfo
