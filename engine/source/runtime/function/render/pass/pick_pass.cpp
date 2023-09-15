@@ -170,15 +170,6 @@ namespace Bamboo
 		subpass_desc.pColorAttachments = &color_reference;
 		subpass_desc.pDepthStencilAttachment = &depth_reference;
 
-		// subpass dependencies
-		VkSubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependency.srcAccessMask = 0;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
 		// create render pass
 		VkRenderPassCreateInfo render_pass_ci{};
 		render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -186,8 +177,8 @@ namespace Bamboo
 		render_pass_ci.pAttachments = attachments.data();
 		render_pass_ci.subpassCount = 1;
 		render_pass_ci.pSubpasses = &subpass_desc;
-		render_pass_ci.dependencyCount = 1;
-		render_pass_ci.pDependencies = &dependency;
+		render_pass_ci.dependencyCount = 0;
+		render_pass_ci.pDependencies = nullptr;
 
 		VkResult result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
 		CHECK_VULKAN_RESULT(result, "create render pass");
