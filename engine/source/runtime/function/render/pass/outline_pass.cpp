@@ -434,6 +434,8 @@ namespace Bamboo
 			VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);
 			CHECK_VULKAN_RESULT(result, "create outline pass frame buffer");
 		}
+
+		VulkanUtil::transitionImageLayout(m_color_texture_samplers[1].image(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_format);
 	}
 
 	void OutlinePass::destroyResizableObjects()
@@ -453,6 +455,11 @@ namespace Bamboo
 	bool OutlinePass::isEnabled()
 	{
 		return RenderPass::isEnabled() && (!m_render_datas.empty() || !m_billboard_render_datas.empty());
+	}
+
+	const VmaImageViewSampler* OutlinePass::getColorTexture()
+	{
+		return isEnabled() ? &m_color_texture_samplers[1] : nullptr;
 	}
 
 }

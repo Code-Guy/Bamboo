@@ -25,6 +25,18 @@
 #define PCF_DELTA_SCALE 0.75
 #define PCF_SAMPLE_RANGE 1
 
-#define OUTLINE_THICKNESS 3
+#define OUTLINE_THICKNESS 2
+
+#ifndef __cplusplus
+bool is_nearly_equal(float a, float b)
+{
+    return abs(a - b) < EPSILON;
+}
+
+bool is_nearly_zero(float v)
+{
+    return abs(v) < EPSILON;
+}
+#endif
 
 #endif

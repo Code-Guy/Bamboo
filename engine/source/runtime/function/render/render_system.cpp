@@ -538,8 +538,8 @@ namespace Bamboo
 
 		// postprocess pass
 		std::shared_ptr<PostProcessRenderData> postprocess_render_data = std::make_shared<PostProcessRenderData>();
-		postprocess_render_data->p_color_texture = &m_main_pass->getColorTexture();
-		postprocess_render_data->outline_texture = &m_outline_pass->getColorTexture();
+		postprocess_render_data->p_color_texture = m_main_pass->getColorTexture();
+		postprocess_render_data->outline_texture = m_outline_pass->getColorTexture();
 		m_postprocess_pass->setRenderDatas({postprocess_render_data});
 	}
 

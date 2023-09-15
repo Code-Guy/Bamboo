@@ -25,7 +25,7 @@ namespace Bamboo
 			m_billboard_render_datas = billboard_render_datas;
 		}
 
-		const VmaImageViewSampler& getColorTexture() { return m_color_texture_samplers[1]; }
+		const VmaImageViewSampler* getColorTexture();
 
 	private:
 		VkFormat m_format;

@@ -27,7 +27,7 @@ namespace Bamboo
 			m_transparency_render_datas = transparency_render_datas;
 		}
 
-		const VmaImageViewSampler& getColorTexture() { return m_color_texture_sampler; }
+		const VmaImageViewSampler* getColorTexture() { return &m_color_texture_sampler; }
 
 	private:
 		enum class ERendererType

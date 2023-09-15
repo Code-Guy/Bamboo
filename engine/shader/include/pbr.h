@@ -90,11 +90,6 @@ float microfacetDistribution(PBRInfo pbr_info)
 	return roughnessSq / (PI * f * f);
 }
 
-bool is_nearly_equal(float a, float b)
-{
-    return abs(a - b) < EPSILON;
-}
-
 vec3 getLightContribution(PBRInfo pbr_info, vec3 n, vec3 v, vec3 l, vec3 c)
 {
 	vec3 h = normalize(l + v);

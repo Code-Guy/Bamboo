@@ -14,7 +14,7 @@ namespace Bamboo
 	{
 		RenderPass::init();
 
-		loadColorGradingTexture("asset/engine/texture/postprocess/cg_saturation.png");
+		loadColorGradingTexture("asset/engine/texture/postprocess/cg_neural.png");
 	}
 
 	void PostprocessPass::render()
@@ -56,9 +56,14 @@ namespace Bamboo
 		std::vector<VkWriteDescriptorSet> desc_writes;
 		std::array<VkDescriptorImageInfo, 3> desc_image_infos{};
 
+		// push constants
+		int is_selecting = postprocess_render_data->outline_texture != nullptr;
+		updatePushConstants(command_buffer, m_pipeline_layouts[0], { &is_selecting });
+
 		// texture image samplers
 		addImageDescriptorSet(desc_writes, desc_image_infos[0], *postprocess_render_data->p_color_texture, 0);
-		addImageDescriptorSet(desc_writes, desc_image_infos[1], *postprocess_render_data->outline_texture, 1);
+		VmaImageViewSampler outline_texture = is_selecting ? *postprocess_render_data->outline_texture : *postprocess_render_data->p_color_texture;
+		addImageDescriptorSet(desc_writes, desc_image_infos[1], outline_texture, 1);
 		addImageDescriptorSet(desc_writes, desc_image_infos[2], m_color_grading_texture_sampler, 2);
 
 		VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -147,10 +152,17 @@ namespace Bamboo
 
 	void PostprocessPass::createPipelineLayouts()
 	{
+		m_push_constant_ranges =
+		{
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) }
+		};
+
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
 		pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_ci.setLayoutCount = 1;
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[0];
+		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
+		pipeline_layout_ci.pPushConstantRanges = m_push_constant_ranges.data();
 
 		m_pipeline_layouts.resize(1);
 		VkResult result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[0]);
