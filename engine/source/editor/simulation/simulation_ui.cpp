@@ -32,7 +32,6 @@ namespace Bamboo
 		m_mouse_right_button_pressed = false;
 
 		g_runtime_context.eventSystem()->addListener(EEventType::WindowKey, std::bind(&SimulationUI::onKey, this, std::placeholders::_1));
-		g_runtime_context.eventSystem()->addListener(EEventType::WindowMouseButton, std::bind(&SimulationUI::onMouseButton, this, std::placeholders::_1));
 		g_runtime_context.eventSystem()->addListener(EEventType::SelectEntity, std::bind(&SimulationUI::onSelectEntity, this, std::placeholders::_1));
 	}
 
@@ -49,10 +48,19 @@ namespace Bamboo
 		}
 		updateWindowRegion();
 
-		m_mouse_x = ImGui::GetMousePos().x - ImGui::GetCursorScreenPos().x;
-		m_mouse_y = ImGui::GetMousePos().y - ImGui::GetCursorScreenPos().y;
+		ImVec2 cursor_screen_pos = ImGui::GetCursorScreenPos();
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
-		ImGui::Image(m_color_texture_desc_set, ImVec2{content_size.x, content_size.y});
+		ImGui::Image(m_color_texture_desc_set, content_size);
+
+		ImGui::SetCursorScreenPos(cursor_screen_pos);
+		ImGui::SetNextItemAllowOverlap();
+		if (ImGui::InvisibleButton("image", content_size) && !ImGuizmo::IsOver())
+		{
+			uint32_t mouse_x = static_cast<uint32_t>(ImGui::GetMousePos().x - cursor_screen_pos.x);
+			uint32_t mouse_y = static_cast<uint32_t>(ImGui::GetMousePos().y - cursor_screen_pos.y);
+			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>(mouse_x, mouse_y));
+		}
+		m_mouse_right_button_pressed = ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Right);
 
 		// allow drag from asset ui
 		if (ImGui::BeginDragDropTarget())
@@ -248,7 +256,7 @@ namespace Bamboo
 	{
 		// set camera component
 		m_camera_component->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
-		m_camera_component->m_enabled = isFocused();
+		m_camera_component->setInput(m_mouse_right_button_pressed, isFocused());
 
  		if (!m_selected_entity.lock())
  		{
@@ -335,24 +343,6 @@ namespace Bamboo
 			{
 				m_operation_mode = EOperationMode::Scale;
 			}
-		}
-	}
-
-	void SimulationUI::onMouseButton(const std::shared_ptr<class Event>& event)
-	{
-		const WindowMouseButtonEvent* mouse_button_event = static_cast<const WindowMouseButtonEvent*>(event.get());
-		if (mouse_button_event->action == GLFW_PRESS && mouse_button_event->button == GLFW_MOUSE_BUTTON_LEFT && !ImGuizmo::IsOver())
-		{
-			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>(m_mouse_x, m_mouse_y));
-		}
-
-		if (mouse_button_event->action == GLFW_PRESS && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
-		{
-			m_mouse_right_button_pressed = true;
-		}
-		else if (mouse_button_event->action == GLFW_RELEASE && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
-		{
-			m_mouse_right_button_pressed = false;
 		}
 	}
 

@@ -515,13 +515,10 @@ namespace Bamboo
 		lighting_render_data->lighting_ubs = m_lighting_ubs;
 
 		// pick pass
-		if (m_pick_pass->isEnabled())
-		{
-			m_pick_pass->setRenderDatas(mesh_render_datas);
-			m_pick_pass->setBillboardRenderDatas(billboard_render_datas);
-			mesh_entity_ids.insert(mesh_entity_ids.end(), billboard_entity_ids.begin(), billboard_entity_ids.end());
-			m_pick_pass->setEntityIDs(mesh_entity_ids);
-		}
+		m_pick_pass->setRenderDatas(mesh_render_datas);
+		m_pick_pass->setBillboardRenderDatas(billboard_render_datas);
+		mesh_entity_ids.insert(mesh_entity_ids.end(), billboard_entity_ids.begin(), billboard_entity_ids.end());
+		m_pick_pass->setEntityIDs(mesh_entity_ids);
 
 		// outline pass
 		m_outline_pass->setRenderDatas(selected_mesh_render_datas);

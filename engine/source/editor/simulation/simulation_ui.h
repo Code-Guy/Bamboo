@@ -31,7 +31,6 @@ namespace Bamboo
 		void constructImGuizmo();
 
 		void onKey(const std::shared_ptr<class Event>& event);
-		void onMouseButton(const std::shared_ptr<class Event>& event);
 		void onSelectEntity(const std::shared_ptr<class Event>& event);
 
 		VkSampler m_color_texture_sampler;
@@ -39,12 +38,8 @@ namespace Bamboo
 
 		ECoordinateMode m_coordinate_mode;
 		EOperationMode m_operation_mode;
+		bool m_mouse_right_button_pressed;
 		std::shared_ptr<class CameraComponent> m_camera_component;
 		std::weak_ptr<class Entity> m_selected_entity;
-
-		// picking and manipulation
-		uint32_t m_mouse_x;
-		uint32_t m_mouse_y;
-		bool m_mouse_right_button_pressed;
 	};
 }

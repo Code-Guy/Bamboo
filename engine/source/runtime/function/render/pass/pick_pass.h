@@ -20,7 +20,7 @@ namespace Bamboo
 		virtual void destroyResizableObjects() override;
 
 		void pick(uint32_t mouse_x, uint32_t mouse_y);
-		virtual bool isEnabled() override { return RenderPass::isEnabled() && m_enabled; }
+		virtual bool isEnabled() override;
 
 		void setBillboardRenderDatas(const std::vector<std::shared_ptr<BillboardRenderData>>& billboard_render_datas) {
 			m_billboard_render_datas = billboard_render_datas;

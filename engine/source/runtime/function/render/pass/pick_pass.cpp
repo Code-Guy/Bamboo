@@ -406,6 +406,11 @@ namespace Bamboo
 		}
 	}
 
+	bool PickPass::isEnabled()
+	{
+		return RenderPass::isEnabled() && m_enabled;
+	}
+
 	glm::vec4 PickPass::encodeEntityID(uint32_t id)
 	{
 		glm::vec4 color;

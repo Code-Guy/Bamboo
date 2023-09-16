@@ -65,6 +65,12 @@ namespace Bamboo
 		return glm::perspectiveRH_ZO(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
 	}
 
+	void CameraComponent::setInput(bool mouse_right_button_pressed, bool mouse_focused)
+	{
+		m_mouse_right_button_pressed = mouse_right_button_pressed;
+		m_mouse_focused = mouse_focused;
+	}
+
 	void CameraComponent::tick(float delta_time)
 	{
 		float offset = m_move_speed * delta_time;
@@ -106,7 +112,6 @@ namespace Bamboo
 		// bind camera input callbacks
 		g_runtime_context.eventSystem()->addListener(EEventType::WindowKey, std::bind(&CameraComponent::onKey, this, std::placeholders::_1));
 		g_runtime_context.eventSystem()->addListener(EEventType::WindowCursorPos, std::bind(&CameraComponent::onCursorPos, this, std::placeholders::_1));
-		g_runtime_context.eventSystem()->addListener(EEventType::WindowMouseButton, std::bind(&CameraComponent::onMouseButton, this, std::placeholders::_1));
 		g_runtime_context.eventSystem()->addListener(EEventType::WindowScroll, std::bind(&CameraComponent::onScroll, this, std::placeholders::_1));
 
 		// update camera pose
@@ -183,27 +188,15 @@ namespace Bamboo
 		updatePose();
 	}
 
-	void CameraComponent::onMouseButton(const std::shared_ptr<class Event>& event)
-	{
-		const WindowMouseButtonEvent* mouse_button_event = static_cast<const WindowMouseButtonEvent*>(event.get());
-		if (mouse_button_event->action == GLFW_PRESS && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
-		{
-			m_mouse_right_button_pressed = true;
-		}
-		else if (mouse_button_event->action == GLFW_RELEASE && mouse_button_event->button == GLFW_MOUSE_BUTTON_RIGHT)
-		{
-			m_mouse_right_button_pressed = false;
-			m_last_xpos = m_last_ypos = 0.0;
-		}
-	}
-
 	void CameraComponent::onScroll(const std::shared_ptr<class Event>& event)
 	{
-		const WindowScrollEvent* scroll_event = static_cast<const WindowScrollEvent*>(event.get());
-		if (m_enabled)
+		if (!m_mouse_focused)
 		{
-			m_transform_component->m_position += m_forward * (float)scroll_event->yoffset * m_zoom_speed;
+			return;
 		}
+
+		const WindowScrollEvent* scroll_event = static_cast<const WindowScrollEvent*>(event.get());
+		m_transform_component->m_position += m_forward * (float)scroll_event->yoffset * m_zoom_speed;
 	}
 
 	void CameraComponent::updatePose()

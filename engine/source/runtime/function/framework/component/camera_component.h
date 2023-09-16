@@ -16,6 +16,8 @@ namespace Bamboo
 		glm::mat4 getViewMatrixNoTranslation();
 		glm::mat4 getPerspectiveMatrixNoInverted();
 
+		void setInput(bool mouse_right_button_pressed, bool mouse_focused);
+
 		virtual void tick(float delta_time) override;
 		virtual void inflate() override;
 
@@ -32,9 +34,6 @@ namespace Bamboo
 
 		// postprocessing
 		float m_exposure;
-
-		// enabled
-		bool m_enabled = false;
 
 	private:
 		REGISTER_REFLECTION(Component)
@@ -61,7 +60,6 @@ namespace Bamboo
 
 		void onKey(const std::shared_ptr<class Event>& event);
 		void onCursorPos(const std::shared_ptr<class Event>& event);
-		void onMouseButton(const std::shared_ptr<class Event>& event);
 		void onScroll(const std::shared_ptr<class Event>& event);
 
 		void updatePose();
@@ -80,7 +78,9 @@ namespace Bamboo
 		bool m_move_right = false;
 		bool m_move_up = false;
 		bool m_move_down = false;
+
 		bool m_mouse_right_button_pressed = false;
+		bool m_mouse_focused = false;
 
 		double m_last_xpos = 0.0f, m_last_ypos = 0.0f;
 	};
