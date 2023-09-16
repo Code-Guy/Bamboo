@@ -189,7 +189,7 @@ namespace Bamboo
 
 		// set render datas
 		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();
-		lighting_render_data->camera_view_proj = camera_component->getViewPerspectiveMatrix();
+		lighting_render_data->camera_view_proj = camera_component->getViewProjectionMatrix();
 		lighting_render_data->brdf_lut_texture = m_default_texture_2d->m_image_view_sampler;
 		lighting_render_data->irradiance_texture = m_default_texture_cube->m_image_view_sampler;
 		lighting_render_data->prefilter_texture = m_default_texture_cube->m_image_view_sampler;
@@ -210,7 +210,7 @@ namespace Bamboo
 		ShadowCascadeCreateInfo shadow_cascade_ci{};
 		shadow_cascade_ci.camera_near = camera_component->m_near;
 		shadow_cascade_ci.camera_far = camera_component->m_far;
-		shadow_cascade_ci.inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
+		shadow_cascade_ci.inv_camera_view_proj = glm::inverse(camera_component->getViewProjectionMatrix());
 
 		std::vector<ShadowCubeCreateInfo> shadow_cube_cis;
 		std::vector<ShadowFrustumCreateInfo> shadow_frustum_cis;
@@ -220,7 +220,7 @@ namespace Bamboo
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
 		lighting_ubo.exposure = camera_component->m_exposure;
 		lighting_ubo.camera_view = camera_component->getViewMatrix();
-		lighting_ubo.inv_camera_view_proj = glm::inverse(camera_component->getViewPerspectiveMatrix());
+		lighting_ubo.inv_camera_view_proj = glm::inverse(camera_component->getViewProjectionMatrix());
 		lighting_ubo.has_sky_light = lighting_ubo.has_directional_light = false;
 		lighting_ubo.point_light_num = lighting_ubo.spot_light_num = 0;
 
@@ -287,7 +287,7 @@ namespace Bamboo
 					// update push constants
 					static_mesh_render_data->transform_pco.m = transform_component->getGlobalMatrix();
 					static_mesh_render_data->transform_pco.nm = glm::transpose(glm::inverse(glm::mat3(static_mesh_render_data->transform_pco.m)));
-					static_mesh_render_data->transform_pco.mvp = camera_component->getViewPerspectiveMatrix() * static_mesh_render_data->transform_pco.m;
+					static_mesh_render_data->transform_pco.mvp = camera_component->getViewProjectionMatrix() * static_mesh_render_data->transform_pco.m;
 
 					// traverse all sub meshes
 					for (size_t i = 0; i < mesh->m_sub_meshes.size(); ++i)
@@ -362,13 +362,17 @@ namespace Bamboo
 				lighting_render_data->prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
 
 				// set skybox render data
-				skybox_render_data = std::make_shared<SkyboxRenderData>();
-				std::shared_ptr<StaticMesh> skybox_cube_mesh = sky_light_component->m_cube_mesh;
-				skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
-				skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
-				skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
-				skybox_render_data->transform_pco.mvp = camera_component->getPerspectiveMatrix() * camera_component->getViewMatrixNoTranslation();
-				skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
+				// only render sky box when in perspective view
+				//if (camera_component->m_projection_type == EProjectionType::Perspective)
+				{
+					skybox_render_data = std::make_shared<SkyboxRenderData>();
+					std::shared_ptr<StaticMesh> skybox_cube_mesh = sky_light_component->m_cube_mesh;
+					skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
+					skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
+					skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
+					skybox_render_data->transform_pco.mvp = camera_component->getProjectionMatrix(EProjectionType::Perspective) * camera_component->getViewMatrixNoTranslation();
+					skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
+				}
 
 				// set lighting uniform buffer object
 				lighting_ubo.has_sky_light = true;
@@ -559,7 +563,7 @@ namespace Bamboo
 
 		float dist = glm::distance(billboard_pos, camera_pos);
 		float size = MathUtil::mapRangeValueClamped(dist, k_min_dist, k_max_dist, k_max_size, k_min_size);
-		billboard_render_data->position = camera_component->getViewPerspectiveMatrix() * glm::vec4(billboard_pos, 1.0f);
+		billboard_render_data->position = camera_component->getViewProjectionMatrix() * glm::vec4(billboard_pos, 1.0f);
 		billboard_render_data->position /= billboard_render_data->position.w;
 		billboard_render_data->size = glm::vec2(size, size * camera_component->m_aspect_ratio);
 		billboard_render_data->texture = m_lighting_icons[light_type]->m_image_view_sampler;

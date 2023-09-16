@@ -1441,7 +1441,7 @@ namespace ImGuizmo
 
    static bool CanActivate()
    {
-      if (ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemActive())
+      if (ImGui::IsMouseClicked(0))
       {
          return true;
       }

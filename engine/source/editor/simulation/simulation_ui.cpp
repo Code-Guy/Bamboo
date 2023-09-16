@@ -91,7 +91,31 @@ namespace Bamboo
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(-2.0f, -2.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 8.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f));
-		constructRadioButtonPopup("view", views, view_index);
+		if (constructRadioButtonPopup("view", views, view_index))
+		{
+			static glm::vec3 last_camera_rotation;
+			static glm::vec3 ortho_camera_rotations[6] = {
+				glm::vec3(0.0f, 0.0f, -90.0f), glm::vec3(0.0f, 0.0f, 90.0f),
+				glm::vec3(0.0f, 90.0f, 0.0f), glm::vec3(0.0f, -90.0f, 0.0f),
+				glm::vec3(0.0f, 180.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f)
+			};
+
+			if (view_index == 0)
+			{
+				m_camera_component->m_projection_type = EProjectionType::Perspective;
+				m_camera_component->getTransformComponent()->m_rotation = last_camera_rotation;
+			}
+			else
+			{
+				if (m_camera_component->m_projection_type == EProjectionType::Perspective)
+				{
+					m_camera_component->m_projection_type = EProjectionType::Orthographic;
+					last_camera_rotation = m_camera_component->getTransformComponent()->m_rotation;
+				}
+				
+				m_camera_component->getTransformComponent()->m_rotation = ortho_camera_rotations[view_index - 1];
+			}
+		}
 
 		ImGui::SameLine();
 		sprintf(m_title_buf, "%s shader", ICON_FA_BOWLING_BALL);
@@ -265,11 +289,12 @@ namespace Bamboo
 
 		// set translation/rotation/scale gizmos
 		ImGuizmo::SetID(0);
+		ImGuizmo::SetOrthographic(m_camera_component->m_projection_type == EProjectionType::Orthographic);
 		ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
 		ImGuizmo::SetDrawlist();
 
 		const float* p_view = glm::value_ptr(m_camera_component->getViewMatrix());
-		const float* p_projection = glm::value_ptr(m_camera_component->getPerspectiveMatrixNoInverted());
+		const float* p_projection = glm::value_ptr(m_camera_component->getProjectionMatrixNoInverted());
 
 		auto transform_component = m_selected_entity.lock()->getComponent(TransformComponent);
 		glm::mat4 matrix = transform_component->getGlobalMatrix();

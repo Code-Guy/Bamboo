@@ -26,6 +26,12 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::CameraComponent)
 namespace Bamboo
 {
 
+	CameraComponent::CameraComponent()
+	{
+		m_projection_type = EProjectionType::Perspective;
+		m_ortho_width = 10.0f;
+	}
+
 	glm::vec3 CameraComponent::getPosition()
 	{
 		return m_transform_component->m_position;
@@ -42,17 +48,31 @@ namespace Bamboo
 		return glm::lookAtRH(m_transform_component->m_position, m_transform_component->m_position + m_forward, m_up);
 	}
 
-	glm::mat4 CameraComponent::getPerspectiveMatrix()
+	glm::mat4 CameraComponent::getProjectionMatrix()
 	{
-		glm::mat4 projMat = glm::perspectiveRH_ZO(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
-		projMat[1][1] *= -1.0f;
-
-		return projMat;
+		return getProjectionMatrix(m_projection_type);
 	}
 
-	glm::mat4 CameraComponent::getViewPerspectiveMatrix()
+	glm::mat4 CameraComponent::getProjectionMatrix(EProjectionType projection_type)
 	{
-		return getPerspectiveMatrix() * getViewMatrix();
+		glm::mat4 proj(1.0);
+		if (projection_type == EProjectionType::Perspective)
+		{
+			proj = glm::perspectiveRH_ZO(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
+		}
+		else if (projection_type == EProjectionType::Orthographic)
+		{
+			float ortho_height = m_ortho_width / m_aspect_ratio;
+			proj = glm::orthoRH_ZO(-m_ortho_width, m_ortho_width, -ortho_height, ortho_height, -m_ortho_width, m_far);
+		}
+
+		invertProjectionMatrix(proj);
+		return proj;
+	}
+
+	glm::mat4 CameraComponent::getViewProjectionMatrix()
+	{
+		return getProjectionMatrix() * getViewMatrix();
 	}
 
 	glm::mat4 CameraComponent::getViewMatrixNoTranslation()
@@ -60,9 +80,11 @@ namespace Bamboo
 		return glm::mat4(glm::mat3(getViewMatrix()));
 	}
 
-	glm::mat4 CameraComponent::getPerspectiveMatrixNoInverted()
+	glm::mat4 CameraComponent::getProjectionMatrixNoInverted()
 	{
-		return glm::perspectiveRH_ZO(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
+		glm::mat4 proj = getProjectionMatrix();
+		invertProjectionMatrix(proj);
+		return proj;
 	}
 
 	void CameraComponent::setInput(bool mouse_right_button_pressed, bool mouse_focused)
@@ -204,6 +226,11 @@ namespace Bamboo
 		m_forward = m_transform_component->getForwardVector();
 		m_right = glm::cross(m_forward, k_up_vector);
 		m_up = glm::cross(m_right, m_forward);
+	}
+
+	void CameraComponent::invertProjectionMatrix(glm::mat4& proj)
+	{
+		proj[1][1] *= -1.0f;
 	}
 
 }

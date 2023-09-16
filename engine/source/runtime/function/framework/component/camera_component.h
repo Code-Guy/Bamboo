@@ -5,27 +5,38 @@
 
 namespace Bamboo
 {
+	enum class EProjectionType
+	{
+		Perspective, Orthographic
+	};
+
 	class CameraComponent : public Component
 	{
 	public:
+		CameraComponent();
+
 		glm::vec3 getPosition();
 		glm::mat4 getViewMatrix();
-		glm::mat4 getPerspectiveMatrix();
-		glm::mat4 getViewPerspectiveMatrix();
+		glm::mat4 getProjectionMatrix();
+		glm::mat4 getProjectionMatrix(EProjectionType projection_type);
+		glm::mat4 getViewProjectionMatrix();
 
 		glm::mat4 getViewMatrixNoTranslation();
-		glm::mat4 getPerspectiveMatrixNoInverted();
+		glm::mat4 getProjectionMatrixNoInverted();
 
+		std::shared_ptr<class TransformComponent> getTransformComponent() { return m_transform_component; }
 		void setInput(bool mouse_right_button_pressed, bool mouse_focused);
 
 		virtual void tick(float delta_time) override;
 		virtual void inflate() override;
 
 		// projection
+		EProjectionType m_projection_type;
 		float m_fovy;
 		float m_aspect_ratio;
 		float m_near;
 		float m_far;
+		float m_ortho_width;
 
 		// movement
 		float m_move_speed;
@@ -63,6 +74,7 @@ namespace Bamboo
 		void onScroll(const std::shared_ptr<class Event>& event);
 
 		void updatePose();
+		void invertProjectionMatrix(glm::mat4& proj);
 
 		// camera component depends a transform component
 		std::shared_ptr<class TransformComponent> m_transform_component;
