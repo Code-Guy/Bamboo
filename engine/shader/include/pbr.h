@@ -150,8 +150,60 @@ float filterPCF(vec4 shadow_coord, uint cascade_index)
 	return shadow / count;
 }
 
+bool is_debug_lit() { return lighting_ubo.shader_debug_option == 0; }
+bool is_debug_unlit() { return lighting_ubo.shader_debug_option == 1; }
+bool is_debug_wireframe() { return lighting_ubo.shader_debug_option == 2; }
+bool is_debug_lighting_only() { return lighting_ubo.shader_debug_option == 3; }
+bool is_debug_depth() { return lighting_ubo.shader_debug_option == 4; }
+bool is_debug_normal() { return lighting_ubo.shader_debug_option == 5; }
+bool is_debug_base_color() { return lighting_ubo.shader_debug_option == 6; }
+bool is_debug_emissive_color() { return lighting_ubo.shader_debug_option == 7; }
+bool is_debug_metallic() { return lighting_ubo.shader_debug_option == 8; }
+bool is_debug_roughness() { return lighting_ubo.shader_debug_option == 9; }
+bool is_debug_occlusion() { return lighting_ubo.shader_debug_option == 10; }
+bool is_debug_opacity() { return lighting_ubo.shader_debug_option == 11; }
+
 vec4 calc_pbr(MaterialInfo mat_info)
 {
+	if (is_debug_depth())
+	{
+		float depth = dot(mat_info.position - lighting_ubo.camera_pos, lighting_ubo.camera_dir);
+		depth *= DEBUG_SHADER_DEPTH_MULTIPLIER;
+		return vec4(vec3(depth), 1.0);
+	}
+	if (is_debug_normal())
+	{
+		return vec4((mat_info.normal + 1.0) / 2.0, 1.0);
+	}
+	if (is_debug_base_color())
+	{
+		return vec4(mat_info.base_color.xyz, 1.0);
+	}
+	if (is_debug_emissive_color())
+	{
+		return vec4(mat_info.emissive_color.xyz, 1.0);
+	}
+	if (is_debug_metallic())
+	{
+		return vec4(vec3(mat_info.metallic), 1.0);
+	}
+	if (is_debug_roughness())
+	{
+		return vec4(vec3(mat_info.roughness), 1.0);
+	}
+	if (is_debug_occlusion())
+	{
+		return vec4(vec3(mat_info.occlusion), 1.0);
+	}
+	if (is_debug_opacity())
+	{
+		return vec4(vec3(mat_info.base_color.a), 1.0);
+	}
+	if (is_debug_lighting_only())
+	{
+		mat_info.base_color.rgb = vec3(0.73);
+	}
+
 	float perceptual_roughness = mat_info.roughness;
 	float alpha_roughness = perceptual_roughness * perceptual_roughness;
 
@@ -188,7 +240,7 @@ vec4 calc_pbr(MaterialInfo mat_info)
 	pbr_info.specular_color = specular_color;
 
 	// calculate light contribution
-	vec3 color = vec3(0.0);
+	vec3 light_color = vec3(0.0);
 
 	// directional light
 	if (bool(lighting_ubo.has_directional_light))
@@ -212,7 +264,7 @@ vec4 calc_pbr(MaterialInfo mat_info)
 			shadow = filterPCF(shadow_coord, cascade_index);
 		}
 		
-		color += getLightContribution(pbr_info, n, v, -directional_light.direction, directional_light.color) * shadow;
+		light_color += getLightContribution(pbr_info, n, v, -directional_light.direction, directional_light.color) * shadow;
 	}
 
 	// point lights
@@ -239,7 +291,7 @@ vec4 calc_pbr(MaterialInfo mat_info)
 				}
 			}
 
-			color += getLightContribution(pbr_info, n, v, l, c) * shadow;
+			light_color += getLightContribution(pbr_info, n, v, l, c) * shadow;
 		}
 	}
 
@@ -277,16 +329,19 @@ vec4 calc_pbr(MaterialInfo mat_info)
 				}
 			}
 
-			color += getLightContribution(pbr_info, n, v, l, c) * shadow;
+			light_color += getLightContribution(pbr_info, n, v, l, c) * shadow;
 		}
 	}
 
 	// calculate ibl contribution
 	if (bool(lighting_ubo.has_sky_light))
 	{
-		color += getIBLContribution(pbr_info, n, r);
+		light_color += getIBLContribution(pbr_info, n, r);
 	}
-	
+
+	// calculate total color
+	vec3 color = is_debug_unlit() ? vec3(0.0) : light_color;
+
 	// occlusion/emissive color
 	color = color * mat_info.occlusion + mat_info.emissive_color.xyz;
 

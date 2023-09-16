@@ -16,17 +16,16 @@ layout(push_constant) uniform PCO
 
 void main()
 {
-	vec4 color = texture(color_texture_sampler, f_tex_coord);
+	o_color = texture(color_texture_sampler, f_tex_coord);
 	ivec3 dim = textureSize(color_grading_lut_texture_sampler, 0);
-	vec3 uvw = vec3(1.0 - color.g, color.r, color.b) + vec3(-0.5, 0.5, 0.5) / vec3(dim.y, dim.x, dim.z);
-	o_color = texture(color_grading_lut_texture_sampler, uvw);
-
-	if (bool(pco.is_selecting))
+	if (dim.x > 1)
 	{
-		vec4 outline_color = texture(outline_texture_sampler, f_tex_coord);
-		if (outline_color.a > 0.5)
-	    {
-	    	o_color = OUTLINE_COLOR;
-	    }
+		vec3 uvw = vec3(1.0 - o_color.g, o_color.r, o_color.b) + vec3(-0.5, 0.5, 0.5) / vec3(dim.y, dim.x, dim.z);
+		o_color = texture(color_grading_lut_texture_sampler, uvw);
+	}
+
+	if (bool(pco.is_selecting) && texture(outline_texture_sampler, f_tex_coord).a > 0.5)
+	{
+	    o_color = OUTLINE_COLOR;
 	}
 }

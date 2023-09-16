@@ -26,6 +26,7 @@
 #define PCF_SAMPLE_RANGE 1
 
 #define OUTLINE_THICKNESS 2
+#define DEBUG_SHADER_DEPTH_MULTIPLIER 0.02
 
 #ifndef __cplusplus
 bool is_nearly_equal(float a, float b)

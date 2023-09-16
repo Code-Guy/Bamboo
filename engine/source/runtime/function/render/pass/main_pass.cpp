@@ -580,7 +580,7 @@ namespace Bamboo
 		// billboard pipeline
 		m_input_assembly_state_ci.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		m_depth_stencil_ci.depthTestEnable = VK_TRUE;
-		m_depth_stencil_ci.depthWriteEnable = VK_FALSE;
+		m_depth_stencil_ci.depthWriteEnable = VK_TRUE;
 		m_color_blend_attachments[0].blendEnable = VK_TRUE;
 
 		// shader stages

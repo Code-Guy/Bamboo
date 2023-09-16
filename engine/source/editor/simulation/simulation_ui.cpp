@@ -129,7 +129,10 @@ namespace Bamboo
 			"lit", "unlit", "wireframe", "lighting only", "depth", "normal", "base color", "emissive color",
 			"metallic", "roughness", "occlusion", "opacity"
 		};
-		constructRadioButtonPopup("shader", shaders, shader_index);
+		if (constructRadioButtonPopup("shader", shaders, shader_index))
+		{
+			g_runtime_context.renderSystem()->setShaderDebugOption(shader_index);
+		}
 
 		ImGui::SameLine();
 		sprintf(m_title_buf, "%s show", ICON_FA_EYE);
@@ -140,7 +143,7 @@ namespace Bamboo
 
 		static std::vector<std::pair<std::string, bool>> shows = {
 			{ "anti-aliasing", false }, { "bounding boxes", false }, { "collision", false }, { "grid", false }, 
-			{ "static meshes", false }, { "skeletal meshes", false }, { "translucency", false }
+			{ "static meshes", true }, { "skeletal meshes", true }, { "translucency", true }
 		};
 		constructCheckboxPopup("show", shows);
 		ImGui::PopStyleVar(3);
@@ -243,6 +246,7 @@ namespace Bamboo
 
 	void SimulationUI::constructCheckboxPopup(const std::string& popup_name, std::vector<std::pair<std::string, bool>>& values)
 	{
+		static int show_debug_option = 0;
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
 		if (ImGui::BeginPopup(popup_name.c_str()))
 		{
@@ -250,7 +254,16 @@ namespace Bamboo
 			{
 				if (ImGui::Checkbox(values[i].first.c_str(), &values[i].second))
 				{
-					
+					if (values[i].second)
+					{
+						show_debug_option |= (1 << i);
+					}
+					else
+					{
+						show_debug_option &= ~(1 << i);
+					}
+
+					g_runtime_context.renderSystem()->setShowDebugOption(show_debug_option);
 				}
 				if (i != values.size() - 1)
 				{

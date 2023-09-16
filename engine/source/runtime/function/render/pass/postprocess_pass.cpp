@@ -14,7 +14,7 @@ namespace Bamboo
 	{
 		RenderPass::init();
 
-		loadColorGradingTexture("asset/engine/texture/postprocess/cg_neural.png");
+		loadColorGradingTexture("asset/engine/texture/postprocess/cg_none.png");
 	}
 
 	void PostprocessPass::render()
@@ -229,6 +229,9 @@ namespace Bamboo
 
 	void PostprocessPass::loadColorGradingTexture(const std::string& filename)
 	{
+		// destroy last texture sampler
+		m_color_grading_texture_sampler.destroy();
+
 		// load image data
 		uint32_t width;
 		uint32_t height;

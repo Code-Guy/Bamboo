@@ -21,6 +21,9 @@ namespace Bamboo
 		void destroy();
 
 		void resize(uint32_t width, uint32_t height);
+		void setShaderDebugOption(int option) { m_shader_debug_option = option; }
+		void setShowDebugOption(int option) { m_show_debug_option = option; }
+
 		VkImageView getColorImageView();
 
 	private:
@@ -56,7 +59,11 @@ namespace Bamboo
 		std::shared_ptr<class TextureCube> m_default_texture_cube;
 		std::map<ELightType, std::shared_ptr<class Texture2D>> m_lighting_icons;
 
-		// select
+		// render options
+		int m_shader_debug_option = 0;
+		int m_show_debug_option = 0;
+
+		// selection
 		std::vector<uint32_t> m_selected_entity_ids;
 	};
 }

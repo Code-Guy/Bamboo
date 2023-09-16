@@ -218,11 +218,13 @@ namespace Bamboo
 		// set lighting uniform buffer object
 		LightingUBO lighting_ubo;
 		lighting_ubo.camera_pos = camera_transform_component->m_position;
+		lighting_ubo.camera_dir = camera_transform_component->getForwardVector();
 		lighting_ubo.exposure = camera_component->m_exposure;
 		lighting_ubo.camera_view = camera_component->getViewMatrix();
 		lighting_ubo.inv_camera_view_proj = glm::inverse(camera_component->getViewProjectionMatrix());
 		lighting_ubo.has_sky_light = lighting_ubo.has_directional_light = false;
 		lighting_ubo.point_light_num = lighting_ubo.spot_light_num = 0;
+		lighting_ubo.shader_debug_option = m_shader_debug_option;
 
 		// get debug draw manager
 		const auto& ddm = g_runtime_context.debugDrawSystem();
@@ -257,7 +259,10 @@ namespace Bamboo
 				{
 					// draw mesh bounding boxes
 					BoundingBox bounding_box = mesh->m_bounding_box.transform(transform_component->getGlobalMatrix());
-					//ddm->drawBox(bounding_box.center(), bounding_box.extent(), k_zero_vector, Color3::Orange);
+					if ((m_show_debug_option & (1 << 1)) == (1 << 1))
+					{
+						ddm->drawBox(bounding_box.center(), bounding_box.extent(), k_zero_vector, Color3::Yellow);
+					}
 
 					// create mesh render data
 					bool is_skeletal_mesh = skeletal_mesh_component != nullptr;
@@ -362,17 +367,13 @@ namespace Bamboo
 				lighting_render_data->prefilter_texture = sky_light_component->m_prefilter_texture_sampler;
 
 				// set skybox render data
-				// only render sky box when in perspective view
-				//if (camera_component->m_projection_type == EProjectionType::Perspective)
-				{
-					skybox_render_data = std::make_shared<SkyboxRenderData>();
-					std::shared_ptr<StaticMesh> skybox_cube_mesh = sky_light_component->m_cube_mesh;
-					skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
-					skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
-					skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
-					skybox_render_data->transform_pco.mvp = camera_component->getProjectionMatrix(EProjectionType::Perspective) * camera_component->getViewMatrixNoTranslation();
-					skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
-				}
+				skybox_render_data = std::make_shared<SkyboxRenderData>();
+				std::shared_ptr<StaticMesh> skybox_cube_mesh = sky_light_component->m_cube_mesh;
+				skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
+				skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
+				skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
+				skybox_render_data->transform_pco.mvp = camera_component->getProjectionMatrix(EProjectionType::Perspective) * camera_component->getViewMatrixNoTranslation();
+				skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
 
 				// set lighting uniform buffer object
 				lighting_ubo.has_sky_light = true;

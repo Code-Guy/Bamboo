@@ -93,6 +93,10 @@ struct LightingUBO
     int has_directional_light;
     int point_light_num;
     int spot_light_num;
+
+    // debug
+    vec3 camera_dir;
+    int shader_debug_option;
 };
 
 struct MaterialInfo
