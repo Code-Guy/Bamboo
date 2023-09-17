@@ -33,6 +33,8 @@ namespace Bamboo
 		void onKey(const std::shared_ptr<class Event>& event);
 		void onSelectEntity(const std::shared_ptr<class Event>& event);
 
+		glm::vec3 calcPlacePos(const glm::vec2& mouse_pos, const glm::vec2& viewport_size);
+
 		VkSampler m_color_texture_sampler;
 		VkDescriptorSet m_color_texture_desc_set = VK_NULL_HANDLE;
 
@@ -40,6 +42,8 @@ namespace Bamboo
 		EOperationMode m_operation_mode;
 		bool m_mouse_right_button_pressed;
 		std::shared_ptr<class CameraComponent> m_camera_component;
+
+		std::shared_ptr<class Entity> m_created_entity;
 		std::weak_ptr<class Entity> m_selected_entity;
 	};
 }

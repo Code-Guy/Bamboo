@@ -22,7 +22,7 @@ namespace Bamboo
 		glm::mat4 getViewProjectionMatrix();
 
 		glm::mat4 getViewMatrixNoTranslation();
-		glm::mat4 getProjectionMatrixNoInverted();
+		glm::mat4 getProjectionMatrixNoYInverted();
 
 		std::shared_ptr<class TransformComponent> getTransformComponent() { return m_transform_component; }
 		void setInput(bool mouse_right_button_pressed, bool mouse_focused);
@@ -74,7 +74,7 @@ namespace Bamboo
 		void onScroll(const std::shared_ptr<class Event>& event);
 
 		void updatePose();
-		void invertProjectionMatrix(glm::mat4& proj);
+		glm::mat4 getProjectionMatrixYInverted(const glm::mat4& projection_matrix);
 
 		// camera component depends a transform component
 		std::shared_ptr<class TransformComponent> m_transform_component;
@@ -82,7 +82,6 @@ namespace Bamboo
 		glm::vec3 m_forward;
 		glm::vec3 m_right;
 		glm::vec3 m_up;
-		glm::vec3 m_last_rotation;
 
 		bool m_move_forward = false;
 		bool m_move_back = false;
@@ -95,5 +94,9 @@ namespace Bamboo
 		bool m_mouse_focused = false;
 
 		double m_last_xpos = 0.0f, m_last_ypos = 0.0f;
+
+		glm::mat4 m_view_matrix;
+		glm::mat4 m_projection_matrix;
+		glm::mat4 m_view_projection_matrix;
 	};
 }

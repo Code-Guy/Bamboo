@@ -49,6 +49,9 @@ namespace Bamboo
 		updateWindowRegion();
 
 		ImVec2 cursor_screen_pos = ImGui::GetCursorScreenPos();
+		uint32_t mouse_x = static_cast<uint32_t>(ImGui::GetMousePos().x - cursor_screen_pos.x);
+		uint32_t mouse_y = static_cast<uint32_t>(ImGui::GetMousePos().y - cursor_screen_pos.y);
+
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		ImGui::Image(m_color_texture_desc_set, content_size);
 
@@ -56,8 +59,6 @@ namespace Bamboo
 		ImGui::SetNextItemAllowOverlap();
 		if (ImGui::InvisibleButton("image", content_size) && !ImGuizmo::IsOver())
 		{
-			uint32_t mouse_x = static_cast<uint32_t>(ImGui::GetMousePos().x - cursor_screen_pos.x);
-			uint32_t mouse_y = static_cast<uint32_t>(ImGui::GetMousePos().y - cursor_screen_pos.y);
 			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>(mouse_x, mouse_y));
 		}
 		m_mouse_right_button_pressed = ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Right);
@@ -65,13 +66,26 @@ namespace Bamboo
 		// allow drag from asset ui
 		if (ImGui::BeginDragDropTarget())
 		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("load_asset"))
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("load_asset", ImGuiDragDropFlags_AcceptBeforeDelivery))
 			{
-				std::string url((const char*)payload->Data, payload->DataSize);
-				StopWatch stop_watch;
-				stop_watch.start();
-				loadAsset(url);
-				LOG_INFO("load asset {}, elapsed time: {}ms", url, stop_watch.stop());
+				if (!m_created_entity)
+				{
+					std::string url((const char*)payload->Data, payload->DataSize);
+					StopWatch stop_watch;
+					stop_watch.start();
+					loadAsset(url);
+					LOG_INFO("load asset {}, elapsed time: {}ms", url, stop_watch.stop());
+				}
+				else
+				{
+					glm::vec3 place_pos = calcPlacePos(glm::vec2(mouse_x, mouse_y), glm::vec2(content_size.x, content_size.y));
+					m_created_entity->getComponent(TransformComponent)->m_position = place_pos;
+				}
+
+				if (payload->IsDelivery())
+				{
+					m_created_entity = nullptr;
+				}
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -185,39 +199,39 @@ namespace Bamboo
 		std::string basename = g_runtime_context.fileSystem()->basename(url);
 
 		std::shared_ptr<World> world = g_runtime_context.worldManager()->getCurrentWorld();
-		std::shared_ptr<Entity> entity = world->createEntity(basename);
+		m_created_entity = world->createEntity(basename);
 
 		// add transform component
 		std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
-		entity->addComponent(transform_component);
+		m_created_entity->addComponent(transform_component);
 
 		if (asset_type == EAssetType::StaticMesh)
 		{
 			std::shared_ptr<StaticMeshComponent> static_mesh_component = std::make_shared<StaticMeshComponent>();
 			std::shared_ptr<StaticMesh> static_mesh = as->loadAsset<StaticMesh>(url);
 			static_mesh_component->setStaticMesh(static_mesh);
-			entity->addComponent(static_mesh_component);
+			m_created_entity->addComponent(static_mesh_component);
 		}
 		else if (asset_type == EAssetType::SkeletalMesh)
 		{
 			std::shared_ptr<SkeletalMeshComponent> skeletal_mesh_component = std::make_shared<SkeletalMeshComponent>();
 			std::shared_ptr<SkeletalMesh> skeletal_mesh = as->loadAsset<SkeletalMesh>(url);
 			skeletal_mesh_component->setSkeletalMesh(skeletal_mesh);
-			entity->addComponent(skeletal_mesh_component);
+			m_created_entity->addComponent(skeletal_mesh_component);
 
 			std::shared_ptr<AnimationComponent> animation_component = std::make_shared<AnimationComponent>();
 			std::shared_ptr<Animation> animation = as->loadAsset<Animation>("asset/cesium_man/anim_Anim_0.anim");
 			animation_component->addAnimation(animation);
-			entity->addComponent(animation_component);
+			m_created_entity->addComponent(animation_component);
 
 			std::shared_ptr<AnimatorComponent> animator_component = std::make_shared<AnimatorComponent>();
 			std::shared_ptr<Skeleton> skeleton = as->loadAsset<Skeleton>("asset/cesium_man/skl_Armature.skl");
 			animator_component->setTickEnabled(true);
 			animator_component->setSkeleton(skeleton);
-			entity->addComponent(animator_component);
+			m_created_entity->addComponent(animator_component);
 
-			entity->setTickEnabled(true);
-			entity->setTickInterval(0.0167f);
+			m_created_entity->setTickEnabled(true);
+			m_created_entity->setTickInterval(0.0167f);
 		}
 	}
 
@@ -307,7 +321,7 @@ namespace Bamboo
 		ImGuizmo::SetDrawlist();
 
 		const float* p_view = glm::value_ptr(m_camera_component->getViewMatrix());
-		const float* p_projection = glm::value_ptr(m_camera_component->getProjectionMatrixNoInverted());
+		const float* p_projection = glm::value_ptr(m_camera_component->getProjectionMatrixNoYInverted());
 
 		auto transform_component = m_selected_entity.lock()->getComponent(TransformComponent);
 		glm::mat4 matrix = transform_component->getGlobalMatrix();
@@ -327,20 +341,24 @@ namespace Bamboo
 			ImGuizmo::Manipulate(p_view, p_projection, operation, (ImGuizmo::MODE)m_coordinate_mode, 
 				glm::value_ptr(matrix), glm::value_ptr(delta_matrix), nullptr, nullptr, nullptr);
 
-			glm::vec3 translation, rotation, scale;
-			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(matrix), glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
+			// only set gizmo's transformation to selected entity if the simulation window is focused
+			if (ImGui::IsWindowFocused())
+			{
+				glm::vec3 translation, rotation, scale;
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(matrix), glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
 
-			if (m_operation_mode == EOperationMode::Translate)
-			{
-				transform_component->m_position = translation;
-			}
-			else if (m_operation_mode == EOperationMode::Rotate)
-			{
-				transform_component->m_rotation = rotation;
-			}
-			else if (m_operation_mode == EOperationMode::Scale)
-			{
-				transform_component->m_scale = scale;
+				if (m_operation_mode == EOperationMode::Translate)
+				{
+					transform_component->m_position = translation;
+				}
+				else if (m_operation_mode == EOperationMode::Rotate)
+				{
+					transform_component->m_rotation = rotation;
+				}
+				else if (m_operation_mode == EOperationMode::Scale)
+				{
+					transform_component->m_scale = scale;
+				}
 			}
 		}
 	}
@@ -393,6 +411,19 @@ namespace Bamboo
 			const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
 			m_selected_entity = current_world->getEntity(p_event->entity_id);
 		}
+	}
+
+	glm::vec3 SimulationUI::calcPlacePos(const glm::vec2& mouse_pos, const glm::vec2& viewport_size)
+	{
+		glm::vec3 ray_origin = glm::unProjectZO(glm::vec3(mouse_pos.x, mouse_pos.y, 0.0f), m_camera_component->getViewMatrix(), 
+			m_camera_component->getProjectionMatrix(), glm::vec4(0.0f, 0.0f, viewport_size.x, viewport_size.y));
+		glm::vec3 ray_target = glm::unProjectZO(glm::vec3(mouse_pos.x, mouse_pos.y, 1.0f), m_camera_component->getViewMatrix(),
+			m_camera_component->getProjectionMatrix(), glm::vec4(0.0f, 0.0f, viewport_size.x, viewport_size.y));
+		glm::vec3 ray_dir = glm::normalize(ray_target - ray_origin);
+		float t = -ray_origin.y / ray_dir.y;
+
+		glm::vec3 place_pos = ray_origin + ray_dir * t;
+		return place_pos;
 	}
 
 }

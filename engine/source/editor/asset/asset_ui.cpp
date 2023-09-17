@@ -259,7 +259,6 @@ namespace Bamboo
 			{
 				std::string ref_filename = g_runtime_context.fileSystem()->relative(filename);
 				ImGui::SetDragDropPayload("load_asset", ref_filename.data(), ref_filename.size());
-				ImGui::Text(" load %s ", basename.c_str());
 				ImGui::EndDragDropSource();
 			}
 		}

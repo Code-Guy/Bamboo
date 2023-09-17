@@ -39,52 +39,43 @@ namespace Bamboo
 
 	glm::mat4 CameraComponent::getViewMatrix()
 	{
-		if (m_last_rotation != m_transform_component->m_rotation)
-		{
-			m_last_rotation = m_transform_component->m_rotation;
-			updatePose();
-		}
-
-		return glm::lookAtRH(m_transform_component->m_position, m_transform_component->m_position + m_forward, m_up);
+		return m_view_matrix;
 	}
 
 	glm::mat4 CameraComponent::getProjectionMatrix()
 	{
-		return getProjectionMatrix(m_projection_type);
+		return m_projection_matrix;
 	}
 
 	glm::mat4 CameraComponent::getProjectionMatrix(EProjectionType projection_type)
 	{
-		glm::mat4 proj(1.0);
+		glm::mat4 projection_matrix(1.0);
 		if (projection_type == EProjectionType::Perspective)
 		{
-			proj = glm::perspectiveRH_ZO(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
+			projection_matrix = glm::perspectiveRH_ZO(glm::radians(m_fovy), m_aspect_ratio, m_near, m_far);
 		}
 		else if (projection_type == EProjectionType::Orthographic)
 		{
 			float ortho_height = m_ortho_width / m_aspect_ratio;
-			proj = glm::orthoRH_ZO(-m_ortho_width, m_ortho_width, -ortho_height, ortho_height, -m_ortho_width, m_far);
+			projection_matrix = glm::orthoRH_ZO(-m_ortho_width, m_ortho_width, -ortho_height, ortho_height, -m_ortho_width, m_far);
 		}
 
-		invertProjectionMatrix(proj);
-		return proj;
+		return getProjectionMatrixYInverted(projection_matrix);
 	}
 
 	glm::mat4 CameraComponent::getViewProjectionMatrix()
 	{
-		return getProjectionMatrix() * getViewMatrix();
+		return m_view_projection_matrix;
 	}
 
 	glm::mat4 CameraComponent::getViewMatrixNoTranslation()
 	{
-		return glm::mat4(glm::mat3(getViewMatrix()));
+		return glm::mat4(glm::mat3(m_view_matrix));
 	}
 
-	glm::mat4 CameraComponent::getProjectionMatrixNoInverted()
+	glm::mat4 CameraComponent::getProjectionMatrixNoYInverted()
 	{
-		glm::mat4 proj = getProjectionMatrix();
-		invertProjectionMatrix(proj);
-		return proj;
+		return getProjectionMatrixYInverted(m_projection_matrix);
 	}
 
 	void CameraComponent::setInput(bool mouse_right_button_pressed, bool mouse_focused)
@@ -95,8 +86,8 @@ namespace Bamboo
 
 	void CameraComponent::tick(float delta_time)
 	{
+		// update camera position
 		float offset = m_move_speed * delta_time;
-
 		if (m_mouse_right_button_pressed)
 		{
 			if (m_move_forward)
@@ -124,6 +115,11 @@ namespace Bamboo
 				m_transform_component->m_position -= k_up_vector * offset;
 			}
 		}
+
+		// update camera view/projection matrix
+		m_view_matrix = glm::lookAtRH(m_transform_component->m_position, m_transform_component->m_position + m_forward, m_up);
+		m_projection_matrix = getProjectionMatrix(m_projection_type);
+		m_view_projection_matrix = m_projection_matrix * m_view_matrix;
 	}
 
 	void CameraComponent::inflate()
@@ -201,6 +197,7 @@ namespace Bamboo
 		xoffset *= m_turn_speed;
 		yoffset *= m_turn_speed;
 
+		// update camera rotation
 		float& yaw = m_transform_component->m_rotation.y;
 		float& pitch = m_transform_component->m_rotation.z;
 		yaw += xoffset;
@@ -228,9 +225,11 @@ namespace Bamboo
 		m_up = glm::cross(m_right, m_forward);
 	}
 
-	void CameraComponent::invertProjectionMatrix(glm::mat4& proj)
+	glm::mat4 CameraComponent::getProjectionMatrixYInverted(const glm::mat4& projection_matrix)
 	{
-		proj[1][1] *= -1.0f;
+		glm::mat4 projection_matrix_y_inverted = projection_matrix;
+		projection_matrix_y_inverted[1][1] *= -1.0f;
+		return projection_matrix_y_inverted;
 	}
 
 }

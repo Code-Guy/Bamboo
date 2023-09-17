@@ -9,18 +9,18 @@
                     "ref_urls": []
                 },
                 "base_color_factor": {
-                    "x": 0.5,
-                    "y": 0.5,
-                    "z": 0.5,
-                    "w": 0.5
+                    "x": 1.0,
+                    "y": 1.0,
+                    "z": 1.0,
+                    "w": 1.0
                 },
                 "emissive_factor": {
                     "x": 0.0,
                     "y": 0.0,
                     "z": 0.0,
-                    "w": 0.0
+                    "w": 1.0
                 },
-                "metallic_factor": 1.0,
+                "metallic_factor": 0.0,
                 "roughness_factor": 1.0,
                 "contains_occlusion_channel": false
             }
