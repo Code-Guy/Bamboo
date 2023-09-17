@@ -255,7 +255,7 @@ namespace Bamboo
 		{
 			EAssetType asset_type = g_runtime_context.assetManager()->getAssetType(filename);
 			if ((asset_type == EAssetType::StaticMesh || asset_type == EAssetType::SkeletalMesh) &&
-				ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+				ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID | ImGuiDragDropFlags_SourceNoPreviewTooltip))
 			{
 				std::string ref_filename = g_runtime_context.fileSystem()->relative(filename);
 				ImGui::SetDragDropPayload("load_asset", ref_filename.data(), ref_filename.size());

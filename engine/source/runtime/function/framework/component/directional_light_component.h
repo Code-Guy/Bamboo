@@ -7,6 +7,8 @@ namespace Bamboo
 	class DirectionalLightComponent : public LightComponent
 	{
 	public:
+		DirectionalLightComponent();
+
 		float m_cascade_frustum_near;
 
 	private:

@@ -14,4 +14,12 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::LightComponent, Bamboo::PointLightC
 namespace Bamboo
 {
 	POLYMORPHIC_DEFINITION(PointLightComponent)
+
+	PointLightComponent::PointLightComponent()
+	{
+		m_radius = 64.0f;
+		m_linear_attenuation = 0.14f;
+		m_quadratic_attenuation = 0.07f;
+	}
+
 }

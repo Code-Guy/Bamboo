@@ -7,6 +7,8 @@ namespace Bamboo
 	class SpotLightComponent : public PointLightComponent
 	{
 	public:
+		SpotLightComponent();
+
 		float m_inner_cone_angle;
 		float m_outer_cone_angle;
 

@@ -13,4 +13,11 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::PointLightComponent, Bamboo::SpotLi
 namespace Bamboo
 {
 	POLYMORPHIC_DEFINITION(SpotLightComponent)
+
+	SpotLightComponent::SpotLightComponent()
+	{
+		m_inner_cone_angle = 60.0f;
+		m_outer_cone_angle = 90.0f;
+	}
+
 }

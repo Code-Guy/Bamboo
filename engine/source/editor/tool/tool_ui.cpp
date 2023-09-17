@@ -94,9 +94,21 @@ namespace Bamboo
 			{
 				if (ImGui::BeginMenu(categories[i].c_str()))
 				{
-					for (const std::string& entity_type : entity_typess[i])
+					for (size_t j = 0; j < entity_typess[i].size(); ++j)
 					{
-						ImGui::MenuItem(entity_type.c_str());
+						const std::string& entity_type = entity_typess[i][j];
+						ImGui::Text(entity_type.c_str());
+						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID | ImGuiDragDropFlags_SourceNoPreviewTooltip))
+						{
+							std::string trimmed_entity_type(entity_type.begin() + 4, entity_type.end());
+							ImGui::SetDragDropPayload("create_entity", trimmed_entity_type.data(), trimmed_entity_type.size());
+							ImGui::EndDragDropSource();
+						}
+
+						if (j != entity_typess[i].size() - 1)
+						{
+							ImGui::Separator();
+						}
 					}
 					ImGui::EndMenu();
 				}

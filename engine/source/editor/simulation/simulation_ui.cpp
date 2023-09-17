@@ -12,6 +12,9 @@
 #include "runtime/function/framework/component/skeletal_mesh_component.h"
 #include "runtime/function/framework/component/animation_component.h"
 #include "runtime/function/framework/component/animator_component.h"
+#include "runtime/function/framework/component/directional_light_component.h"
+#include "runtime/function/framework/component/sky_light_component.h"
+#include "runtime/function/framework/component/spot_light_component.h"
 
 #include <GLFW/glfw3.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
@@ -64,31 +67,7 @@ namespace Bamboo
 		m_mouse_right_button_pressed = ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Right);
 
 		// allow drag from asset ui
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("load_asset", ImGuiDragDropFlags_AcceptBeforeDelivery))
-			{
-				if (!m_created_entity)
-				{
-					std::string url((const char*)payload->Data, payload->DataSize);
-					StopWatch stop_watch;
-					stop_watch.start();
-					loadAsset(url);
-					LOG_INFO("load asset {}, elapsed time: {}ms", url, stop_watch.stop());
-				}
-				else
-				{
-					glm::vec3 place_pos = calcPlacePos(glm::vec2(mouse_x, mouse_y), glm::vec2(content_size.x, content_size.y));
-					m_created_entity->getComponent(TransformComponent)->m_position = place_pos;
-				}
-
-				if (payload->IsDelivery())
-				{
-					m_created_entity = nullptr;
-				}
-			}
-			ImGui::EndDragDropTarget();
-		}
+		handleDragDropTarget(glm::vec2(mouse_x, mouse_y), glm::vec2(content_size.x, content_size.y));
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.8f));
 		ImGui::SetCursorPos(ImVec2(10, 30));
@@ -410,6 +389,80 @@ namespace Bamboo
 		{
 			const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
 			m_selected_entity = current_world->getEntity(p_event->entity_id);
+		}
+	}
+
+	void SimulationUI::handleDragDropTarget(const glm::vec2& mouse_pos, const glm::vec2& viewport_size)
+	{
+		if (ImGui::BeginDragDropTarget())
+		{
+			const ImGuiPayload* payload = nullptr;
+			ImGuiDragDropFlags flags = ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoPreviewTooltip;
+			if (payload = ImGui::AcceptDragDropPayload("load_asset", flags))
+			{
+				if (!m_created_entity)
+				{
+					std::string url((const char*)payload->Data, payload->DataSize);
+					StopWatch stop_watch;
+					stop_watch.start();
+					loadAsset(url);
+					LOG_INFO("load asset {}, elapsed time: {}ms", url, stop_watch.stop());
+				}
+			}
+			else if (payload = ImGui::AcceptDragDropPayload("create_entity", flags))
+			{
+				if (!m_created_entity)
+				{
+					std::string entity_type((const char*)payload->Data, payload->DataSize);
+					if (entity_type.find("light") != std::string::npos)
+					{
+						std::shared_ptr<World> world = g_runtime_context.worldManager()->getCurrentWorld();
+						m_created_entity = world->createEntity(entity_type);
+
+						// add transform component
+						m_created_entity->addComponent(std::make_shared<TransformComponent>());
+
+						// add light component
+						if (entity_type.find("directional") != std::string::npos)
+						{
+							m_created_entity->addComponent(std::make_shared<DirectionalLightComponent>());
+						}
+						else if (entity_type.find("sky") != std::string::npos)
+						{
+							auto sky_light_component = std::make_shared<SkyLightComponent>();
+							auto sky_texture_cube = g_runtime_context.assetManager()->loadAsset<TextureCube>("asset/engine/texture/ibl/texc_cloudy.texc");
+							sky_light_component->setTextureCube(sky_texture_cube);
+							m_created_entity->addComponent(sky_light_component);
+						}
+						else if (entity_type.find("point") != std::string::npos)
+						{
+							m_created_entity->addComponent(std::make_shared<PointLightComponent>());
+						}
+						else if (entity_type.find("spot") != std::string::npos)
+						{
+							m_created_entity->addComponent(std::make_shared<SpotLightComponent>());
+						}
+					}
+					else if (entity_type != "empty entity")
+					{
+						std::string url = StringUtil::format("asset/engine/mesh/primitive/sm_%s.sm", entity_type.c_str());
+						loadAsset(url);
+					}
+				}
+			}
+
+			if (m_created_entity)
+			{
+				glm::vec3 place_pos = calcPlacePos(mouse_pos, viewport_size);
+				m_created_entity->getComponent(TransformComponent)->m_position = place_pos;
+			}
+
+			if (payload && payload->IsDelivery())
+			{
+				m_created_entity = nullptr;
+			}
+
+			ImGui::EndDragDropTarget();
 		}
 	}
 

@@ -7,6 +7,8 @@ namespace Bamboo
 	class PointLightComponent : public LightComponent
 	{
 	public:
+		PointLightComponent();
+
 		float m_radius;
 		float m_linear_attenuation;
 		float m_quadratic_attenuation;

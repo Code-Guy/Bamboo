@@ -12,4 +12,10 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::DirectionalLight
 namespace Bamboo
 {
 	POLYMORPHIC_DEFINITION(DirectionalLightComponent)
+
+	DirectionalLightComponent::DirectionalLightComponent()
+	{
+		m_cascade_frustum_near = 0.0f;
+	}
+
 }
