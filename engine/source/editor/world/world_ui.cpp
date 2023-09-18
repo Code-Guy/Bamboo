@@ -22,7 +22,7 @@ namespace Bamboo
 		}
 
 		// get current active world
-		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
+		const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
 
 		// traverse all entities
 		const float k_unindent_w = 16;

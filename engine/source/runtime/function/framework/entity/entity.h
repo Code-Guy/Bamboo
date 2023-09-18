@@ -26,7 +26,7 @@ namespace Bamboo
 		void detach();
 
 		uint32_t getID() { return m_id; }
-		std::weak_ptr<World> getWorld() { return m_world; }
+		const std::weak_ptr<World>& getWorld() { return m_world; }
 		const std::string& getName() const { return m_name; }
 		const std::weak_ptr<Entity>& getParent() { return m_parent; }
 		const std::vector<std::weak_ptr<Entity>>& getChildren() { return m_children; }

@@ -180,12 +180,12 @@ namespace Bamboo
 		std::vector<uint32_t> mesh_entity_ids, billboard_entity_ids;
 
 		// get current active world
-		std::shared_ptr<World> current_world = g_runtime_context.worldManager()->getCurrentWorld();
+		const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
 
 		// get camera entity
 		const auto& camera_entity = current_world->getCameraEntity();
-		auto camera_transform_component = camera_entity->getComponent(TransformComponent);
-		auto camera_component = camera_entity->getComponent(CameraComponent);
+		auto camera_transform_component = camera_entity.lock()->getComponent(TransformComponent);
+		auto camera_component = camera_entity.lock()->getComponent(CameraComponent);
 
 		// set render datas
 		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();

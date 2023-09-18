@@ -32,6 +32,13 @@ namespace Bamboo
 		m_ortho_width = 10.0f;
 	}
 
+	CameraComponent::~CameraComponent()
+	{
+		g_runtime_context.eventSystem()->removeListener(m_key_event_handle);
+		g_runtime_context.eventSystem()->removeListener(m_cursor_pos_event_handle);
+		g_runtime_context.eventSystem()->removeListener(m_scroll_event_handle);
+	}
+
 	glm::vec3 CameraComponent::getPosition()
 	{
 		return m_transform_component->m_position;
@@ -128,9 +135,12 @@ namespace Bamboo
 		m_transform_component = m_parent.lock()->getComponent(TransformComponent);
 
 		// bind camera input callbacks
-		g_runtime_context.eventSystem()->addListener(EEventType::WindowKey, std::bind(&CameraComponent::onKey, this, std::placeholders::_1));
-		g_runtime_context.eventSystem()->addListener(EEventType::WindowCursorPos, std::bind(&CameraComponent::onCursorPos, this, std::placeholders::_1));
-		g_runtime_context.eventSystem()->addListener(EEventType::WindowScroll, std::bind(&CameraComponent::onScroll, this, std::placeholders::_1));
+		m_key_event_handle = g_runtime_context.eventSystem()->addListener(EEventType::WindowKey, 
+			std::bind(&CameraComponent::onKey, this, std::placeholders::_1));
+		m_cursor_pos_event_handle = g_runtime_context.eventSystem()->addListener(EEventType::WindowCursorPos, 
+			std::bind(&CameraComponent::onCursorPos, this, std::placeholders::_1));
+		m_scroll_event_handle = g_runtime_context.eventSystem()->addListener(EEventType::WindowScroll, 
+			std::bind(&CameraComponent::onScroll, this, std::placeholders::_1));
 
 		// update camera pose
 		updatePose();

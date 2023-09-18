@@ -33,7 +33,7 @@ namespace Bamboo
 		World() = default;
 
 		uint32_t m_next_entity_id = 0;
-		std::shared_ptr<Entity> m_camera_entity;
+		std::weak_ptr<Entity> m_camera_entity;
 		std::map<uint32_t, std::shared_ptr<Entity>> m_entities;
 	};
 }

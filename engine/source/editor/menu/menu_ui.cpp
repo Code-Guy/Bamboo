@@ -1,6 +1,7 @@
 #include "menu_ui.h"
 #include "runtime/core/base/macro.h"
 #include "runtime/core/config/config_manager.h"
+#include "runtime/core/event/event_system.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/framework/world/world_manager.h"
 
@@ -118,6 +119,8 @@ namespace Bamboo
 					{
 						const std::string& template_url = m_template_worlds[m_selected_template_world_index].url;
 						std::string save_as_url = m_selected_folder + "/" + world_name_str + ".world";
+
+						clearEntitySelection();
 						g_runtime_context.worldManager()->createWorld(template_url, save_as_url);
 
 						showing_new_world_popup = false;
@@ -168,7 +171,8 @@ namespace Bamboo
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - 30);
 				if (ImGui::Button("open", ImVec2(button_width, 0)))
 				{
-					g_runtime_context.worldManager()->loadWorld(m_selected_world_url);
+					clearEntitySelection();
+					g_runtime_context.worldManager()->openWorld(m_selected_world_url);
 					showing_open_world_popup = false;
 				}
 
@@ -446,7 +450,12 @@ namespace Bamboo
 			{
 				if (g_runtime_context.assetManager()->getAssetType(child_file) == EAssetType::World)
 				{
-					m_current_world_urls.push_back(g_runtime_context.fileSystem()->relative(child_file));
+					std::string world_name = g_runtime_context.fileSystem()->basename(child_file);
+					std::string current_world_name = g_runtime_context.worldManager()->getCurrentWorldName();
+					if (world_name != current_world_name)
+					{
+						m_current_world_urls.push_back(g_runtime_context.fileSystem()->relative(child_file));
+					}
 				}
 			}
 		}
@@ -594,6 +603,11 @@ namespace Bamboo
 	void MenuUI::constructWorldURLPanel()
 	{
 
+	}
+
+	void MenuUI::clearEntitySelection()
+	{
+		g_runtime_context.eventSystem()->syncDispatch(std::make_shared<SelectEntityEvent>(UINT_MAX));
 	}
 
 }

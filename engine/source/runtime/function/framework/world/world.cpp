@@ -38,7 +38,7 @@ namespace Bamboo
 			entity->inflate();
 
 			// get camera entity
-			if (!m_camera_entity && entity->hasComponent(CameraComponent))
+			if (entity->hasComponent(CameraComponent))
 			{
 				m_camera_entity = entity;
 			}

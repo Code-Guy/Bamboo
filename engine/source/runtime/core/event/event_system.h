@@ -31,6 +31,12 @@ namespace Bamboo
 	};
 	using EventQueue = eventpp::EventQueue<EEventType, void(const EventPointer&), EventPolicy>;
 
+	struct EventHandle
+	{
+		EEventType type;
+		EventQueue::Handle handle;
+	};
+
 	class WindowResetEvent : public Event
 	{
 	public:
@@ -225,7 +231,8 @@ namespace Bamboo
 		void tick();
 		void destroy() {}
 
-		void addListener(EEventType event_type, const std::function<void(const EventPointer& event_pointer)>& callback);
+		void* addListener(EEventType event_type, const std::function<void(const EventPointer& event_pointer)>& callback);
+		void removeListener(void* handle);
 		void asyncDispatch(const EventPointer& event_pointer);
 		void syncDispatch(const EventPointer& event_pointer);
 

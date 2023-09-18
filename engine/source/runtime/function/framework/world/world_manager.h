@@ -11,19 +11,23 @@ namespace Bamboo
 		void destroy();
 		void tick(float delta_time);
 
-		bool loadWorld(const URL& url);
-		bool createWorld(const URL& template_url, const URL& save_as_url);
+		void openWorld(const URL& url);
+		void createWorld(const URL& template_url, const URL& save_as_url);
 		bool saveWorld();
 		bool saveAsWorld(const URL& url);
 
 		const std::shared_ptr<World>& getCurrentWorld() { return m_current_world; }
 		std::string getCurrentWorldName();
 
-		std::shared_ptr<class CameraComponent> getCameraComponent();
+		std::weak_ptr<class CameraComponent> getCameraComponent();
 
 	private:
+		bool loadWorld(const URL& url);
 		void scriptWorld();
 
 		std::shared_ptr<World> m_current_world;
+
+		URL m_open_world_url;
+		URL m_template_url, m_save_as_url;
 	};
 }

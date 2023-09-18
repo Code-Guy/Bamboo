@@ -38,6 +38,8 @@ namespace Bamboo
 		void constructTemplateWorldPanel();
 		void constructWorldURLPanel();
 
+		void clearEntitySelection();
+
 		std::string m_layout_path;
 
 		bool showing_new_world_popup = false;

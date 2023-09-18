@@ -201,8 +201,13 @@ namespace Bamboo
 
 		asset->setURL(url);
 		asset->inflate();
-		m_assets[url] = asset;
 
+		// don't cache world!
+		if (asset_type != EAssetType::World)
+		{
+			m_assets[url] = asset;
+		}
+		
 		return asset;
 	}
 

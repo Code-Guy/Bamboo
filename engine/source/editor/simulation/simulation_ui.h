@@ -42,7 +42,7 @@ namespace Bamboo
 		ECoordinateMode m_coordinate_mode;
 		EOperationMode m_operation_mode;
 		bool m_mouse_right_button_pressed;
-		std::shared_ptr<class CameraComponent> m_camera_component;
+		std::weak_ptr<class CameraComponent> m_camera_component;
 
 		std::shared_ptr<class Entity> m_created_entity;
 		std::weak_ptr<class Entity> m_selected_entity;

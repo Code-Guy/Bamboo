@@ -31,7 +31,6 @@ namespace Bamboo
 
 		m_coordinate_mode = ECoordinateMode::Local;
 		m_operation_mode = EOperationMode::Translate;
-		m_camera_component = g_runtime_context.worldManager()->getCameraComponent();
 		m_mouse_right_button_pressed = false;
 
 		g_runtime_context.eventSystem()->addListener(EEventType::WindowKey, std::bind(&SimulationUI::onKey, this, std::placeholders::_1));
@@ -40,6 +39,12 @@ namespace Bamboo
 
 	void SimulationUI::construct()
 	{
+		// try to get new camera if current camera is not valid
+		if (!m_camera_component.lock())
+		{
+			m_camera_component = g_runtime_context.worldManager()->getCameraComponent();
+		}
+		
 		const std::string& world_name = g_runtime_context.worldManager()->getCurrentWorldName();
 		sprintf(m_title_buf, "%s %s###%s", ICON_FA_GAMEPAD, world_name.c_str(), m_title.c_str());
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -95,18 +100,18 @@ namespace Bamboo
 
 			if (view_index == 0)
 			{
-				m_camera_component->m_projection_type = EProjectionType::Perspective;
-				m_camera_component->getTransformComponent()->m_rotation = last_camera_rotation;
+				m_camera_component.lock()->m_projection_type = EProjectionType::Perspective;
+				m_camera_component.lock()->getTransformComponent()->m_rotation = last_camera_rotation;
 			}
 			else
 			{
-				if (m_camera_component->m_projection_type == EProjectionType::Perspective)
+				if (m_camera_component.lock()->m_projection_type == EProjectionType::Perspective)
 				{
-					m_camera_component->m_projection_type = EProjectionType::Orthographic;
-					last_camera_rotation = m_camera_component->getTransformComponent()->m_rotation;
+					m_camera_component.lock()->m_projection_type = EProjectionType::Orthographic;
+					last_camera_rotation = m_camera_component.lock()->getTransformComponent()->m_rotation;
 				}
 				
-				m_camera_component->getTransformComponent()->m_rotation = ortho_camera_rotations[view_index - 1];
+				m_camera_component.lock()->getTransformComponent()->m_rotation = ortho_camera_rotations[view_index - 1];
 			}
 		}
 
@@ -177,7 +182,7 @@ namespace Bamboo
 		EAssetType asset_type = as->getAssetType(url);
 		std::string basename = g_runtime_context.fileSystem()->basename(url);
 
-		std::shared_ptr<World> world = g_runtime_context.worldManager()->getCurrentWorld();
+		const auto& world = g_runtime_context.worldManager()->getCurrentWorld();
 		m_created_entity = world->createEntity(basename);
 
 		// add transform component
@@ -285,8 +290,8 @@ namespace Bamboo
 	void SimulationUI::constructImGuizmo()
 	{
 		// set camera component
-		m_camera_component->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
-		m_camera_component->setInput(m_mouse_right_button_pressed, isFocused());
+		m_camera_component.lock()->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
+		m_camera_component.lock()->setInput(m_mouse_right_button_pressed, isFocused());
 
  		if (!m_selected_entity.lock())
  		{
@@ -295,12 +300,12 @@ namespace Bamboo
 
 		// set translation/rotation/scale gizmos
 		ImGuizmo::SetID(0);
-		ImGuizmo::SetOrthographic(m_camera_component->m_projection_type == EProjectionType::Orthographic);
+		ImGuizmo::SetOrthographic(m_camera_component.lock()->m_projection_type == EProjectionType::Orthographic);
 		ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
 		ImGuizmo::SetDrawlist();
 
-		const float* p_view = glm::value_ptr(m_camera_component->getViewMatrix());
-		const float* p_projection = glm::value_ptr(m_camera_component->getProjectionMatrixNoYInverted());
+		const float* p_view = glm::value_ptr(m_camera_component.lock()->getViewMatrix());
+		const float* p_projection = glm::value_ptr(m_camera_component.lock()->getProjectionMatrixNoYInverted());
 
 		auto transform_component = m_selected_entity.lock()->getComponent(TransformComponent);
 		glm::mat4 matrix = transform_component->getGlobalMatrix();
@@ -385,7 +390,7 @@ namespace Bamboo
 	{
 		const SelectEntityEvent* p_event = static_cast<const SelectEntityEvent*>(event.get());
 
-		if (p_event->entity_id != m_camera_component->getParent().lock()->getID())
+		if (p_event->entity_id != m_camera_component.lock()->getParent().lock()->getID())
 		{
 			const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
 			m_selected_entity = current_world->getEntity(p_event->entity_id);
@@ -416,7 +421,7 @@ namespace Bamboo
 					std::string entity_type((const char*)payload->Data, payload->DataSize);
 					if (entity_type.find("light") != std::string::npos)
 					{
-						std::shared_ptr<World> world = g_runtime_context.worldManager()->getCurrentWorld();
+						const auto& world = g_runtime_context.worldManager()->getCurrentWorld();
 						m_created_entity = world->createEntity(entity_type);
 
 						// add transform component
@@ -468,10 +473,10 @@ namespace Bamboo
 
 	glm::vec3 SimulationUI::calcPlacePos(const glm::vec2& mouse_pos, const glm::vec2& viewport_size)
 	{
-		glm::vec3 ray_origin = glm::unProjectZO(glm::vec3(mouse_pos.x, mouse_pos.y, 0.0f), m_camera_component->getViewMatrix(), 
-			m_camera_component->getProjectionMatrix(), glm::vec4(0.0f, 0.0f, viewport_size.x, viewport_size.y));
-		glm::vec3 ray_target = glm::unProjectZO(glm::vec3(mouse_pos.x, mouse_pos.y, 1.0f), m_camera_component->getViewMatrix(),
-			m_camera_component->getProjectionMatrix(), glm::vec4(0.0f, 0.0f, viewport_size.x, viewport_size.y));
+		glm::vec3 ray_origin = glm::unProjectZO(glm::vec3(mouse_pos.x, mouse_pos.y, 0.0f), m_camera_component.lock()->getViewMatrix(), 
+			m_camera_component.lock()->getProjectionMatrix(), glm::vec4(0.0f, 0.0f, viewport_size.x, viewport_size.y));
+		glm::vec3 ray_target = glm::unProjectZO(glm::vec3(mouse_pos.x, mouse_pos.y, 1.0f), m_camera_component.lock()->getViewMatrix(),
+			m_camera_component.lock()->getProjectionMatrix(), glm::vec4(0.0f, 0.0f, viewport_size.x, viewport_size.y));
 		glm::vec3 ray_dir = glm::normalize(ray_target - ray_origin);
 		float t = -ray_origin.y / ray_dir.y;
 

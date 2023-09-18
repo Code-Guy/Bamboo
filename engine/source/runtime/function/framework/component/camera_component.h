@@ -14,6 +14,7 @@ namespace Bamboo
 	{
 	public:
 		CameraComponent();
+		~CameraComponent();
 
 		glm::vec3 getPosition();
 		glm::mat4 getViewMatrix();
@@ -98,5 +99,9 @@ namespace Bamboo
 		glm::mat4 m_view_matrix;
 		glm::mat4 m_projection_matrix;
 		glm::mat4 m_view_projection_matrix;
+
+		void* m_key_event_handle;
+		void* m_cursor_pos_event_handle;
+		void* m_scroll_event_handle;
 	};
 }
