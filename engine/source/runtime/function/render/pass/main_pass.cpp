@@ -513,6 +513,7 @@ namespace Bamboo
 			shader_manager->getShaderStageCI("skybox.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 		m_color_blend_attachments[0].blendEnable = VK_FALSE;
+		m_depth_stencil_ci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 		m_rasterize_state_ci.cullMode = VK_CULL_MODE_NONE;
 		m_pipeline_ci.layout = m_pipeline_layouts[5];
 		m_pipeline_ci.subpass = 2;
@@ -521,6 +522,7 @@ namespace Bamboo
 		m_color_blend_ci.attachmentCount = static_cast<uint32_t>(m_color_blend_attachments.size());
 		shader_stage_cis[1] = shader_manager->getShaderStageCI("gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 		CHECK_VULKAN_RESULT(result, "create skybox graphics pipeline");
+		m_depth_stencil_ci.depthCompareOp = VK_COMPARE_OP_LESS;
 
 		// create gbuffer skeletal mesh pipeline
 		vertex_input_binding_descriptions[0].stride = sizeof(SkeletalVertex);

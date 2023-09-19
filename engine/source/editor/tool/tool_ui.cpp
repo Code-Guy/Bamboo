@@ -1,5 +1,6 @@
 #include "tool_ui.h"
 #include "runtime/core/base/macro.h"
+#include "runtime/function/framework/world/world_manager.h"
 #include <map>
 
 namespace Bamboo
@@ -28,7 +29,7 @@ namespace Bamboo
 		ImGui::PushFont(bigIconFont());
 		if (ImGui::Button(ICON_FA_SAVE, kButtonSize))
 		{
-			
+			g_runtime_context.worldManager()->saveWorld();
 		}
 		ImGui::PopFont();
 

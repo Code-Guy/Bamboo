@@ -14,16 +14,11 @@ layout(location = 0) out vec4 o_color;
 
 void main()
 {
-	float depth = subpassLoad(depth_stencil_texture_sampler).x;
-	if (is_nearly_equal(depth, 1.0))
-	{
-		discard;
-	}
-
 	// reconstruct position from depth image
-	MaterialInfo mat_info;
+	float depth = subpassLoad(depth_stencil_texture_sampler).x;
     vec4 ndc_pos = vec4(f_tex_coord * 2.0 - 1.0, depth, 1.0);
     vec4 world_position = lighting_ubo.inv_camera_view_proj * ndc_pos;
+    MaterialInfo mat_info;
 	mat_info.position = world_position.xyz / world_position.w;
 	mat_info.normal = subpassLoad(normal_texture_sampler).xyz;
 	

@@ -1258,7 +1258,6 @@ namespace ImGuizmo
 
    static void DrawHatchedAxis(const vec_t& axis)
    {
-      return;
       for (int j = 1; j < 10; j++)
       {
          ImVec2 baseSSpace2 = worldToPos(axis * 0.05f * (float)(j * 2) * gContext.mScreenFactor, gContext.mMVP);

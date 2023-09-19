@@ -54,17 +54,20 @@ namespace Bamboo
 	void WorldManager::openWorld(const URL& url)
 	{
 		m_open_world_url = url;
+		LOG_INFO("open world: {}", m_open_world_url);
 	}
 
 	void WorldManager::createWorld(const URL& template_url, const URL& save_as_url)
 	{
 		m_template_url = template_url;
 		m_save_as_url = save_as_url;
+		LOG_INFO("create world: {}", m_template_url);
 	}
 
 	bool WorldManager::saveWorld()
 	{
 		g_runtime_context.assetManager()->serializeAsset(m_current_world);
+		LOG_INFO("save world: {}", m_current_world->getURL());
 		return true;
 	}
 

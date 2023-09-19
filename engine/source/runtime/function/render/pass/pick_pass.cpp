@@ -129,10 +129,7 @@ namespace Bamboo
 		VulkanUtil::extractImage(m_color_image_view.image(), m_width, m_height, m_formats[0], image_data);
 
 		uint32_t entity_id = decodeEntityID(&image_data[(m_mouse_y * m_width + m_mouse_x) * 4]);
-		if (entity_id != UINT_MAX)
-		{
-			g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(entity_id));
-		}
+		g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(entity_id));
 
 		//LOG_INFO("pick entity {} elapsed time : {}ms", entity_id, stop_watch.stop());
 		m_enabled = false;

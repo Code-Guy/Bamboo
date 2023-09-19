@@ -65,7 +65,8 @@ namespace Bamboo
 
 		ImGui::SetCursorScreenPos(cursor_screen_pos);
 		ImGui::SetNextItemAllowOverlap();
-		if (ImGui::InvisibleButton("image", content_size) && !ImGuizmo::IsOver())
+		if (ImGui::InvisibleButton("image", content_size) && 
+			(!m_selected_entity.lock() || !ImGuizmo::IsOver()))
 		{
 			g_runtime_context.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>(mouse_x, mouse_y));
 		}
@@ -355,9 +356,17 @@ namespace Bamboo
 			return;
 		}
 
-		if (key_event->key == GLFW_KEY_ESCAPE)
+		if (m_selected_entity.lock())
 		{
-			g_runtime_context.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(UINT_MAX));
+			uint32_t selected_entity_id = m_selected_entity.lock()->getID();
+			if (key_event->key == GLFW_KEY_ESCAPE || key_event->key == GLFW_KEY_DELETE)
+			{
+				g_runtime_context.eventSystem()->syncDispatch(std::make_shared<SelectEntityEvent>(UINT_MAX));
+			}
+			if (key_event->key == GLFW_KEY_DELETE)
+			{
+				g_runtime_context.worldManager()->getCurrentWorld()->removeEntity(selected_entity_id);
+			}
 		}
 
 		if (!isFocused())
@@ -365,7 +374,7 @@ namespace Bamboo
 			return;
 		}
 
-		if (m_selected_entity.lock() && !m_mouse_right_button_pressed)
+		if (m_selected_entity.lock() || !m_mouse_right_button_pressed)
 		{
 			if (key_event->key == GLFW_KEY_Q)
 			{

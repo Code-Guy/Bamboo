@@ -17,5 +17,4 @@ void main()
 
 	vec4 pos = transform_pco.mvp * vec4(position, 1.0);
 	gl_Position = pos.xyww;
-	gl_Position.z *= 1 - EPSILON;
 }
