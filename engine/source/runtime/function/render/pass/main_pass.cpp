@@ -410,7 +410,7 @@ namespace Bamboo
 
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[4];
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[4]);
-		CHECK_VULKAN_RESULT(result, "create transparency static mesh pipeline layout");
+		CHECK_VULKAN_RESULT(result, "create transparency skeletal mesh pipeline layout");
 
 		// skybox pipeline layouts
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[5];
@@ -729,7 +729,7 @@ namespace Bamboo
 			if (renderer_type == ERendererType::Forward)
 			{
 				// lighting ubo
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 11);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_lighting_render_data->lighting_ubs[flight_index], 11);
 
 				// ibl textures
 				std::vector<VmaImageViewSampler> ibl_textures = {
