@@ -217,6 +217,7 @@ namespace Bamboo
 		if (!asset_name.empty())
 		{
 			std::string asset_basename = g_runtime_context.fileSystem()->basename(asset_name);
+			asset_basename = g_runtime_context.fileSystem()->validateBasename(asset_basename);
 			return g_runtime_context.fileSystem()->format("%s_%s.%s", ext.c_str(), asset_basename.c_str(), ext.c_str());
 		}
 		return g_runtime_context.fileSystem()->format("%s_%s_%d.%s", ext.c_str(), basename.c_str(), asset_index, ext.c_str());

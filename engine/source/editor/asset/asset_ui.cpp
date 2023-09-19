@@ -298,21 +298,12 @@ namespace Bamboo
 					ImGui::Text("Importing gltf: %s", import_file.c_str());
 					ImGui::Separator();
 
-					static bool combine_meshes = true;
 					ImGui::SeparatorText("Mesh");
-					ImGui::Checkbox("combine meshes", &combine_meshes);
-
 					static bool force_static_mesh = false;
-					if (combine_meshes)
-					{
-						force_static_mesh = true;
-						ImGui::BeginDisabled();
-					}
 					ImGui::Checkbox("force static mesh", &force_static_mesh);
-					if (combine_meshes)
-					{
-						ImGui::EndDisabled();
-					}
+
+					static bool combine_meshes = true;
+					ImGui::Checkbox("combine meshes", &combine_meshes);
 
 					ImGui::SeparatorText("Material");
 					static bool contains_occlusion_channel = true;

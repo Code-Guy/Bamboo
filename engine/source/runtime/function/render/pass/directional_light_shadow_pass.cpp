@@ -422,10 +422,8 @@ namespace Bamboo
 		}
 
 		// update uniform buffers
-		for (VmaBuffer& uniform_buffer : m_shadow_cascade_ubs)
-		{
-			VulkanUtil::updateBuffer(uniform_buffer, (void*)&m_shadow_cascade_ubo, sizeof(ShadowCascadeUBO));
-		}
+		VmaBuffer uniform_buffer = m_shadow_cascade_ubs[VulkanRHI::get().getFlightIndex()];
+		VulkanUtil::updateBuffer(uniform_buffer, (void*)&m_shadow_cascade_ubo, sizeof(ShadowCascadeUBO));
 	}
 
 }

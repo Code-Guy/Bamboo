@@ -1,9 +1,9 @@
 #include "animator_component.h"
+#include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/global/runtime_context.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/framework/entity/entity.h"
 #include "runtime/function/framework/component/animation_component.h"
-#include "runtime/function/framework/component/skeletal_mesh_component.h"
 
 RTTR_REGISTRATION
 {
@@ -16,6 +16,24 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::AnimatorComponen
 
 namespace Bamboo
 {
+
+	AnimatorComponent::AnimatorComponent()
+	{
+		m_bone_ubs.resize(MAX_FRAMES_IN_FLIGHT);
+		for (VmaBuffer& bone_ub : m_bone_ubs)
+		{
+			VulkanUtil::createBuffer(sizeof(BoneUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, bone_ub);
+		}
+	}
+
+	AnimatorComponent::~AnimatorComponent()
+	{
+		for (VmaBuffer& bone_ub : m_bone_ubs)
+		{
+			bone_ub.destroy();
+		}
+	}
+
 	void AnimatorComponent::setSkeleton(std::shared_ptr<Skeleton>& skeleton)
 	{
 		m_skeleton_inst = *skeleton;
@@ -28,19 +46,14 @@ namespace Bamboo
 		{
 			m_animation_component = m_parent.lock()->getComponent(AnimationComponent);
 		}
-		if (!m_skeletal_mesh_component)
-		{
-			m_skeletal_mesh_component = m_parent.lock()->getComponent(SkeletalMeshComponent);
-		}
 
-		if (!m_animation_component || !m_skeletal_mesh_component)
+		if (!m_animation_component)
 		{
 			return;
 		}
 
 		const auto& animations = m_animation_component->getAnimations();
-		const auto& skeletal_mesh = m_skeletal_mesh_component->getSkeletalMesh();
-		if (animations.empty() || !skeletal_mesh)
+		if (animations.empty())
 		{
 			return;
 		}
@@ -106,10 +119,8 @@ namespace Bamboo
 		}
 
 		// update uniform buffers
-		for (VmaBuffer& uniform_buffer : skeletal_mesh->m_uniform_buffers)
-		{
-			VulkanUtil::updateBuffer(uniform_buffer, (void*)&m_bone_ubo, sizeof(BoneUBO));
-		}
+		VmaBuffer uniform_buffer = m_bone_ubs[VulkanRHI::get().getFlightIndex()];
+		VulkanUtil::updateBuffer(uniform_buffer, (void*)&m_bone_ubo, sizeof(BoneUBO));
 	}
 
 	void AnimatorComponent::play(bool loop)

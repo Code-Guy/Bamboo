@@ -552,12 +552,23 @@ namespace Bamboo
 		// turn nodes to static mesh/skeletal mesh
 		if (option.combine_meshes)
 		{
-			EAssetType asset_type = EAssetType::StaticMesh;
+			// determine mesh type by skins
+			bool is_skeletal_mesh = !option.force_static_mesh && !gltf_model.skins.empty();
+			EAssetType asset_type = is_skeletal_mesh ? EAssetType::SkeletalMesh : EAssetType::StaticMesh;
 			std::string asset_name = as->getAssetName(basename, asset_type, asset_indices[asset_type]++, basename);
 			URL url = g_runtime_context.fileSystem()->combine(folder, asset_name);
-			std::shared_ptr<StaticMesh> static_mesh = std::make_shared<StaticMesh>();
-			static_mesh->setURL(url);
+			std::shared_ptr<StaticMesh> static_mesh = nullptr;
 			std::shared_ptr<SkeletalMesh> skeletal_mesh = nullptr;
+			if (is_skeletal_mesh)
+			{
+				skeletal_mesh = std::make_shared<SkeletalMesh>();
+				skeletal_mesh->setURL(url);
+			}
+			else
+			{
+				static_mesh = std::make_shared<StaticMesh>();
+				static_mesh->setURL(url);
+			}
 
 			std::vector<std::pair<tinygltf::Primitive, glm::mat4>> primitives;
 			for (const auto& node_pair : nodes)
@@ -571,8 +582,16 @@ namespace Bamboo
 
 			importGltfPrimitives(gltf_model, primitives, materials, static_mesh, skeletal_mesh);
 
-			static_mesh->inflate();
-			as->serializeAsset(static_mesh);
+			if (is_skeletal_mesh)
+			{
+				skeletal_mesh->inflate();
+				as->serializeAsset(skeletal_mesh);
+			}
+			else
+			{
+				static_mesh->inflate();
+				as->serializeAsset(static_mesh);
+			}
 		}
 		else
 		{

@@ -48,7 +48,6 @@ namespace Bamboo
 
 		VmaBuffer m_vertex_buffer;
 		VmaBuffer m_index_buffer;
-		std::vector<VmaBuffer> m_uniform_buffers;
 		
 		BoundingBox m_bounding_box;
 

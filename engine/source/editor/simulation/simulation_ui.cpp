@@ -204,16 +204,28 @@ namespace Bamboo
 			skeletal_mesh_component->setSkeletalMesh(skeletal_mesh);
 			m_created_entity->addComponent(skeletal_mesh_component);
 
-			std::shared_ptr<AnimationComponent> animation_component = std::make_shared<AnimationComponent>();
-			std::shared_ptr<Animation> animation = as->loadAsset<Animation>("asset/cesium_man/anim_Anim_0.anim");
-			animation_component->addAnimation(animation);
-			m_created_entity->addComponent(animation_component);
-
-			std::shared_ptr<AnimatorComponent> animator_component = std::make_shared<AnimatorComponent>();
-			std::shared_ptr<Skeleton> skeleton = as->loadAsset<Skeleton>("asset/cesium_man/skl_Armature.skl");
-			animator_component->setTickEnabled(true);
-			animator_component->setSkeleton(skeleton);
-			m_created_entity->addComponent(animator_component);
+			const auto& fs = g_runtime_context.fileSystem();
+			std::vector<std::string> filenames = fs->traverse(fs->absolute(fs->dir(url)));
+			for (const std::string& filename : filenames)
+			{
+				URL asset_url = fs->relative(filename);
+				EAssetType asset_type = as->getAssetType(asset_url);
+				if (asset_type == EAssetType::Animation && !m_created_entity->hasComponent(AnimationComponent))
+				{
+					std::shared_ptr<AnimationComponent> animation_component = std::make_shared<AnimationComponent>();
+					std::shared_ptr<Animation> animation = as->loadAsset<Animation>(asset_url);
+					animation_component->addAnimation(animation);
+					m_created_entity->addComponent(animation_component);
+				}
+				else if (asset_type == EAssetType::Skeleton && !m_created_entity->hasComponent(AnimatorComponent))
+				{
+					std::shared_ptr<AnimatorComponent> animator_component = std::make_shared<AnimatorComponent>();
+					std::shared_ptr<Skeleton> skeleton = as->loadAsset<Skeleton>(asset_url);
+					animator_component->setTickEnabled(true);
+					animator_component->setSkeleton(skeleton);
+					m_created_entity->addComponent(animator_component);
+				}
+			}
 
 			m_created_entity->setTickEnabled(true);
 			m_created_entity->setTickInterval(0.0167f);

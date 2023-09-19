@@ -27,6 +27,7 @@ namespace Bamboo
 		std::string modifiedTime(const std::string& path);
 		std::vector<std::string> traverse(const std::string& path, bool is_recursive = false, 
 			EFileOrderType file_order_type = EFileOrderType::Name, bool is_reverse = false);
+		std::string validateBasename(const std::string& basename);
 
 		std::string getAssetDir();
 		std::string getShaderDir();

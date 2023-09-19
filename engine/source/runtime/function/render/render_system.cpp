@@ -21,6 +21,7 @@
 #include "runtime/function/framework/component/transform_component.h"
 #include "runtime/function/framework/component/static_mesh_component.h"
 #include "runtime/function/framework/component/skeletal_mesh_component.h"
+#include "runtime/function/framework/component/animator_component.h"
 #include "runtime/function/framework/component/sky_light_component.h"
 #include "runtime/function/framework/component/directional_light_component.h"
 #include "runtime/function/framework/component/point_light_component.h"
@@ -286,7 +287,8 @@ namespace Bamboo
 					// update uniform buffers
 					if (is_skeletal_mesh)
 					{
-						skeletal_mesh_render_data->bone_ubs = mesh->m_uniform_buffers;
+						auto animator_component = entity->getComponent(AnimatorComponent);
+						skeletal_mesh_render_data->bone_ubs = animator_component->m_bone_ubs;
 					}
 
 					// update push constants
@@ -513,10 +515,8 @@ namespace Bamboo
 		}
 
 		// update lighting uniform buffers
-		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
-		{
-			VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
-		}
+		VmaBuffer uniform_buffer = m_lighting_ubs[VulkanRHI::get().getFlightIndex()];
+		VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
 		lighting_render_data->lighting_ubs = m_lighting_ubs;
 
 		// pick pass

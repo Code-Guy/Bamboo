@@ -142,6 +142,21 @@ namespace Bamboo
 		return filenames;
 	}
 
+	std::string FileSystem::validateBasename(const std::string& basename)
+	{
+		std::vector<char> invalid_chars = {
+			'\\', '/', ':', '*', '?', '"', '<', '>', '|'
+		};
+
+		std::string validated_basename;
+		for (size_t i = 0; i < basename.size(); ++i)
+		{
+			bool is_valid_char = std::find(invalid_chars.begin(), invalid_chars.end(), basename[i]) == invalid_chars.end();
+			validated_basename.push_back(is_valid_char ? basename[i] : '_');
+		}
+		return validated_basename;
+	}
+
 	std::string FileSystem::getAssetDir()
 	{
 		return absolute("asset");

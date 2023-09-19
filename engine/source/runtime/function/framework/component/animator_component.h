@@ -2,6 +2,7 @@
 
 #include "component.h"
 #include "runtime/resource/asset/skeleton.h"
+#include "runtime/core/vulkan/vulkan_util.h"
 #include "host_device.h"
 
 namespace Bamboo
@@ -9,12 +10,17 @@ namespace Bamboo
 	class AnimatorComponent : public Component, public IAssetRef
 	{
 	public:
+		AnimatorComponent();
+		~AnimatorComponent();
+
 		void setSkeleton(std::shared_ptr<Skeleton>& skeleton);
 		std::shared_ptr<Skeleton> getSkeleton() { return m_skeleton; }
 
 		virtual void tick(float delta_time) override;
 
 		void play(bool loop = true);
+
+		std::vector<VmaBuffer> m_bone_ubs;
 
 	private:
 		REGISTER_REFLECTION(Component)
@@ -32,7 +38,6 @@ namespace Bamboo
 		Skeleton m_skeleton_inst;
 
 		std::shared_ptr<class AnimationComponent> m_animation_component;
-		std::shared_ptr<class SkeletalMeshComponent> m_skeletal_mesh_component;
 		BoneUBO m_bone_ubo;
 
 		float m_time = 0.0f;
