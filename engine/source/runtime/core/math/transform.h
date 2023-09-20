@@ -5,6 +5,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/epsilon.hpp>
 
+#include "runtime/resource/serialization/serialization.h"
+
 namespace Bamboo
 {
 	const glm::vec3 k_forward_vector = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -37,6 +39,16 @@ namespace Bamboo
 		glm::vec3 m_scale = glm::vec3(1.0f);
 
 		glm::mat4 matrix() const;
-		bool isIdentity() const;
+		void fromMatrix(const glm::mat4& m);
+
+	private:
+		friend class cereal::access;
+		template<class Archive>
+		void serialize(Archive& ar)
+		{
+			ar(cereal::make_nvp("position", m_position));
+			ar(cereal::make_nvp("rotation", m_rotation));
+			ar(cereal::make_nvp("scale", m_scale));
+		}
 	};
 }

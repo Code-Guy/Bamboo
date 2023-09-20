@@ -72,6 +72,24 @@ namespace Bamboo
 		return matrix;
 	}
 
+	QTranform GltfImporter::getGltfNodeTransform(const tinygltf::Node* node)
+	{
+		QTranform transform;
+		if (!node->translation.empty())
+		{
+			transform.m_position = glm::make_vec3(node->translation.data());
+		}
+		if (!node->rotation.empty())
+		{
+			transform.m_rotation = glm::make_quat(node->rotation.data());
+		}
+		if (!node->scale.empty())
+		{
+			transform.m_scale = glm::make_vec3(node->scale.data());
+		}
+		return transform;
+	}
+
 	bool GltfImporter::validateGltfMeshNode(const tinygltf::Node* node, const tinygltf::Model& gltf_model)
 	{
 		if (node->mesh == INVALID_INDEX)
@@ -127,7 +145,7 @@ namespace Bamboo
 		{
 			const tinygltf::Node& joint_node = joint_nodes[i].first;
 			bones[i].m_name = joint_node.name;
-			bones[i].m_local_bind_pose_matrix = getGltfNodeMatrix(&joint_node);
+			bones[i].m_local_bind_pose_transform = getGltfNodeTransform(&joint_node);
 
 			for (int child_joint_node_index : joint_node.children)
 			{
@@ -307,12 +325,15 @@ namespace Bamboo
 				}
 
 				static_vertex->m_position = glm::make_vec3(&position_buffer[v * position_byte_stride]);
-				static_vertex->m_position = matrix * glm::vec4(static_vertex->m_position, 1.0f);
 				static_vertex->m_tex_coord = tex_coord_buffer ? glm::make_vec2(&tex_coord_buffer[v * tex_coord_byte_stride]) : glm::vec2(0.0f);
 				static_vertex->m_normal = glm::make_vec3(&normal_buffer[v * normal_byte_stride]);
-				static_vertex->m_normal = glm::normalize(normal_matrix * static_vertex->m_normal);
 
-				if (!static_mesh)
+				if (static_mesh)
+				{
+ 					static_vertex->m_position = matrix * glm::vec4(static_vertex->m_position, 1.0f);
+ 					static_vertex->m_normal = glm::normalize(normal_matrix * static_vertex->m_normal);
+				}
+				else
 				{
 					switch (joint_component_type)
 					{
@@ -518,6 +539,7 @@ namespace Bamboo
 
 		// 3.load nodes recursively
 		// load all nodes into one single vector, with global world matrix
+		glm::mat4 root_bone_matrix = glm::mat4(1.0);
 		std::vector<std::pair<glm::mat4, const tinygltf::Node*>> nodes;
 		for (const tinygltf::Scene& gltf_scene : gltf_model.scenes)
 		{
@@ -538,6 +560,11 @@ namespace Bamboo
 				if (validateGltfMeshNode(parent_node, gltf_model))
 				{
 					nodes.push_back(node_pair);
+				}
+
+				if (parent_node->mesh != INVALID_INDEX && parent_node->skin != INVALID_INDEX)
+				{
+					root_bone_matrix = parent_matrix;
 				}
 
 				for (int children : parent_node->children)
@@ -659,6 +686,7 @@ namespace Bamboo
 
 			// set bone's children/parent relations
 			skeleton->m_root_bone_index = topologizeGltfBones(skeleton->m_bones, joint_nodes);
+			skeleton->m_bones[skeleton->m_root_bone_index].m_local_bind_pose_transform.fromMatrix(root_bone_matrix);
 
 			// set bone's global inverse bind matrix
 			ASSERT(skin.inverseBindMatrices != INVALID_INDEX, "gltf skin must have inverse bind matrices");
@@ -735,7 +763,7 @@ namespace Bamboo
 					}
 					default:
 					{
-						LOG_FATAL("unknown gltf animation sampler's value type");
+						LOG_WARNING("ignore unknown gltf animation sampler's value type {}", accessor.type);
 						break;
 					}
 					}
@@ -748,8 +776,11 @@ namespace Bamboo
 			{
 				const tinygltf::AnimationChannel& gltf_channel = gltf_animation.channels[i];
 				AnimationChannel& channel = animation->m_channels[i];
-				ASSERT(gltf_channel.target_path == "rotation" || gltf_channel.target_path == "translation" || gltf_channel.target_path == "scale",
-					"gltf animation channel's target path must be rotation/translation/scale");
+				if (gltf_channel.target_path != "rotation" && gltf_channel.target_path != "translation" && gltf_channel.target_path != "scale")
+				{
+					LOG_WARNING("ignore unknown gltf animation channel's target path {}", gltf_channel.target_path);
+					break;
+				}
 
 				channel.m_path_type = gltf_channel.target_path == "rotation" ? AnimationChannel::EPathType::Rotation :
 					(gltf_channel.target_path == "translation" ? AnimationChannel::EPathType::Translation : AnimationChannel::EPathType::Scale);

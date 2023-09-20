@@ -17,6 +17,7 @@ namespace Bamboo
 		static VkFilter getVkFilterFromGltf(int gltf_filter);
 		static VkSamplerAddressMode getVkAddressModeFromGltf(int gltf_wrap);
 		static glm::mat4 getGltfNodeMatrix(const tinygltf::Node* node);
+		static QTranform getGltfNodeTransform(const tinygltf::Node* node);
 		static bool validateGltfMeshNode(const tinygltf::Node* node, const tinygltf::Model& gltf_model);
 		static bool isGltfSkeletalMesh(const tinygltf::Mesh& gltf_mesh);
 		static size_t findGltfJointNodeBoneIndex(const std::vector<std::pair<tinygltf::Node, int>>& joint_nodes, int node_index);

@@ -1,5 +1,4 @@
 #include "animator_component.h"
-#include "runtime/core/vulkan/vulkan_rhi.h"
 #include "runtime/function/global/runtime_context.h"
 #include "runtime/resource/asset/asset_manager.h"
 #include "runtime/function/framework/entity/entity.h"
@@ -98,6 +97,9 @@ namespace Bamboo
 					}
 						break;
 					default:
+					{
+						LOG_FATAL("Unknown animation channel path type {}", channel.m_path_type);
+					}
 						break;
 					}
 				}
@@ -119,8 +121,10 @@ namespace Bamboo
 		}
 
 		// update uniform buffers
-		VmaBuffer uniform_buffer = m_bone_ubs[VulkanRHI::get().getFlightIndex()];
-		VulkanUtil::updateBuffer(uniform_buffer, (void*)&m_bone_ubo, sizeof(BoneUBO));
+ 		for (VmaBuffer& bone_ub : m_bone_ubs)
+ 		{
+ 			VulkanUtil::updateBuffer(bone_ub, (void*)&m_bone_ubo, sizeof(BoneUBO));
+ 		}
 	}
 
 	void AnimatorComponent::play(bool loop)

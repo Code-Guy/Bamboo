@@ -1,4 +1,5 @@
 #include "transform.h"
+#include <glm/gtx/matrix_decompose.hpp>
 
 namespace Bamboo
 {
@@ -52,11 +53,11 @@ namespace Bamboo
 		return model_matrix;
 	}
 
-	bool QTranform::isIdentity() const
-	{
-		return glm::all(glm::epsilonEqual(m_position, k_zero_vector, k_epsilon)) &&
-			glm::all(glm::epsilonEqual(m_rotation, k_zero_quat, k_epsilon)) &&
-			glm::all(glm::epsilonEqual(m_scale, k_one_vector, k_epsilon));
+	void QTranform::fromMatrix(const glm::mat4& m)
+	{	
+		glm::vec3 skew;
+		glm::vec4 perspective;
+		glm::decompose(m, m_scale, m_rotation, m_position, skew, perspective);
 	}
 
 }
