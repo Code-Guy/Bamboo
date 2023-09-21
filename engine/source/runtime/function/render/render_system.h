@@ -41,6 +41,7 @@ namespace Bamboo
 			std::vector<std::shared_ptr<BillboardRenderData>>& selected_billboard_render_datas,
 			std::vector<uint32_t>& billboard_entity_ids,
 			ELightType light_type);
+		void scriptEntities(float delta_time);
 
 		// render passes
 		std::shared_ptr<class DirectionalLightShadowPass> m_directional_light_shadow_pass;

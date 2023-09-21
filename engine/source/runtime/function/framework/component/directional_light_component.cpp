@@ -15,6 +15,7 @@ namespace Bamboo
 
 	DirectionalLightComponent::DirectionalLightComponent()
 	{
+		m_intensity = 4.0f;
 		m_cascade_frustum_near = 0.0f;
 	}
 

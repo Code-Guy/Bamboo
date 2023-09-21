@@ -16,8 +16,8 @@ namespace Bamboo
 
 	SpotLightComponent::SpotLightComponent()
 	{
-		m_inner_cone_angle = 60.0f;
-		m_outer_cone_angle = 90.0f;
+		m_inner_cone_angle = 30.0f;
+		m_outer_cone_angle = 45.0f;
 	}
 
 }

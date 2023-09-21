@@ -123,6 +123,9 @@ namespace Bamboo
 			}
 		}
 
+		// update camera pose
+		updateRotation();
+
 		// update camera view/projection matrix
 		m_view_matrix = glm::lookAtRH(m_transform_component->m_position, m_transform_component->m_position + m_forward, m_up);
 		m_projection_matrix = getProjectionMatrix(m_projection_type);
@@ -141,9 +144,6 @@ namespace Bamboo
 			std::bind(&CameraComponent::onCursorPos, this, std::placeholders::_1));
 		m_scroll_event_handle = g_runtime_context.eventSystem()->addListener(EEventType::WindowScroll, 
 			std::bind(&CameraComponent::onScroll, this, std::placeholders::_1));
-
-		// update camera pose
-		updatePose();
 	}
 
 	void CameraComponent::onKey(const std::shared_ptr<class Event>& event)
@@ -213,8 +213,6 @@ namespace Bamboo
 		yaw += xoffset;
 		pitch -= yoffset;
 		pitch = std::clamp(pitch, -89.0f, 89.0f);
-
-		updatePose();
 	}
 
 	void CameraComponent::onScroll(const std::shared_ptr<class Event>& event)
@@ -228,7 +226,7 @@ namespace Bamboo
 		m_transform_component->m_position += m_forward * (float)scroll_event->yoffset * m_zoom_speed;
 	}
 
-	void CameraComponent::updatePose()
+	void CameraComponent::updateRotation()
 	{
 		m_forward = m_transform_component->getForwardVector();
 		m_right = glm::cross(m_forward, k_up_vector);

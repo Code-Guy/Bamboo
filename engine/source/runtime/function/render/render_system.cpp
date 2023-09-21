@@ -27,6 +27,8 @@
 #include "runtime/function/framework/component/point_light_component.h"
 #include "runtime/function/framework/component/spot_light_component.h"
 
+#include <random>
+
 namespace Bamboo
 {
 
@@ -90,6 +92,7 @@ namespace Bamboo
 	void RenderSystem::tick(float delta_time)
 	{
 		// collect render data from entities of current world
+		//scriptEntities(delta_time);
 		collectRenderDatas();
 
 		// vulkan rendering
@@ -194,7 +197,7 @@ namespace Bamboo
 		lighting_render_data->brdf_lut_texture = m_default_texture_2d->m_image_view_sampler;
 		lighting_render_data->irradiance_texture = m_default_texture_cube->m_image_view_sampler;
 		lighting_render_data->prefilter_texture = m_default_texture_cube->m_image_view_sampler;
-		lighting_render_data->directional_light_shadow_texture = m_default_texture_2d->m_image_view_sampler;
+		lighting_render_data->directional_light_shadow_texture = m_directional_light_shadow_pass->getShadowImageViewSampler();
 		lighting_render_data->point_light_shadow_textures.resize(MAX_POINT_LIGHT_NUM);
 		lighting_render_data->spot_light_shadow_textures.resize(MAX_SPOT_LIGHT_NUM);
 		for (uint32_t i = 0; i < MAX_POINT_LIGHT_NUM; ++i)
@@ -454,7 +457,6 @@ namespace Bamboo
 				lighting_ubo.directional_light.cascade_splits[i] = m_directional_light_shadow_pass->m_cascade_splits[i];
 				lighting_ubo.directional_light.cascade_view_projs[i] = m_directional_light_shadow_pass->m_shadow_cascade_ubo.cascade_view_projs[i];
 			}
-			lighting_render_data->directional_light_shadow_texture = m_directional_light_shadow_pass->getShadowImageViewSampler();
 
 			if (lighting_ubo.directional_light.cast_shadow)
 			{
@@ -582,6 +584,38 @@ namespace Bamboo
 			selected_billboard_render_datas.push_back(billboard_render_data);
 		}
 		billboard_entity_ids.push_back(entity_id);
+	}
+
+	void RenderSystem::scriptEntities(float delta_time)
+	{
+		const auto& current_world = g_runtime_context.worldManager()->getCurrentWorld();
+		const auto& entities = current_world->getEntities();
+
+		std::random_device rd;
+		std::mt19937 mt(rd());
+		std::uniform_real_distribution<float> dist(0.1f, 1.0f);
+
+		static float time = 0.0f;
+		static glm::vec3 start_axis = glm::normalize(glm::vec3(dist(mt), dist(mt), dist(mt)));
+		static glm::vec3 target_axis = glm::normalize(glm::vec3(dist(mt), dist(mt), dist(mt)));
+
+		time += delta_time;
+		if (time > 1.0f)
+		{
+			target_axis = glm::normalize(glm::vec3(dist(mt), dist(mt), dist(mt)));
+			time = 0.0f;
+		}
+		
+		glm::vec3 current_axis = glm::mix(start_axis, target_axis, time);
+		for (const auto& iter : entities)
+		{
+			const auto& entity = iter.second;
+			if (entity->getName() == "sm_octopus_dance")
+			{
+				auto transform_component = entity->getComponent(TransformComponent);
+				transform_component->m_rotation += target_axis * delta_time * 30.0f;
+			}
+		}
 	}
 
 }

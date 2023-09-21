@@ -446,11 +446,13 @@ namespace Bamboo
 						m_created_entity = world->createEntity(entity_type);
 
 						// add transform component
-						m_created_entity->addComponent(std::make_shared<TransformComponent>());
+						auto transform_component = std::make_shared<TransformComponent>();
+						m_created_entity->addComponent(transform_component);
 
 						// add light component
 						if (entity_type.find("directional") != std::string::npos)
 						{
+							transform_component->setRotation(glm::vec3(0.0f, 135.0f, -35.2f));
 							m_created_entity->addComponent(std::make_shared<DirectionalLightComponent>());
 						}
 						else if (entity_type.find("sky") != std::string::npos)

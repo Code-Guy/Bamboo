@@ -18,6 +18,7 @@ namespace Bamboo
 
 	SkyLightComponent::SkyLightComponent()
 	{
+		m_intensity = 0.5f;
 		m_prefilter_mip_levels = 0;
 	}
 
@@ -49,7 +50,6 @@ namespace Bamboo
 			brdf_pass->render();
 			brdf_pass->destroy();
 		}
-		m_brdf_lut_texture_sampler = g_runtime_context.assetManager()->loadAsset<Texture2D>(BRDF_TEXTURE_URL)->m_image_view_sampler;
 
 		// create ibl textures
 		createIBLTextures();
@@ -69,6 +69,7 @@ namespace Bamboo
 		m_irradiance_texture_sampler = filter_cube_pass->getIrradianceTextureSampler();
 		m_prefilter_texture_sampler = filter_cube_pass->getPrefilterTextureSampler();
 		m_prefilter_mip_levels = filter_cube_pass->getPrefilterMipLevels();
+		m_brdf_lut_texture_sampler = g_runtime_context.assetManager()->loadAsset<Texture2D>(BRDF_TEXTURE_URL)->m_image_view_sampler;
 	}
 
 }

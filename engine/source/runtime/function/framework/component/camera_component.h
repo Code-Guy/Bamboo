@@ -74,7 +74,7 @@ namespace Bamboo
 		void onCursorPos(const std::shared_ptr<class Event>& event);
 		void onScroll(const std::shared_ptr<class Event>& event);
 
-		void updatePose();
+		void updateRotation();
 		glm::mat4 getProjectionMatrixYInverted(const glm::mat4& projection_matrix);
 
 		// camera component depends a transform component
