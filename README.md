@@ -25,15 +25,19 @@
 - Postprocessing(Color Grading)
 
 ## How to build
+**I don't want to build anyway**
+Well, if you're using Windows, you can download the prebuild engine zip file(Bamboo.zip) in the release page:)
+
 **Supported Platforms**
 - Windows
 - Linux(WIP)
-- MacOS(TODO)
+- MacOS(ToDo)
 
 **Prerequites**
 - [Git](http://git-scm.com/downloads).
 - [CMake](https://cmake.org/download/). Version 3.20.0 or later is required.
 - [Vulkan Sdk](https://www.lunarg.com/vulkan-sdk/). Verison 1.3 or later is prefered.
+- [Visual Studio](https://visualstudio.microsoft.com/). Version 2022 is prefered.
 
 **Step 1.** Clone the sources and create a build directory.
 
@@ -48,11 +52,13 @@ mkdir build && cd build
 cmake -G "Visual Studio 17 Win64" -S . -B build
 ```
 
-**Step 3.** Finally, you can use any IDE according to you selected generator, but you can also just build straight from CMake.
+**Step 3.** You can use any IDE according to you selected generator, but you can also just build straight from CMake.
 
 ```shell
 cmake --build build --config Release
 ```
+
+**Step 4.** Don't forget to download Bamboo.zip file from github repo, unzip it, and copy the asset folder to the path of BambooEditor.exe to cover the existing one, then we can run the Bamboo editor finally! 
 
 ## External libraries
 All external libraries' source codes have been integrated into this repo, so there is no need to clone those libraries manually:)
