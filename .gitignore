@@ -1,6 +1,7 @@
 # custom
 build/*
 log/*
+asset/*
 
 # mac
 cpm_modules/

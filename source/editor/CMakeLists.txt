@@ -8,7 +8,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${HEADER_FILES} ${SOURCE_F
 
 add_executable(${TARGET_NAME} ${HEADER_FILES} ${SOURCE_FILES} ${RESOURCE})
 
-set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Bamboo" OUTPUT_NAME "BambooEditor")
+set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Bamboo")
 
 target_link_libraries(${TARGET_NAME} Engine)
 
