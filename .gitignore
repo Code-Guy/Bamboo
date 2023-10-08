@@ -1,13 +1,6 @@
 # custom
-build/
-log/
-asset/*
-!asset/world/
-
-!asset/engine/
-asset/engine/mesh/
-asset/engine/spv/
-asset/engine/texture
+build/*
+log/*
 
 # mac
 cpm_modules/
