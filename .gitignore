@@ -1,13 +1,13 @@
 # custom
 build/
-engine/log/
-engine/asset/*
-!engine/asset/world/
+log/
+asset/*
+!asset/world/
 
-!engine/asset/engine/
-engine/asset/engine/mesh/
-engine/asset/engine/spv/
-engine/asset/engine/texture
+!asset/engine/
+asset/engine/mesh/
+asset/engine/spv/
+asset/engine/texture
 
 # mac
 cpm_modules/
