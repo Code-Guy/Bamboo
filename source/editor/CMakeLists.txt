@@ -2,20 +2,15 @@ set(TARGET_NAME Editor)
 
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "*.cpp")
-file(GLOB RESOURCE CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/resource/BambooEditor.rc)
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${HEADER_FILES} ${SOURCE_FILES})
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${HEADER_FILES} ${SOURCE_FILES} ${RESOURCE})
-
-add_executable(${TARGET_NAME} ${HEADER_FILES} ${SOURCE_FILES} ${RESOURCE})
+add_library(${TARGET_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Bamboo")
 
-target_link_libraries(${TARGET_NAME} Engine)
+target_link_libraries(${TARGET_NAME} PRIVATE Engine)
 
-if (WIN32)
-    set(SUBSYSTEM_LINKER_OPTIONS "$<IF:$<CONFIG:Debug>,/SUBSYSTEM:CONSOLE,/SUBSYSTEM:WINDOWS>" "/ENTRY:mainCRTStartup")
-else()
-    set(SUBSYSTEM_LINKER_OPTIONS "$<IF:$<NOT:$<CONFIG:Debug>>,-mwindows,>")
-endif()
-
-target_link_options(${TARGET_NAME} PRIVATE ${SUBSYSTEM_LINKER_OPTIONS})
+install(TARGETS ${TARGET_NAME} DESTINATION "bin/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/editor.h"
+        DESTINATION "include/editor"
+  )

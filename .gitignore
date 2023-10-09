@@ -1,5 +1,6 @@
 # custom
 build/*
+install/*
 log/*
 asset/*
 

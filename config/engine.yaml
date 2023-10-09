@@ -1,7 +1,0 @@
-window:
-  width: 1280
-  height: 720
-
-default_world_url: "asset/world/sponza.world"
-editor_layout: "default.layout"
-save_layout: false

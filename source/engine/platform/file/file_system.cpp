@@ -10,9 +10,9 @@ namespace Bamboo
 		{
 			m_header = std::filesystem::path(".");
 		}
-		else if (std::filesystem::exists(std::filesystem::path("../../../asset")))
+		else if (std::filesystem::exists(std::filesystem::path("../asset")))
 		{
-			m_header = std::filesystem::path("../../../");
+			m_header = std::filesystem::path("../");
 		}
 		else
 		{

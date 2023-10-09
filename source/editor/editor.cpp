@@ -15,9 +15,11 @@
 
 namespace Bamboo
 {
-    void Editor::init(Engine *engine)
+    void Editor::init()
     {
-        m_engine = engine;
+        // init engine
+        m_engine = new Bamboo::Engine;
+        m_engine->init();
 
         // create editor ui
         std::shared_ptr<EditorUI> menu_ui = std::make_shared<MenuUI>();
@@ -54,6 +56,10 @@ namespace Bamboo
 		{
 			editor_ui->destroy();
 		}
+
+        // destroy engine
+        m_engine->destroy();
+        delete m_engine;
     }
 
     void Editor::run()

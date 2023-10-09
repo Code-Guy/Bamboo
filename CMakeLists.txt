@@ -8,12 +8,7 @@ set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 
 set(BAMBOO_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-set(CMAKE_INSTALL_PREFIX "${BAMBOO_ROOT_DIR}/bin")
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options("/MP")
-    set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Editor)
-endif()
+set(CMAKE_INSTALL_PREFIX "${BAMBOO_ROOT_DIR}/install")
 
 add_subdirectory(external)
 add_subdirectory(source/engine)

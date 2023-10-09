@@ -8,7 +8,7 @@ namespace Bamboo
     class Editor
     {
         public:
-            void init(class Engine* engine);
+            void init();
             void destroy();
             void run();
 
