@@ -34,6 +34,7 @@ namespace Bamboo
 		// setup Dear ImGui style
 		ImGui::StyleColorsDark();
 		//ImGui::StyleColorsLight();
+		ImGui::GetStyle().WindowMenuButtonPosition = ImGuiDir_None;
 
 		// create descriptor pool
 		createDescriptorPool();

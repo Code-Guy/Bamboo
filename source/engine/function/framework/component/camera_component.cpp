@@ -25,11 +25,13 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::CameraComponent)
 
 namespace Bamboo
 {
+	float CameraComponent::m_last_aspect_ratio = 0.0f;
 
 	CameraComponent::CameraComponent()
 	{
 		m_projection_type = EProjectionType::Perspective;
 		m_ortho_width = 10.0f;
+		m_aspect_ratio = m_last_aspect_ratio > 0.0f ? m_last_aspect_ratio : 16.0f / 9.0f;
 	}
 
 	CameraComponent::~CameraComponent()
@@ -37,6 +39,8 @@ namespace Bamboo
 		g_engine.eventSystem()->removeListener(m_key_event_handle);
 		g_engine.eventSystem()->removeListener(m_cursor_pos_event_handle);
 		g_engine.eventSystem()->removeListener(m_scroll_event_handle);
+
+		m_last_aspect_ratio = m_aspect_ratio;
 	}
 
 	glm::vec3 CameraComponent::getPosition()

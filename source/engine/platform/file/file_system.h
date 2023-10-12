@@ -32,6 +32,8 @@ namespace Bamboo
 		std::string getAssetDir();
 		std::string getShaderDir();
 		std::string getSpvDir();
+		std::string getLogDir();
+		std::string getCacheDir();
 
 		bool exists(const std::string& path);
 		bool isFile(const std::string& path);

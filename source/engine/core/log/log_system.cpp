@@ -8,7 +8,6 @@
 #include <iomanip>
 #include <ctime>
 
-#define LOGGER_PATH "log"
 #define MAX_LOG_FILE_NUM 100
 #define MAX_ROTATE_FILE_NUM 5
 #define MAX_ROTATE_FILE_SIZE 1048576 * 10
@@ -73,25 +72,18 @@ namespace Bamboo
 
     std::string LogSystem::getLogFilename()
 	{
-        std::string abs_logger_path = g_engine.fileSystem()->absolute(LOGGER_PATH);
-        if (!g_engine.fileSystem()->exists(abs_logger_path))
+        std::string log_dir = g_engine.fileSystem()->getLogDir();
+        std::vector<std::string> log_filenames = g_engine.fileSystem()->traverse(log_dir, false, EFileOrderType::Time);
+        if (log_filenames.size() >= MAX_LOG_FILE_NUM)
         {
-            g_engine.fileSystem()->createDir(abs_logger_path);
-        }
-        else
-        {
-            std::vector<std::string> log_filenames = g_engine.fileSystem()->traverse(abs_logger_path, false, EFileOrderType::Time);
-            if (log_filenames.size() >= MAX_LOG_FILE_NUM)
+            size_t removed_num = log_filenames.size() - MAX_LOG_FILE_NUM / 2;
+            for (size_t i = 0; i < removed_num; ++i)
             {
-                size_t removed_num = log_filenames.size() - MAX_LOG_FILE_NUM / 2;
-                for (size_t i = 0; i < removed_num; ++i)
-                {
-                    g_engine.fileSystem()->removeFile(log_filenames[i]);
-                }
+                g_engine.fileSystem()->removeFile(log_filenames[i]);
             }
         }
 
-        std::string log_filename = g_engine.fileSystem()->combine(abs_logger_path, "bamboo_" + getCurrentDateTimeStr() + ".log");
+        std::string log_filename = g_engine.fileSystem()->combine(log_dir, "bamboo_" + getCurrentDateTimeStr() + ".log");
         return log_filename;
 	}
 

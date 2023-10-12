@@ -33,4 +33,9 @@ namespace Bamboo
 		return m_config_node["save_layout"].as<bool>();
 	}
 
+	bool ConfigManager::isInEditor()
+	{
+		return m_config_node["in_editor"].as<bool>();
+	}
+
 }

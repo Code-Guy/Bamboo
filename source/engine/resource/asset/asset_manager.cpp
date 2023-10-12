@@ -131,8 +131,6 @@ namespace Bamboo
 	void AssetManager::serializeAsset(std::shared_ptr<Asset> asset, const URL& url)
 	{
 		// reference asset
-		m_assets[asset->getURL()] = asset;
-
 		EAssetType asset_type = asset->getAssetType();
 		const std::string& asset_ext = m_asset_type_exts[asset_type];
 		EArchiveType archive_type = m_asset_archive_types[asset_type];
@@ -156,6 +154,12 @@ namespace Bamboo
 		break;
 		default:
 			break;
+		}
+
+		// don't cache world!
+		if (asset_type != EAssetType::World)
+		{
+			m_assets[url] = asset;
 		}
 	}
 

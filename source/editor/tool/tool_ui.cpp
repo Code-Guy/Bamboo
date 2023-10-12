@@ -22,6 +22,7 @@ namespace Bamboo
 
 		float region_w = ImGui::GetContentRegionAvail().x;
 		ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
+		const auto& wm = g_engine.worldManager();
 
 		// save
 		const float kButtonHeight = 30.0f;
@@ -29,7 +30,7 @@ namespace Bamboo
 		ImGui::PushFont(bigIconFont());
 		if (ImGui::Button(ICON_FA_SAVE, kButtonSize))
 		{
-			g_engine.worldManager()->saveWorld();
+			wm->saveWorld();
 		}
 		ImGui::PopFont();
 
@@ -45,21 +46,54 @@ namespace Bamboo
 		// play/step/stop
 		ImGui::SameLine();
 		ImGui::SetCursorPosX(region_w * 0.5f - kButtonSize.x * 1.5f - spacing.x);
-		if (ImGui::Button(ICON_FA_PLAY, kButtonSize))
-		{
 
+		EWorldMode current_world_mode = wm->getWorldMode();
+		const char* play_icon_text = current_world_mode == EWorldMode::Edit ? ICON_FA_PLAY :
+			(current_world_mode == EWorldMode::Play ? ICON_FA_PAUSE : ICON_FA_FORWARD);
+		if (ImGui::Button(play_icon_text, kButtonSize))
+		{
+			switch (current_world_mode)
+			{
+			case EWorldMode::Edit:
+				wm->setWorldMode(EWorldMode::Play);
+				break;
+			case EWorldMode::Play:
+				wm->setWorldMode(EWorldMode::Pause);
+				break;
+			case EWorldMode::Pause:
+				wm->setWorldMode(EWorldMode::Play);
+				break;
+			default:
+				break;
+			}
 		}
 
 		ImGui::SameLine();
+		if (current_world_mode != EWorldMode::Pause)
+		{
+			ImGui::BeginDisabled(true);
+		}
 		if (ImGui::Button(ICON_FA_STEP_FORWARD, kButtonSize))
 		{
-
+			wm->getCurrentWorld()->step();
+		}
+		if (current_world_mode != EWorldMode::Pause)
+		{
+			ImGui::EndDisabled();
 		}
 
 		ImGui::SameLine();
+		if (current_world_mode == EWorldMode::Edit)
+		{
+			ImGui::BeginDisabled(true);
+		}
 		if (ImGui::Button(ICON_FA_STOP, kButtonSize))
 		{
-
+			wm->setWorldMode(EWorldMode::Edit);
+		}
+		if (current_world_mode == EWorldMode::Edit)
+		{
+			ImGui::EndDisabled();
 		}
 
 		ImGui::End();

@@ -73,4 +73,25 @@ namespace Bamboo
 		m_file_system->destroy();
         m_timer_manager->destroy();
 	}
+
+	bool EngineContext::isInEditor()
+	{
+        return m_config_manager->isInEditor();
+	}
+
+	bool EngineContext::isEditing()
+	{
+        return m_world_manager->getWorldMode() == EWorldMode::Edit;
+	}
+
+	bool EngineContext::isPlaying()
+	{
+        return m_world_manager->getWorldMode() == EWorldMode::Play;
+	}
+
+	bool EngineContext::isPausing()
+	{
+        return m_world_manager->getWorldMode() == EWorldMode::Pause;
+	}
+
 }

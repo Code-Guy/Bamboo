@@ -16,11 +16,13 @@ namespace Bamboo
 		void setSkeleton(std::shared_ptr<Skeleton>& skeleton);
 		std::shared_ptr<Skeleton> getSkeleton() { return m_skeleton; }
 
-		virtual void tick(float delta_time) override;
-
 		void play(bool loop = true);
 
 		std::vector<VmaBuffer> m_bone_ubs;
+
+	protected:
+		virtual void inflate() override;
+		virtual void tick(float delta_time) override;
 
 	private:
 		REGISTER_REFLECTION(Component)

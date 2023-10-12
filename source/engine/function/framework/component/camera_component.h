@@ -28,9 +28,6 @@ namespace Bamboo
 		std::shared_ptr<class TransformComponent> getTransformComponent() { return m_transform_component; }
 		void setInput(bool mouse_right_button_pressed, bool mouse_focused);
 
-		virtual void tick(float delta_time) override;
-		virtual void inflate() override;
-
 		// projection
 		EProjectionType m_projection_type;
 		float m_fovy;
@@ -46,6 +43,10 @@ namespace Bamboo
 
 		// postprocessing
 		float m_exposure;
+
+	protected:
+		virtual void inflate() override;
+		virtual void tick(float delta_time) override;
 
 	private:
 		REGISTER_REFLECTION(Component)
@@ -95,6 +96,7 @@ namespace Bamboo
 		bool m_mouse_focused = false;
 
 		double m_last_xpos = 0.0f, m_last_ypos = 0.0f;
+		static float m_last_aspect_ratio;
 
 		glm::mat4 m_view_matrix;
 		glm::mat4 m_projection_matrix;

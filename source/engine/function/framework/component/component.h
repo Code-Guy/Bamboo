@@ -20,6 +20,8 @@ namespace Bamboo
 		void setTickInterval(float tick_interval) { m_tick_interval = tick_interval; }
 
 		void tickable(float delta_time);
+
+	protected:
 		virtual void tick(float delta_time) {}
 
 	private:
@@ -50,13 +52,17 @@ namespace Bamboo
 		const std::string& getTypeName() { return m_type_name; }
 		void setTypeName(const std::string& type_name) { m_type_name = type_name; }
 
-		virtual void inflate() {}
-
 	protected:
+		virtual void inflate() {}
+		virtual void beginPlay() {}
+		virtual void endPlay() {}
+
 		std::weak_ptr<Entity> m_parent;
 		std::string m_type_name;
 
 	private:
+		friend Entity;
+
 		RTTR_ENABLE()
 		friend class cereal::access;
 		template<class Archive>

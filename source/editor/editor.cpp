@@ -1,4 +1,5 @@
 #include "editor.h"
+#include "editor/global/editor_context.h"
 #include "editor/menu/menu_ui.h"
 #include "editor/tool/tool_ui.h"
 #include "editor/world/world_ui.h"
@@ -27,9 +28,9 @@ namespace Bamboo
         std::shared_ptr<EditorUI> world_ui = std::make_shared<WorldUI>();
         std::shared_ptr<EditorUI> property_ui = std::make_shared<PropertyUI>();
         std::shared_ptr<EditorUI> asset_ui = std::make_shared<AssetUI>();
-        std::shared_ptr<EditorUI> simulation_ui = std::make_shared<SimulationUI>();
         std::shared_ptr<EditorUI> log_ui = std::make_shared<LogUI>();
-        m_editor_uis = { menu_ui, tool_ui, world_ui, property_ui, asset_ui, simulation_ui, log_ui };
+        m_simulation_ui = std::make_shared<SimulationUI>();
+        m_editor_uis = { menu_ui, tool_ui, world_ui, property_ui, asset_ui, m_simulation_ui, log_ui };
 
         // init all editor uis
 		for (auto& editor_ui : m_editor_uis)
@@ -38,12 +39,7 @@ namespace Bamboo
 		}
 
         // set construct ui function to UIPass through RenderSystem
-        g_engine.eventSystem()->addListener(EEventType::RenderConstructUI, [this](const EventPointer& event) {
-            for (auto& editor_ui : m_editor_uis)
-            {
-                editor_ui->construct();
-            }
-            });
+        g_engine.eventSystem()->addListener(EEventType::RenderConstructUI, [this](const EventPointer& event) { constructUI(); });
     }
 
     void Editor::destroy()
@@ -79,5 +75,20 @@ namespace Bamboo
             }
         }
     }
+
+	void Editor::constructUI()
+	{
+        if (g_editor.isFullscreen())
+        {
+            m_simulation_ui->construct();
+        }
+        else
+        {
+			for (auto& editor_ui : m_editor_uis)
+			{
+				editor_ui->construct();
+			}
+        }
+	}
 
 }

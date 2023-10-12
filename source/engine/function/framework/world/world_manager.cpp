@@ -87,6 +87,36 @@ namespace Bamboo
 		return m_current_world->getCameraEntity().lock()->getComponent(CameraComponent);
 	}
 
+	void WorldManager::setWorldMode(EWorldMode world_mode)
+	{
+		if (m_world_mode == world_mode)
+		{
+			return;
+		}
+
+		m_world_mode = world_mode;
+		std::string cache_dir = g_engine.fileSystem()->getCacheDir();
+		std::string pie_world_url = g_engine.fileSystem()->combine(cache_dir, std::string("pie.world"));
+		pie_world_url = g_engine.fileSystem()->relative(pie_world_url);
+		switch (m_world_mode)
+		{
+		case EWorldMode::Edit:
+		{
+			// load world from cache
+			openWorld(pie_world_url);
+		}
+			break;
+		case EWorldMode::Play:
+		{
+			// save world to cache
+			saveAsWorld(pie_world_url);
+		}
+			break;
+		default:
+			break;
+		}
+	}
+
 	bool WorldManager::loadWorld(const URL& url)
 	{
 		if (m_current_world)

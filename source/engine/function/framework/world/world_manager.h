@@ -21,6 +21,9 @@ namespace Bamboo
 
 		std::weak_ptr<class CameraComponent> getCameraComponent();
 
+		void setWorldMode(EWorldMode world_mode);
+		EWorldMode getWorldMode() { return m_world_mode; }
+
 	private:
 		bool loadWorld(const URL& url);
 		void scriptWorld();
@@ -29,5 +32,7 @@ namespace Bamboo
 
 		URL m_open_world_url;
 		URL m_template_url, m_save_as_url;
+
+		EWorldMode m_world_mode;
 	};
 }

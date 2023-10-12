@@ -16,7 +16,6 @@ namespace Bamboo
 	public:
 		~Entity();
 
-		virtual void tick(float delta_time) override;
 		void inflate();
 
 		bool isRoot() { return m_parent.expired(); }
@@ -63,6 +62,11 @@ namespace Bamboo
 
 #define getComponent(TComponent) getComponent<TComponent>(#TComponent)
 #define hasComponent(TComponent) hasComponent(#TComponent)
+
+	protected:
+		virtual void beginPlay() {}
+		virtual void tick(float delta_time) override;
+		virtual void endPlay() {}
 
 	private:
 		friend class cereal::access;
