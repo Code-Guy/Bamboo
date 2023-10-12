@@ -5,13 +5,19 @@
 
 namespace Bamboo
 {
+	enum class EWorldMode
+	{
+		Edit, Play, Pause
+	};
+
 	class World : public Asset, public std::enable_shared_from_this<World>
 	{
 	public:
 		~World();
 
-		void tick(float delta_time);
 		virtual void inflate() override;
+		void tick(float delta_time);
+		void step();
 
 		const auto& getCameraEntity() { return m_camera_entity; }
 		const auto& getEntities() const { return m_entities; }
@@ -35,5 +41,7 @@ namespace Bamboo
 		uint32_t m_next_entity_id = 0;
 		std::weak_ptr<Entity> m_camera_entity;
 		std::map<uint32_t, std::shared_ptr<Entity>> m_entities;
+
+		bool is_stepping = false;
 	};
 }

@@ -27,6 +27,12 @@ namespace Bamboo
             void setDeltaTime(float delta_time) { m_delta_time = delta_time; }
             float getDeltaTime() { return m_delta_time; }
 
+            // runtime modes
+            bool isInEditor();
+            bool isEditing();
+            bool isPlaying();
+            bool isPausing();
+
         private:
             std::shared_ptr<class TimerManager> m_timer_manager;
 			std::shared_ptr<class FileSystem> m_file_system;

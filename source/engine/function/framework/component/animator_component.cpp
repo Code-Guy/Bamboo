@@ -39,6 +39,12 @@ namespace Bamboo
 		REF_ASSET(m_skeleton, skeleton)
 	}
 
+	void AnimatorComponent::inflate()
+	{
+		// tick once to update bone ubo
+		tick(0.0f);
+	}
+
 	void AnimatorComponent::tick(float delta_time)
 	{
 		if (!m_animation_component)

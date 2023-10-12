@@ -33,6 +33,7 @@ namespace Bamboo
 		void onKey(const std::shared_ptr<class Event>& event);
 		void onSelectEntity(const std::shared_ptr<class Event>& event);
 
+		void updateCamera();
 		void handleDragDropTarget(const glm::vec2& mouse_pos, const glm::vec2& viewport_size);
 		glm::vec3 calcPlacePos(const glm::vec2& mouse_pos, const glm::vec2& viewport_size);
 

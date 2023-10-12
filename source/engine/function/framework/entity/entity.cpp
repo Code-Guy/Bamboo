@@ -67,6 +67,8 @@ namespace Bamboo
 
 		// attach to current entity
 		component->attach(weak_from_this());
+		component->inflate();
+
 		m_components.push_back(component);
 	}
 

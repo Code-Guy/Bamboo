@@ -1,4 +1,6 @@
 #include "simulation_ui.h"
+#include "editor/global/editor_context.h"
+
 #include "engine/core/vulkan/vulkan_rhi.h"
 #include "engine/core/event/event_system.h"
 #include "engine/function/render/render_system.h"
@@ -17,6 +19,7 @@
 #include "engine/function/framework/component/spot_light_component.h"
 
 #include <GLFW/glfw3.h>
+#include <imgui/imgui_internal.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
 #include <imgui/ImGuizmo.h>
 
@@ -39,12 +42,6 @@ namespace Bamboo
 
 	void SimulationUI::construct()
 	{
-		// try to get new camera if current camera is not valid
-		if (!m_camera_component.lock())
-		{
-			m_camera_component = g_engine.worldManager()->getCameraComponent();
-		}
-		
 		const std::string& world_name = g_engine.worldManager()->getCurrentWorldName();
 		sprintf(m_title_buf, "%s %s###%s", ICON_FA_GAMEPAD, world_name.c_str(), m_title.c_str());
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -56,12 +53,33 @@ namespace Bamboo
 		}
 		updateWindowRegion();
 
+		// hide window tab bar
+		if (ImGui::IsWindowDocked()) 
+		{
+			ImGuiWindow* window = ImGui::FindWindowByName(m_title_buf);
+			ImGuiDockNode* node = window->DockNode;
+			bool show_tab = !(g_editor.isSimulate() && g_editor.isFullscreen());
+			if ((!show_tab && !node->IsHiddenTabBar()) || (show_tab && node->IsHiddenTabBar())) 
+			{
+				node->WantHiddenTabBarToggle = true;
+			}
+		}
+
 		ImVec2 cursor_screen_pos = ImGui::GetCursorScreenPos();
 		uint32_t mouse_x = static_cast<uint32_t>(ImGui::GetMousePos().x - cursor_screen_pos.x);
 		uint32_t mouse_y = static_cast<uint32_t>(ImGui::GetMousePos().y - cursor_screen_pos.y);
 
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		ImGui::Image(m_color_texture_desc_set, content_size);
+
+		if (g_editor.isSimulate() || !g_engine.isEditing())
+		{
+			updateCamera();
+
+			ImGui::End();
+			ImGui::PopStyleVar();
+			return;
+		}
 
 		ImGui::SetCursorScreenPos(cursor_screen_pos);
 		ImGui::SetNextItemAllowOverlap();
@@ -70,7 +88,7 @@ namespace Bamboo
 		{
 			g_engine.eventSystem()->syncDispatch(std::make_shared<PickEntityEvent>(mouse_x, mouse_y));
 		}
-		m_mouse_right_button_pressed = ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Right);
+		updateCamera();
 
 		// allow drag from asset ui
 		handleDragDropTarget(glm::vec2(mouse_x, mouse_y), glm::vec2(content_size.x, content_size.y));
@@ -302,10 +320,6 @@ namespace Bamboo
 
 	void SimulationUI::constructImGuizmo()
 	{
-		// set camera component
-		m_camera_component.lock()->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
-		m_camera_component.lock()->setInput(m_mouse_right_button_pressed, isFocused());
-
  		if (!m_selected_entity.lock())
  		{
  			return;
@@ -368,6 +382,15 @@ namespace Bamboo
 			return;
 		}
 
+		if (key_event->key == GLFW_KEY_F11)
+		{
+			g_editor.toggleFullscreen();
+		}
+		else if (key_event->key == GLFW_KEY_G)
+		{
+			g_editor.toggleSimulate();
+		}
+
 		if (m_selected_entity.lock())
 		{
 			uint32_t selected_entity_id = m_selected_entity.lock()->getID();
@@ -416,6 +439,28 @@ namespace Bamboo
 			const auto& current_world = g_engine.worldManager()->getCurrentWorld();
 			m_selected_entity = current_world->getEntity(p_event->entity_id);
 		}
+	}
+
+	void SimulationUI::updateCamera()
+	{
+		// try to get new camera if current camera is not valid
+		if (!m_camera_component.lock())
+		{
+			m_camera_component = g_engine.worldManager()->getCameraComponent();
+		}
+
+		// set camera component
+		m_camera_component.lock()->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
+		if (g_editor.isSimulate())
+		{
+			m_mouse_right_button_pressed = ImGui::IsMouseDown(ImGuiMouseButton_Right);
+		}
+		else
+		{
+			m_mouse_right_button_pressed = ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Right);
+		}
+		
+		m_camera_component.lock()->setInput(m_mouse_right_button_pressed, isFocused());
 	}
 
 	void SimulationUI::handleDragDropTarget(const glm::vec2& mouse_pos, const glm::vec2& viewport_size)

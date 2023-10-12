@@ -18,6 +18,19 @@ namespace Bamboo
 		{
 			LOG_FATAL("failed to find engine asset");
 		}
+
+		// create log and cache folder
+		std::string log_dir = getLogDir();
+		if (!exists(log_dir))
+		{
+			createDir(log_dir);
+		}
+
+		std::string cache_dir = getCacheDir();
+		if (!exists(cache_dir))
+		{
+			createDir(cache_dir);
+		}
 	}
 
 	void FileSystem::destroy()
@@ -166,6 +179,16 @@ namespace Bamboo
 	std::string FileSystem::getSpvDir()
 	{
 		return absolute("asset/engine/shader");
+	}
+
+	std::string FileSystem::getLogDir()
+	{
+		return absolute("log");
+	}
+
+	std::string FileSystem::getCacheDir()
+	{
+		return absolute("cache");
 	}
 
 	bool FileSystem::exists(const std::string& path)

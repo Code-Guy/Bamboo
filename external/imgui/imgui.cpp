@@ -6399,25 +6399,25 @@ void ImGui::RenderWindowDecorations(ImGuiWindow* window, const ImRect& title_bar
         }
 
         // Docking: Unhide tab bar (small triangle in the corner), drag from small triangle to quickly undock
-        ImGuiDockNode* node = window->DockNode;
-        if (window->DockIsActive && node->IsHiddenTabBar() && !node->IsNoTabBar())
-        {
-            float unhide_sz_draw = ImFloor(g.FontSize * 0.70f);
-            float unhide_sz_hit = ImFloor(g.FontSize * 0.55f);
-            ImVec2 p = node->Pos;
-            ImRect r(p, p + ImVec2(unhide_sz_hit, unhide_sz_hit));
-            ImGuiID unhide_id = window->GetID("#UNHIDE");
-            KeepAliveID(unhide_id);
-            bool hovered, held;
-            if (ButtonBehavior(r, unhide_id, &hovered, &held, ImGuiButtonFlags_FlattenChildren))
-                node->WantHiddenTabBarToggle = true;
-            else if (held && IsMouseDragging(0))
-                StartMouseMovingWindowOrNode(window, node, true);
-
-            // FIXME-DOCK: Ideally we'd use ImGuiCol_TitleBgActive/ImGuiCol_TitleBg here, but neither is guaranteed to be visible enough at this sort of size..
-            ImU32 col = GetColorU32(((held && hovered) || (node->IsFocused && !hovered)) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
-            window->DrawList->AddTriangleFilled(p, p + ImVec2(unhide_sz_draw, 0.0f), p + ImVec2(0.0f, unhide_sz_draw), col);
-        }
+//         ImGuiDockNode* node = window->DockNode;
+//         if (window->DockIsActive && node->IsHiddenTabBar() && !node->IsNoTabBar())
+//         {
+//             float unhide_sz_draw = ImFloor(g.FontSize * 0.70f);
+//             float unhide_sz_hit = ImFloor(g.FontSize * 0.55f);
+//             ImVec2 p = node->Pos;
+//             ImRect r(p, p + ImVec2(unhide_sz_hit, unhide_sz_hit));
+//             ImGuiID unhide_id = window->GetID("#UNHIDE");
+//             KeepAliveID(unhide_id);
+//             bool hovered, held;
+//             if (ButtonBehavior(r, unhide_id, &hovered, &held, ImGuiButtonFlags_FlattenChildren))
+//                 node->WantHiddenTabBarToggle = true;
+//             else if (held && IsMouseDragging(0))
+//                 StartMouseMovingWindowOrNode(window, node, true);
+// 
+//             // FIXME-DOCK: Ideally we'd use ImGuiCol_TitleBgActive/ImGuiCol_TitleBg here, but neither is guaranteed to be visible enough at this sort of size..
+//             ImU32 col = GetColorU32(((held && hovered) || (node->IsFocused && !hovered)) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+//             window->DrawList->AddTriangleFilled(p, p + ImVec2(unhide_sz_draw, 0.0f), p + ImVec2(0.0f, unhide_sz_draw), col);
+//         }
 
         // Scrollbars
         if (window->ScrollbarX)
@@ -18768,7 +18768,11 @@ static void ImGui::DockSettingsHandler_ReadLine(ImGuiContext* ctx, ImGuiSettings
     if (sscanf(line, " CentralNode=%d%n", &x, &r) == 1)             { line += r; if (x != 0) node.Flags |= ImGuiDockNodeFlags_CentralNode; }
     if (sscanf(line, " NoTabBar=%d%n", &x, &r) == 1)                { line += r; if (x != 0) node.Flags |= ImGuiDockNodeFlags_NoTabBar; }
     if (sscanf(line, " HiddenTabBar=%d%n", &x, &r) == 1)            { line += r; if (x != 0) node.Flags |= ImGuiDockNodeFlags_HiddenTabBar; }
-    if (sscanf(line, " NoWindowMenuButton=%d%n", &x, &r) == 1)      { line += r; if (x != 0) node.Flags |= ImGuiDockNodeFlags_NoWindowMenuButton; }
+    if (sscanf(line, " NoWindowMenuButton=%d%n", &x, &r) == 1)      
+    { 
+    line += r; if (x != 0) 
+    node.Flags |= ImGuiDockNodeFlags_NoWindowMenuButton; 
+    }
     if (sscanf(line, " NoCloseButton=%d%n", &x, &r) == 1)           { line += r; if (x != 0) node.Flags |= ImGuiDockNodeFlags_NoCloseButton; }
     if (sscanf(line, " Selected=0x%08X%n", &node.SelectedTabId,&r) == 1) { line += r; }
     if (node.ParentNodeId != 0)
