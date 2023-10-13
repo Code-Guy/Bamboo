@@ -76,6 +76,11 @@ namespace Bamboo
 		return image;
 	}
 
+	std::shared_ptr<Bamboo::ImGuiImage> EditorUI::getImGuiImageFromCache(const URL& url)
+	{
+		return m_imgui_images[url];
+	}
+
 	ImFont* EditorUI::smallFont()
 	{
 		return ImGui::GetIO().Fonts->Fonts[1];
@@ -95,6 +100,11 @@ namespace Bamboo
 	{
 		ImGuiContext& g = *GImGui;
 		return !g.OpenPopupStack.empty();
+	}
+
+	bool EditorUI::isImGuiImageLoaded(const URL& url)
+	{
+		return m_imgui_images.find(url) != m_imgui_images.end();
 	}
 
 	bool EditorUI::isMouseFocused()

@@ -10,6 +10,7 @@
 #include <rttr/registration_friend.h>
 
 #include "engine/resource/serialization/serialization.h"
+#include "engine/resource/asset/base/url.h"
 
 #define INVALID_INDEX -1
 
@@ -39,7 +40,6 @@
 
 namespace Bamboo
 {
-    using URL = std::string;
 
 	enum class EAssetType
 	{
@@ -80,8 +80,6 @@ namespace Bamboo
 
 		const URL& getURL() { return m_url; }
 		const std::string& getName() { return m_name; }
-		std::string getBareName();
-		std::string getFolder();
 
 		EAssetType getAssetType() { return m_asset_type; }		
 

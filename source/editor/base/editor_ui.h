@@ -32,11 +32,13 @@ namespace Bamboo
 		void updateWindowRegion();
 		std::shared_ptr<ImGuiImage> loadImGuiImageFromFile(const std::string& filename);
 		std::shared_ptr<ImGuiImage> loadImGuiImageFromTexture2D(std::shared_ptr<class Texture2D>& texture);
+		std::shared_ptr<ImGuiImage> getImGuiImageFromCache(const URL& url);
 		ImFont* smallFont();
 		ImFont* bigIconFont();
 
 		bool isFocused();
 		bool isPoppingUp();
+		bool isImGuiImageLoaded(const URL& url);
 
 		std::string m_title;
 		char m_title_buf[128];
@@ -45,6 +47,6 @@ namespace Bamboo
 	private:
 		bool isMouseFocused();
 
-		std::map<std::string, std::shared_ptr<ImGuiImage>> m_imgui_images;
+		std::map<URL, std::shared_ptr<ImGuiImage>> m_imgui_images;
 	};
 }

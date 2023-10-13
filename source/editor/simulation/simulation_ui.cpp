@@ -226,7 +226,7 @@ namespace Bamboo
 			std::vector<std::string> filenames = fs->traverse(fs->absolute(fs->dir(url)));
 			for (const std::string& filename : filenames)
 			{
-				URL asset_url = fs->relative(filename);
+				URL asset_url(filename);
 				EAssetType asset_type = as->getAssetType(asset_url);
 				if (asset_type == EAssetType::Animation && !m_created_entity->hasComponent(AnimationComponent))
 				{

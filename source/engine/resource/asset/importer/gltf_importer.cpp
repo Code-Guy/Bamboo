@@ -252,8 +252,8 @@ namespace Bamboo
 			mesh_asset = skeletal_mesh;
 		}
 
-		std::string folder = mesh_asset->getFolder();
-		std::string bare_name = mesh_asset->getBareName();
+		std::string folder = mesh_asset->getURL().getFolder();
+		std::string bare_name = mesh_asset->getURL().getBareName();
 		const auto& as = g_engine.assetManager();
 
 		uint32_t vertex_start = 0;
@@ -485,7 +485,7 @@ namespace Bamboo
 
 			EAssetType asset_type = EAssetType::Texture2D;
 			std::string asset_name = as->getAssetName(gltf_texture.name, asset_type, asset_indices[asset_type]++, basename);
-			URL url = g_engine.fileSystem()->combine(folder, asset_name);
+			URL url = URL::combine(folder.str(), asset_name);
 			std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
 			texture->setURL(url);
 			importGltfTexture(gltf_model, gltf_image, gltf_sampler, static_cast<uint32_t>(textures.size()), texture);
@@ -501,7 +501,7 @@ namespace Bamboo
 		{
 			EAssetType asset_type = EAssetType::Material;
 			std::string asset_name = as->getAssetName(gltf_material.name, asset_type, asset_indices[asset_type]++, basename);
-			URL url = g_engine.fileSystem()->combine(folder, asset_name);
+			URL url = URL::combine(folder.str(), asset_name);
 
 			std::shared_ptr<Material> material = std::make_shared<Material>();
 			material->setURL(url);
@@ -583,7 +583,7 @@ namespace Bamboo
 			bool is_skeletal_mesh = !option.force_static_mesh && !gltf_model.skins.empty();
 			EAssetType asset_type = is_skeletal_mesh ? EAssetType::SkeletalMesh : EAssetType::StaticMesh;
 			std::string asset_name = as->getAssetName(basename, asset_type, asset_indices[asset_type]++, basename);
-			URL url = g_engine.fileSystem()->combine(folder, asset_name);
+			URL url = URL::combine(folder.str(), asset_name);
 			std::shared_ptr<StaticMesh> static_mesh = nullptr;
 			std::shared_ptr<SkeletalMesh> skeletal_mesh = nullptr;
 			if (is_skeletal_mesh)
@@ -628,7 +628,7 @@ namespace Bamboo
 				bool is_skeletal_mesh = option.force_static_mesh ? false : isGltfSkeletalMesh(gltf_mesh);
 				EAssetType asset_type = is_skeletal_mesh ? EAssetType::SkeletalMesh : EAssetType::StaticMesh;
 				std::string asset_name = as->getAssetName(gltf_mesh.name, asset_type, asset_indices[asset_type]++, basename);
-				URL url = g_engine.fileSystem()->combine(folder, asset_name);
+				URL url = URL::combine(folder.str(), asset_name);
 
 				std::shared_ptr<StaticMesh> static_mesh = nullptr;
 				std::shared_ptr<SkeletalMesh> skeletal_mesh = nullptr;
@@ -668,7 +668,7 @@ namespace Bamboo
 		{
 			EAssetType asset_type = EAssetType::Skeleton;
 			std::string asset_name = as->getAssetName(skin.name, asset_type, asset_indices[asset_type]++, basename);
-			URL url = g_engine.fileSystem()->combine(folder, asset_name);
+			URL url = URL::combine(folder.str(), asset_name);
 
 			std::shared_ptr<Skeleton> skeleton = std::make_shared<Skeleton>();
 			skeleton->setURL(url);
@@ -709,7 +709,7 @@ namespace Bamboo
 		{
 			EAssetType asset_type = EAssetType::Animation;
 			std::string asset_name = as->getAssetName(gltf_animation.name, asset_type, asset_indices[asset_type]++, basename);
-			URL url = g_engine.fileSystem()->combine(folder, asset_name);
+			URL url = URL::combine(folder.str(), asset_name);
 
 			std::shared_ptr<Animation> animation = std::make_shared<Animation>();
 			animation->setURL(url);

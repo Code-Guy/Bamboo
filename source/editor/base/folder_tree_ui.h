@@ -33,7 +33,6 @@ namespace Bamboo
 		void constructFolderTree();
 
 		virtual void openFolder(std::string folder);
-		std::string getRelativeURL(const std::string& url);
 
 		std::string m_selected_folder;
 		std::vector<FolderNode> m_folder_nodes;
