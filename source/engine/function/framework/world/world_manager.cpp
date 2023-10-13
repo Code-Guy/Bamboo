@@ -54,20 +54,20 @@ namespace Bamboo
 	void WorldManager::openWorld(const URL& url)
 	{
 		m_open_world_url = url;
-		LOG_INFO("open world: {}", m_open_world_url);
+		LOG_INFO("open world: {}", m_open_world_url.str());
 	}
 
 	void WorldManager::createWorld(const URL& template_url, const URL& save_as_url)
 	{
 		m_template_url = template_url;
 		m_save_as_url = save_as_url;
-		LOG_INFO("create world: {}", m_template_url);
+		LOG_INFO("create world: {}", m_template_url.str());
 	}
 
 	bool WorldManager::saveWorld()
 	{
 		g_engine.assetManager()->serializeAsset(m_current_world);
-		LOG_INFO("save world: {}", m_current_world->getURL());
+		LOG_INFO("save world: {}", m_current_world->getURL().str());
 		return true;
 	}
 
@@ -79,7 +79,7 @@ namespace Bamboo
 
 	std::string WorldManager::getCurrentWorldName()
 	{
-		return g_engine.fileSystem()->basename(m_current_world->getURL());
+		return g_engine.fileSystem()->basename(m_current_world->getURL().str());
 	}
 
 	std::weak_ptr<CameraComponent> WorldManager::getCameraComponent()

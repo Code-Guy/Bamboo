@@ -183,10 +183,25 @@ namespace Bamboo
 		ImTextureID tex_id = nullptr;
 		std::string basename = g_engine.fileSystem()->basename(filename);
 
+		const auto& asset_manager = g_engine.assetManager();
+
 		if (g_engine.fileSystem()->isFile(filename))
 		{
-			EAssetType asset_type = g_engine.assetManager()->getAssetType(filename);
+			EAssetType asset_type = asset_manager->getAssetType(filename);
 			tex_id = m_asset_images[asset_type]->tex_id;
+			if (asset_type == EAssetType::Texture2D)
+			{
+				if (isImGuiImageLoaded(filename))
+				{
+					tex_id = getImGuiImageFromCache(filename)->tex_id;
+				}
+				else
+				{
+					std::shared_ptr<Texture2D> tex = asset_manager->loadAsset<Texture2D>(filename);
+					auto imgui_tex = loadImGuiImageFromTexture2D(tex);
+					tex_id = imgui_tex->tex_id;
+				}
+			}
 		}
 		else if (g_engine.fileSystem()->isDir(filename))
 		{

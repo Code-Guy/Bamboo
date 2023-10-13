@@ -65,7 +65,7 @@ namespace Bamboo
 
 		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
 		std::string asset_name = getAssetName(filename, EAssetType::Texture2D);
-		URL url = g_engine.fileSystem()->combine(folder, asset_name);
+		URL url = URL::combine(folder.str(), asset_name);
 		texture->setURL(url);
 
 		texture->m_width = width;
@@ -86,7 +86,7 @@ namespace Bamboo
 	{
 		std::shared_ptr<TextureCube> texture_cube = std::make_shared<TextureCube>();
 		std::string asset_name = getAssetName(filename, EAssetType::TextureCube);
-		URL url = g_engine.fileSystem()->combine(folder, asset_name);
+		URL url = URL::combine(folder.str(), asset_name);
 		texture_cube->setURL(url);
 
 		texture_cube->setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -120,7 +120,7 @@ namespace Bamboo
 
 	EAssetType AssetManager::getAssetType(const URL& url)
 	{
-		std::string extension = g_engine.fileSystem()->extension(url);
+		std::string extension = g_engine.fileSystem()->extension(url.str());
 		if (m_ext_asset_types.find(extension) != m_ext_asset_types.end())
 		{
 			return m_ext_asset_types[extension];
@@ -134,7 +134,7 @@ namespace Bamboo
 		EAssetType asset_type = asset->getAssetType();
 		const std::string& asset_ext = m_asset_type_exts[asset_type];
 		EArchiveType archive_type = m_asset_archive_types[asset_type];
-		std::string filename = TO_ABSOLUTE(url.empty() ? asset->getURL() : url);
+		std::string filename = url.empty() ? asset->getURL().getAbsolute() : url.getAbsolute();
 
 		switch (archive_type)
 		{
@@ -166,7 +166,7 @@ namespace Bamboo
 	std::shared_ptr<Asset> AssetManager::deserializeAsset(const URL& url)
 	{
 		// check if the asset url exists
-		if (!g_engine.fileSystem()->exists(url))
+		if (!g_engine.fileSystem()->exists(url.str()))
 		{
 			return nullptr;
 		}
@@ -180,7 +180,7 @@ namespace Bamboo
 		EAssetType asset_type = getAssetType(url);
 		EArchiveType archive_type = m_asset_archive_types[asset_type];
 		const std::string& asset_ext = m_asset_type_exts[asset_type];
-		std::string filename = TO_ABSOLUTE(url);
+		std::string filename = url.getAbsolute();
 		std::shared_ptr<Asset> asset = nullptr;
 
 		switch (archive_type)
