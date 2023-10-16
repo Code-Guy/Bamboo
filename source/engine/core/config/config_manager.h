@@ -13,12 +13,13 @@ namespace Bamboo
 
 		int getWindowWidth();
 		int getWindowHeight();
+		bool isFullscreen();
 
 		std::string getDefaultWorldUrl();
 		std::string getEditorLayout();
 		bool getSaveLayout();
 		
-		bool isInEditor();
+		bool isEditor();
 
 	private:
 		YAML::Node m_config_node;

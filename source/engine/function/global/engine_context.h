@@ -28,10 +28,13 @@ namespace Bamboo
             float getDeltaTime() { return m_delta_time; }
 
             // runtime modes
-            bool isInEditor();
+            bool isEditor();
+            bool isApplication() { return !isEditor(); }
+
             bool isEditing();
             bool isPlaying();
             bool isPausing();
+            bool isSimulating() { return isPlaying() || isPausing(); }
 
         private:
             std::shared_ptr<class TimerManager> m_timer_manager;

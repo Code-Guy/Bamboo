@@ -24,8 +24,10 @@ namespace Bamboo
 		void getMousePos(int& x, int& y);
 
 		bool isMouseButtonDown(int button);
-		bool getIsFocus() const { return m_is_focus; }
-		void setIsFocus(bool is_focus);
+		bool getFocus() const { return m_focus; }
+		void setFocus(bool focus);
+
+		void toggleFullscreen();
 
 	private:
 		static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -40,10 +42,12 @@ namespace Bamboo
 		static void windowCloseCallback(GLFWwindow* window);
 
 		GLFWwindow* m_window;
-		int m_width;
-		int m_height;
 		int m_mouse_pos_x;
 		int m_mouse_pos_y;
-		bool m_is_focus;
+		bool m_focus;
+		bool m_fullscreen;
+
+		int m_windowed_width, m_windowed_height;
+		int m_windowed_pos_x, m_windowed_pos_y;
 	};
 }

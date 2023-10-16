@@ -44,11 +44,15 @@ namespace Bamboo
 	{
 		const std::string& world_name = g_engine.worldManager()->getCurrentWorldName();
 		sprintf(m_title_buf, "%s %s###%s", ICON_FA_GAMEPAD, world_name.c_str(), m_title.c_str());
+
+		bool is_simulating_fullscreen = g_engine.isSimulating() && g_editor.isSimulationPanelFullscreen();
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, is_simulating_fullscreen ? 0.0f : 1.0f);
+
 		if (!ImGui::Begin(m_title_buf))
 		{
 			ImGui::End();
-			ImGui::PopStyleVar();
+			ImGui::PopStyleVar(2);
 			return;
 		}
 		updateWindowRegion();
@@ -58,7 +62,7 @@ namespace Bamboo
 		{
 			ImGuiWindow* window = ImGui::FindWindowByName(m_title_buf);
 			ImGuiDockNode* node = window->DockNode;
-			bool show_tab = !(g_editor.isSimulate() && g_editor.isFullscreen());
+			bool show_tab = !is_simulating_fullscreen;
 			if ((!show_tab && !node->IsHiddenTabBar()) || (show_tab && node->IsHiddenTabBar())) 
 			{
 				node->WantHiddenTabBarToggle = true;
@@ -72,12 +76,12 @@ namespace Bamboo
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		ImGui::Image(m_color_texture_desc_set, content_size);
 
-		if (g_editor.isSimulate() || !g_engine.isEditing())
+		if (g_engine.isSimulating())
 		{
 			updateCamera();
 
 			ImGui::End();
-			ImGui::PopStyleVar();
+			ImGui::PopStyleVar(2);
 			return;
 		}
 
@@ -171,7 +175,7 @@ namespace Bamboo
 		constructImGuizmo();
 
 		ImGui::End();
-		ImGui::PopStyleVar();
+		ImGui::PopStyleVar(2);
 	}
 
 	void SimulationUI::destroy()
@@ -386,46 +390,61 @@ namespace Bamboo
 		{
 			g_editor.toggleFullscreen();
 		}
-		else if (key_event->key == GLFW_KEY_G)
-		{
-			g_editor.toggleSimulate();
-		}
 
-		if (m_selected_entity.lock())
+		if (g_engine.isEditor())
 		{
-			uint32_t selected_entity_id = m_selected_entity.lock()->getID();
-			if (key_event->key == GLFW_KEY_ESCAPE || key_event->key == GLFW_KEY_DELETE)
+			EWorldMode current_world_mode = g_engine.worldManager()->getWorldMode();
+			if (key_event->mods == GLFW_MOD_ALT && key_event->key == GLFW_KEY_P)
 			{
-				g_engine.eventSystem()->syncDispatch(std::make_shared<SelectEntityEvent>(UINT_MAX));
+				if (current_world_mode == EWorldMode::Edit)
+				{
+					g_engine.worldManager()->setWorldMode(EWorldMode::Play);
+				}
 			}
-			if (key_event->key == GLFW_KEY_DELETE)
+			else if (key_event->key == GLFW_KEY_ESCAPE)
 			{
-				g_engine.worldManager()->getCurrentWorld()->removeEntity(selected_entity_id);
+				if (current_world_mode == EWorldMode::Play)
+				{
+					g_engine.worldManager()->setWorldMode(EWorldMode::Edit);
+				}
 			}
-		}
 
-		if (!isFocused())
-		{
-			return;
-		}
+			if (m_selected_entity.lock())
+			{
+				uint32_t selected_entity_id = m_selected_entity.lock()->getID();
+				if (key_event->key == GLFW_KEY_ESCAPE || key_event->key == GLFW_KEY_DELETE)
+				{
+					g_engine.eventSystem()->syncDispatch(std::make_shared<SelectEntityEvent>(UINT_MAX));
+				}
+				if (key_event->key == GLFW_KEY_DELETE)
+				{
+					g_engine.worldManager()->getCurrentWorld()->removeEntity(selected_entity_id);
+				}
+			}
 
-		if (m_selected_entity.lock() || !m_mouse_right_button_pressed)
-		{
-			if (key_event->key == GLFW_KEY_Q)
+			if (!isFocused())
 			{
-				m_operation_mode = EOperationMode::Pick;
+				return;
 			}
-			else if (key_event->key == GLFW_KEY_W)
+
+			if (m_selected_entity.lock() || !m_mouse_right_button_pressed)
 			{
-				m_operation_mode = EOperationMode::Translate;
-			}
-			else if (key_event->key == GLFW_KEY_E)
-			{
-				m_operation_mode = EOperationMode::Rotate;
-			}
-			else if (key_event->key == GLFW_KEY_R)
-			{
-				m_operation_mode = EOperationMode::Scale;
+				if (key_event->key == GLFW_KEY_Q)
+				{
+					m_operation_mode = EOperationMode::Pick;
+				}
+				else if (key_event->key == GLFW_KEY_W)
+				{
+					m_operation_mode = EOperationMode::Translate;
+				}
+				else if (key_event->key == GLFW_KEY_E)
+				{
+					m_operation_mode = EOperationMode::Rotate;
+				}
+				else if (key_event->key == GLFW_KEY_R)
+				{
+					m_operation_mode = EOperationMode::Scale;
+				}
 			}
 		}
 	}
@@ -451,7 +470,7 @@ namespace Bamboo
 
 		// set camera component
 		m_camera_component.lock()->m_aspect_ratio = (float)m_content_region.z / m_content_region.w;
-		if (g_editor.isSimulate())
+		if (g_engine.isSimulating())
 		{
 			m_mouse_right_button_pressed = ImGui::IsMouseDown(ImGuiMouseButton_Right);
 		}

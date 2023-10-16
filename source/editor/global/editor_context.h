@@ -12,15 +12,11 @@ namespace Bamboo
             void init();
             void destroy();
 
-            void toggleFullscreen() { m_fullscreen = !m_fullscreen; }
-            bool isFullscreen() { return m_fullscreen; }
-
-			void toggleSimulate() { m_simulate = !m_simulate; }
-			bool isSimulate() { return m_simulate; }
+            void toggleFullscreen();
+            bool isSimulationPanelFullscreen();
 
         private:
-            bool m_fullscreen = false;
-            bool m_simulate = false;
+            bool m_simulation_panel_fullscreen = false;
     };
 
     extern EditorContext g_editor;

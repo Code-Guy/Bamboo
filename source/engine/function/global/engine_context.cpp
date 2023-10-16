@@ -74,9 +74,9 @@ namespace Bamboo
         m_timer_manager->destroy();
 	}
 
-	bool EngineContext::isInEditor()
+	bool EngineContext::isEditor()
 	{
-        return m_config_manager->isInEditor();
+        return m_config_manager->isEditor();
 	}
 
 	bool EngineContext::isEditing()
