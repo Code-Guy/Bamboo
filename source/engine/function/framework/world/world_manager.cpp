@@ -18,6 +18,7 @@ namespace Bamboo
 	void WorldManager::init()
 	{
 		URL default_world_url = g_engine.configManager()->getDefaultWorldUrl();
+		m_world_mode = g_engine.isEditor() ? EWorldMode::Edit : EWorldMode::Play;
 
 		loadWorld(default_world_url);
 		//scriptWorld();

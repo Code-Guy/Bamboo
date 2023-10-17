@@ -92,7 +92,6 @@ namespace Bamboo
 	void RenderSystem::tick(float delta_time)
 	{
 		// collect render data from entities of current world
-		//scriptEntities(delta_time);
 		collectRenderDatas();
 
 		// vulkan rendering
@@ -528,22 +527,13 @@ namespace Bamboo
 		m_pick_pass->setEntityIDs(mesh_entity_ids);
 
 		// outline pass
-		m_outline_pass->setRenderDatas(selected_mesh_render_datas);
-		m_outline_pass->setBillboardRenderDatas(selected_billboard_render_datas);
+		m_outline_pass->setRenderDatas(!g_engine.isSimulating() ? selected_mesh_render_datas : std::vector<std::shared_ptr<RenderData>>{});
+		m_outline_pass->setBillboardRenderDatas(!g_engine.isSimulating() ? selected_billboard_render_datas : std::vector<std::shared_ptr<BillboardRenderData>>{});
 
 		// main pass
 		m_main_pass->setLightingRenderData(lighting_render_data);
 		m_main_pass->setSkyboxRenderData(skybox_render_data);
-// 		if (!mesh_render_datas.empty())
-// 		{
-// 			m_main_pass->setTransparencyRenderDatas({ mesh_render_datas.back() });
-// 			mesh_render_datas.pop_back();
-// 		}
-// 		else
-// 		{
-// 			m_main_pass->setTransparencyRenderDatas({});
-// 		}
-		m_main_pass->setBillboardRenderDatas(billboard_render_datas);
+		m_main_pass->setBillboardRenderDatas(!g_engine.isSimulating() ? billboard_render_datas : std::vector<std::shared_ptr<BillboardRenderData>>{});
 		m_main_pass->setRenderDatas(mesh_render_datas);
 
 		// postprocess pass
@@ -584,38 +574,6 @@ namespace Bamboo
 			selected_billboard_render_datas.push_back(billboard_render_data);
 		}
 		billboard_entity_ids.push_back(entity_id);
-	}
-
-	void RenderSystem::scriptEntities(float delta_time)
-	{
-		const auto& current_world = g_engine.worldManager()->getCurrentWorld();
-		const auto& entities = current_world->getEntities();
-
-		std::random_device rd;
-		std::mt19937 mt(rd());
-		std::uniform_real_distribution<float> dist(0.1f, 1.0f);
-
-		static float time = 0.0f;
-		static glm::vec3 start_axis = glm::normalize(glm::vec3(dist(mt), dist(mt), dist(mt)));
-		static glm::vec3 target_axis = glm::normalize(glm::vec3(dist(mt), dist(mt), dist(mt)));
-
-		time += delta_time;
-		if (time > 1.0f)
-		{
-			target_axis = glm::normalize(glm::vec3(dist(mt), dist(mt), dist(mt)));
-			time = 0.0f;
-		}
-		
-		glm::vec3 current_axis = glm::mix(start_axis, target_axis, time);
-		for (const auto& iter : entities)
-		{
-			const auto& entity = iter.second;
-			if (entity->getName() == "sm_octopus_dance")
-			{
-				auto transform_component = entity->getComponent(TransformComponent);
-				transform_component->m_rotation += target_axis * delta_time * 30.0f;
-			}
-		}
 	}
 
 }

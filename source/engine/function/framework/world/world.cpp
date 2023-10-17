@@ -28,7 +28,7 @@ namespace Bamboo
 			const auto& entity = iter.second;
 			entity->m_world = weak_from_this();
 			entity->inflate();
-			if (!g_engine.isEditing())
+			if (g_engine.isSimulating())
 			{
 				entity->beginPlay();
 			}
@@ -101,7 +101,7 @@ namespace Bamboo
 		entity->m_name = name;
 		entity->m_world = weak_from_this();
 		
-		if (!g_engine.isEditing())
+		if (g_engine.isSimulating())
 		{
 			entity->beginPlay();	
 		}
@@ -112,7 +112,7 @@ namespace Bamboo
 
 	bool World::removeEntity(uint32_t id)
 	{
-		if (!g_engine.isEditing())
+		if (g_engine.isSimulating())
 		{
 			m_entities[id]->endPlay();
 		}

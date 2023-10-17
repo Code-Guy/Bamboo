@@ -78,7 +78,7 @@ namespace Bamboo
 
 	void Editor::constructUI()
 	{
-        if (g_editor.isFullscreen())
+        if (g_editor.isSimulationPanelFullscreen())
         {
             m_simulation_ui->construct();
         }

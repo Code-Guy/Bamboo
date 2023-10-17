@@ -18,6 +18,11 @@ namespace Bamboo
 		return m_config_node["window"]["height"].as<int>();
 	}
 
+	bool ConfigManager::isFullscreen()
+	{
+		return m_config_node["window"]["fullscreen"].as<bool>();
+	}
+
 	std::string ConfigManager::getDefaultWorldUrl()
 	{
 		return m_config_node["default_world_url"].as<std::string>();
@@ -33,9 +38,9 @@ namespace Bamboo
 		return m_config_node["save_layout"].as<bool>();
 	}
 
-	bool ConfigManager::isInEditor()
+	bool ConfigManager::isEditor()
 	{
-		return m_config_node["in_editor"].as<bool>();
+		return m_config_node["is_editor"].as<bool>();
 	}
 
 }

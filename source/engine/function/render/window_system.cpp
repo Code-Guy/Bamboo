@@ -16,17 +16,32 @@ namespace Bamboo
 			return;
 		}
 
-		m_width = g_engine.configManager()->getWindowWidth();
-		m_height = g_engine.configManager()->getWindowHeight();
+		m_focus = false;
+		m_fullscreen = g_engine.configManager()->isFullscreen();
+		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+		const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
 		// create glfw window
+		bool is_packaged_fullscreen = m_fullscreen && g_engine.isApplication();
+		int width = is_packaged_fullscreen ? mode->width : g_engine.configManager()->getWindowWidth();
+		int height = is_packaged_fullscreen ? mode->height: g_engine.configManager()->getWindowHeight();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		m_window = glfwCreateWindow(m_width, m_height, APP_NAME, nullptr, nullptr);
+		m_window = glfwCreateWindow(width, height, APP_NAME, nullptr, nullptr);
 		if (!m_window)
 		{
 			LOG_FATAL("failed to create glfw window");
 			glfwTerminate();
 			return;
+		}
+
+		// set fullscreen if needed
+		if (is_packaged_fullscreen)
+		{
+			m_windowed_width = g_engine.configManager()->getWindowWidth();
+			m_windowed_height = g_engine.configManager()->getWindowHeight();
+			m_windowed_pos_x = (mode->width - m_windowed_width) * 0.5f;
+			m_windowed_pos_y = (mode->height - m_windowed_height) * 0.5f;
+			glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
 		}
 
 		//  set up glfw input callbacks
@@ -75,8 +90,7 @@ namespace Bamboo
 
 	void WindowSystem::getWindowSize(int& width, int& height)
 	{
-		width = m_width;
-		height = m_height;
+		glfwGetWindowSize(m_window, &width, &height);
 	}
 
 	void WindowSystem::getScreenSize(int& width, int& height)
@@ -102,10 +116,28 @@ namespace Bamboo
 		return glfwGetMouseButton(m_window, button) == GLFW_PRESS;
 	}
 
-	void WindowSystem::setIsFocus(bool is_focus)
+	void WindowSystem::setFocus(bool focus)
 	{
-		m_is_focus = is_focus;
-		glfwSetInputMode(m_window, GLFW_CURSOR, m_is_focus ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+		m_focus = focus;
+		glfwSetInputMode(m_window, GLFW_CURSOR, m_focus ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+	}
+
+	void WindowSystem::toggleFullscreen()
+	{
+		m_fullscreen = !m_fullscreen;
+		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+		const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+		if (m_fullscreen)
+		{
+			glfwGetWindowPos(m_window, &m_windowed_pos_x, &m_windowed_pos_y);
+			glfwGetWindowSize(m_window, &m_windowed_width, &m_windowed_height);
+			glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
+		}
+		else
+		{
+			glfwSetWindowMonitor(m_window, nullptr, m_windowed_pos_x, m_windowed_pos_y, m_windowed_width, m_windowed_height, GLFW_DONT_CARE);
+		}
 	}
 
 	void WindowSystem::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
