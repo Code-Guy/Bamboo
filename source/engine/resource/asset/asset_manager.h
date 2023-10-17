@@ -2,6 +2,7 @@
 
 #include "engine/resource/asset/base/asset.h"
 #include "importer/import_option.h"
+#include <basisu/encoder/basisu_enc.h>
 
 #define DEFAULT_MATERIAL_URL "asset/engine/material/mat_default.mat"
 #define DEFAULT_TEXTURE_2D_URL "asset/engine/material/tex_dummy.tex"
@@ -50,5 +51,8 @@ namespace Bamboo
 		std::map<EAssetType, std::string> m_asset_type_exts;
 		std::map<EAssetType, EArchiveType> m_asset_archive_types;
 		std::map<std::string, EAssetType> m_ext_asset_types;
+
+	private:
+		void* compressTexture2D(const std::string& filename, basisu::image& source_image, size_t& data_size);
 	};
 }

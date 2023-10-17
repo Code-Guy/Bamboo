@@ -9,6 +9,7 @@
 #include <tinygltf/stb_image.h>
 
 #include <fstream>
+#include <basisu/encoder/basisu_comp.h>
 
 namespace Bamboo
 {
@@ -16,6 +17,7 @@ namespace Bamboo
 	{
 		m_asset_type_exts = {
 			{ EAssetType::Texture2D, "tex" },
+			{ EAssetType::Texture2D_Ktx, "ktx" },
 			{ EAssetType::TextureCube, "texc" }, 
 			{ EAssetType::Material, "mat" }, 
 			{ EAssetType::Skeleton, "skl" },
@@ -27,6 +29,7 @@ namespace Bamboo
 
 		m_asset_archive_types = {
 			{ EAssetType::Texture2D, EArchiveType::Binary },
+			{ EAssetType::Texture2D_Ktx, EArchiveType::Binary },
 			{ EAssetType::TextureCube, EArchiveType::Binary },
 			{ EAssetType::Material, EArchiveType::Json },
 			{ EAssetType::Skeleton, EArchiveType::Binary },
@@ -58,23 +61,32 @@ namespace Bamboo
 
 	bool AssetManager::importTexture2D(const std::string& filename, const URL& folder)
 	{
-		uint32_t width, height;
-		uint32_t k_channels = 4;
-		uint8_t* image_data = stbi_load(filename.c_str(), (int*)&width, (int*)&height, 0, k_channels);
-		ASSERT(image_data != nullptr, "failed to import texture: {}", filename);
+		// uint32_t width, height;
+		// uint32_t k_channels = 4;
+		// uint8_t* image_data = stbi_load(filename.c_str(), (int*)&width, (int*)&height, 0, k_channels);
+		// ASSERT(image_data != nullptr, "failed to import texture: {}", filename)
+
+		// todo load from file
+		basisu::image image;
+		size_t image_size = 0;
+		void* p_image_data = compressTexture2D(filename, image, image_size);
+		if (p_image_data == nullptr)
+		{
+			printf("Compress Texture2D failed\n");
+			return false;
+		}
 
 		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
 		std::string asset_name = getAssetName(filename, EAssetType::Texture2D);
 		URL url = URL::combine(folder.str(), asset_name);
 		texture->setURL(url);
 
-		texture->m_width = width;
-		texture->m_height = height;
+		texture->m_width = image.get_width();
+		texture->m_height = image.get_height();
 
-		size_t image_size = width * height * k_channels;
 		texture->m_image_data.resize(image_size);
-		memcpy(texture->m_image_data.data(), image_data, image_size);
-		stbi_image_free(image_data);
+		memcpy(texture->m_image_data.data(), p_image_data, image_size);
+		basisu::basis_free_data(p_image_data);
 
 		texture->inflate();
 		serializeAsset(texture);
@@ -225,5 +237,41 @@ namespace Bamboo
 			return g_engine.fileSystem()->format("%s_%s.%s", ext.c_str(), asset_basename.c_str(), ext.c_str());
 		}
 		return g_engine.fileSystem()->format("%s_%s_%d.%s", ext.c_str(), basename.c_str(), asset_index, ext.c_str());
+	}
+
+	void* AssetManager::compressTexture2D(const std::string& filename, basisu::image& source_image, size_t& data_size)
+	{
+		basisu::basisu_encoder_init();
+
+		basisu::vector<basisu::image> source_images(1);
+
+		//source_image = source_images[0];
+		if (!load_image(filename.c_str(), source_image))
+		{
+			basisu::error_printf("Failed loading test image \"%s\"\n", filename.c_str());
+			return nullptr;
+		}
+
+		printf("Loaded file \"%s\", dimemsions %ux%u has alpha: %u\n", filename.c_str(), source_image.get_width(), source_image.get_height(), source_image.has_alpha());
+
+		basisu::image_stats stats;
+
+		uint32_t flags_and_quality;
+		float uastc_rdo_quality = 1.0f;
+
+		// UASTC
+		flags_and_quality = basisu::cFlagThreaded | basisu::cFlagUASTCRDO | basisu::cFlagPrintStats | basisu::cFlagPrintStatus;
+
+		source_images[0] = source_image;
+		void* p_image_data = nullptr;
+		p_image_data = basis_compress(source_images, flags_and_quality, uastc_rdo_quality, &data_size, &stats);
+		if (!p_image_data)
+		{
+			basisu::error_printf("basis_compress() failed!\n");
+			return nullptr;
+		}
+
+		printf("UASTC Size: %u, PSNR: %f\n", (uint32_t)data_size, stats.m_basis_rgba_avg_psnr);
+		return p_image_data;
 	}
 }

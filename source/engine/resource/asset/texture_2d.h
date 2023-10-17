@@ -2,6 +2,7 @@
 
 #include "engine/resource/asset/base/texture.h"
 #include "engine/resource/asset/base/asset.h"
+#include "ktx.h"
 
 namespace Bamboo
 {
@@ -17,5 +18,7 @@ namespace Bamboo
 		{
 			ar(cereal::make_nvp("texture", cereal::base_class<Texture>(this)));
 		}
+
+		
 	};
 }
