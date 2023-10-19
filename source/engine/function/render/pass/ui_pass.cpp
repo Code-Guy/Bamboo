@@ -95,7 +95,7 @@ namespace Bamboo
 		const VkExtent2D& extent = VulkanRHI::get().getSwapchainImageSize();
 		createResizableObjects(extent.width, extent.height);
 
-		LOG_INFO("ui pass init time: {}ms", stop_watch.stop());
+		LOG_INFO("ui pass init time: {}ms", stop_watch.stopMs());
 	}
 
 	void UIPass::prepare()

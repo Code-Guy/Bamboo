@@ -11,8 +11,6 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::DirectionalLight
 
 namespace Bamboo
 {
-	POLYMORPHIC_DEFINITION(DirectionalLightComponent)
-
 	DirectionalLightComponent::DirectionalLightComponent()
 	{
 		m_intensity = 4.0f;

@@ -13,7 +13,6 @@ namespace Bamboo
 
 	private:
 		REGISTER_REFLECTION(LightComponent)
-		POLYMORPHIC_DECLARATION
 
 		template<class Archive>
 		void serialize(Archive& ar)

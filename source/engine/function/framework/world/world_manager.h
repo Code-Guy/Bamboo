@@ -26,7 +26,6 @@ namespace Bamboo
 
 	private:
 		bool loadWorld(const URL& url);
-		void scriptWorld();
 
 		std::shared_ptr<World> m_current_world;
 

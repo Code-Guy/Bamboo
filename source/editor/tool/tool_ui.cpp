@@ -8,6 +8,33 @@ namespace Bamboo
 	void ToolUI::init()
 	{
 		m_title = "Tool";
+
+		entity_categories = {
+			std::string(ICON_FA_CUBE) + " Entities",
+			std::string(ICON_FA_LIGHTBULB) + " Lights",
+			std::string(ICON_FA_SHAPES) + " Primitives"
+		};
+
+		entity_typess = {
+			{ std::string(ICON_FA_ASTERISK) + " Empty Entity" },
+			{ std::string(ICON_FA_SUN) + " Directional Light",
+			  std::string(ICON_FA_CLOUD_MEATBALL) + " Sky Light",
+			  std::string(ICON_FA_LIGHTBULB) + " Point Light",
+			  std::string(ICON_FA_FLASH_LIGHT) + " Spot Light"},
+			{
+				std::string(ICON_FA_STAR) + " Cube",
+				std::string(ICON_FA_STAR) + " Sphere",
+				std::string(ICON_FA_STAR) + " Cylinder",
+				std::string(ICON_FA_STAR) + " Cone",
+				std::string(ICON_FA_STAR) + " Plane",
+			}
+		};
+
+		const auto& entity_class_names = g_engine.worldManager()->getCurrentWorld()->getEntityClassNames();
+		for (const std::string& entity_class_name : entity_class_names)
+		{
+			entity_typess.front().push_back(std::string(ICON_FA_ASTERISK) + " " + entity_class_name);
+		}
 	}
 
 	void ToolUI::construct()
@@ -36,7 +63,7 @@ namespace Bamboo
 
 		// create entities
 		ImGui::SameLine();
-		sprintf(m_title_buf, "create %s", ICON_FA_CHEVRON_DOWN);
+		sprintf(m_title_buf, "Create %s", ICON_FA_CHEVRON_DOWN);
 		if (ImGui::Button(m_title_buf, ImVec2(80, kButtonHeight)))
 		{
 			ImGui::OpenPopup("create_entity");
@@ -101,33 +128,12 @@ namespace Bamboo
 
 	void ToolUI::constructCreateEntityPopup()
 	{
-		static const std::vector<std::string> categories = {
-			std::string(ICON_FA_CUBE) + " basics", 
-			std::string(ICON_FA_LIGHTBULB) + " lights", 
-			std::string(ICON_FA_SHAPES) + " shapes"
-		};
-
-		static const std::vector<std::vector<std::string>> entity_typess = {
-			{ std::string(ICON_FA_ASTERISK) + " empty entity" },
-			{ std::string(ICON_FA_SUN) + " directional light", 
-			  std::string(ICON_FA_CLOUD_MEATBALL) + " sky light", 
-			  std::string(ICON_FA_LIGHTBULB) + " point light", 
-			  std::string(ICON_FA_FLASH_LIGHT) + " spot light"},
-			{
-				std::string(ICON_FA_STAR) + " cube",
-				std::string(ICON_FA_STAR) + " sphere",
-				std::string(ICON_FA_STAR) + " cylinder",
-				std::string(ICON_FA_STAR) + " cone",
-				std::string(ICON_FA_STAR) + " plane",
-			}
-		};
-
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
 		if (ImGui::BeginPopup("create_entity"))
 		{
-			for (size_t i = 0; i < categories.size(); ++i)
+			for (size_t i = 0; i < entity_categories.size(); ++i)
 			{
-				if (ImGui::BeginMenu(categories[i].c_str()))
+				if (ImGui::BeginMenu(entity_categories[i].c_str()))
 				{
 					for (size_t j = 0; j < entity_typess[i].size(); ++j)
 					{
@@ -135,8 +141,9 @@ namespace Bamboo
 						ImGui::Text(entity_type.c_str());
 						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID | ImGuiDragDropFlags_SourceNoPreviewTooltip))
 						{
-							std::string trimmed_entity_type(entity_type.begin() + 4, entity_type.end());
-							ImGui::SetDragDropPayload("create_entity", trimmed_entity_type.data(), trimmed_entity_type.size());
+							std::string playload_str = std::string(entity_categories[i].begin() + 4, entity_categories[i].end()) + "-" +
+								std::string(entity_type.begin() + 4, entity_type.end());
+							ImGui::SetDragDropPayload("create_entity", playload_str.data(), playload_str.size());
 							ImGui::EndDragDropSource();
 						}
 

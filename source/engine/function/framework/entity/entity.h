@@ -14,6 +14,7 @@ namespace Bamboo
 	class Entity : public std::enable_shared_from_this<Entity>, public ITickable
 	{
 	public:
+		Entity() = default;
 		~Entity();
 
 		void inflate();
@@ -60,7 +61,23 @@ namespace Bamboo
 			return nullptr;
 		}
 
+		template<typename TComponent>
+		std::vector<std::shared_ptr<TComponent>> getChildComponents(const std::string& type_name)
+		{
+			std::vector<std::shared_ptr<TComponent>> child_components;
+			for (const auto& component : m_components)
+			{
+				if (component->getTypeName().find(type_name) != std::string::npos)
+				{
+					child_components.push_back(std::static_pointer_cast<TComponent>(component));
+				}
+			}
+
+			return child_components;
+		}
+
 #define getComponent(TComponent) getComponent<TComponent>(#TComponent)
+#define getChildComponents(TComponent) getChildComponents<TComponent>(#TComponent)
 #define hasComponent(TComponent) hasComponent(#TComponent)
 
 	protected:
@@ -69,6 +86,9 @@ namespace Bamboo
 		virtual void endPlay() {}
 
 	private:
+		RTTR_ENABLE()
+
+		friend World;
 		friend class cereal::access;
 		template<class Archive>
 		void serialize(Archive& ar)
@@ -81,9 +101,6 @@ namespace Bamboo
 			ar(cereal::make_nvp("child_ids", m_cids));
 			ar(cereal::make_nvp("components", m_components));
 		}
-
-		friend World;
-		Entity() = default;
 
 		void updateTransforms();
 

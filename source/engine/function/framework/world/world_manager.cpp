@@ -21,7 +21,6 @@ namespace Bamboo
 		m_world_mode = g_engine.isEditor() ? EWorldMode::Edit : EWorldMode::Play;
 
 		loadWorld(default_world_url);
-		//scriptWorld();
 	}
 
 	void WorldManager::destroy()
@@ -111,6 +110,9 @@ namespace Bamboo
 		{
 			// save world to cache
 			saveAsWorld(pie_world_url);
+
+			// call beginPlay of all entities
+			m_current_world->beginPlay();
 		}
 			break;
 		default:
@@ -128,19 +130,4 @@ namespace Bamboo
 		m_current_world = g_engine.assetManager()->loadAsset<World>(url);
 		return true;
 	}
-
-	void WorldManager::scriptWorld()
-	{
- 		// add directional light
- 		std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
- 		transform_component->m_position = glm::vec3(0.0f, 5.0f, 0.0f);
- 		transform_component->m_rotation = glm::vec3(0.0f, -150.0f, -20.0f);
- 
- 		std::shared_ptr<Entity> directional_light_entity = m_current_world->createEntity("directional_light");
- 		directional_light_entity->addComponent(transform_component);
- 		directional_light_entity->addComponent(std::make_shared<DirectionalLightComponent>());
- 
-		m_current_world->removeEntity(1);
-	}
-
 }

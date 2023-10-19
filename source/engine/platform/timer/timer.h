@@ -40,8 +40,8 @@ namespace Bamboo
 	{
 	public:
 		void start();
-		long long stop();
-		float stopHP();
+		long long stopMs();
+		float stop();
 
 	private:
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_start_time;

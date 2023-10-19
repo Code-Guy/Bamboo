@@ -16,11 +16,13 @@ namespace Bamboo
 		~World();
 
 		virtual void inflate() override;
+		void beginPlay();
 		void tick(float delta_time);
 		void step();
 
 		const auto& getCameraEntity() { return m_camera_entity; }
 		const auto& getEntities() const { return m_entities; }
+		const auto& getEntityClassNames() const { return m_entity_class_names; }
 		std::weak_ptr<Entity> getEntity(uint32_t id);
 		std::weak_ptr<Entity> getEntity(const std::string& name);
 
@@ -36,11 +38,12 @@ namespace Bamboo
 		}
 
 		friend class WorldManager;
-		World() = default;
+		World();
 
 		uint32_t m_next_entity_id = 0;
 		std::weak_ptr<Entity> m_camera_entity;
 		std::map<uint32_t, std::shared_ptr<Entity>> m_entities;
+		std::vector<std::string> m_entity_class_names;
 
 		bool is_stepping = false;
 	};

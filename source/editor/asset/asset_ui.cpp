@@ -332,7 +332,7 @@ namespace Bamboo
 						stop_watch.start();
 
 						as->importGltf(import_file, import_folder, { combine_meshes, force_static_mesh, contains_occlusion_channel });
-						LOG_INFO("import gltf {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stop());
+						LOG_INFO("import gltf {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stopMs());
 						iter = m_imported_files.erase(iter);
 					}
 
@@ -353,7 +353,7 @@ namespace Bamboo
 				stop_watch.start();
 
 				as->importTexture2D(import_file, import_folder);
-				LOG_INFO("import texture 2d {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stop());
+				LOG_INFO("import texture 2d {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stopMs());
 				iter = m_imported_files.erase(iter);
 			}
 			else if (as->isTextureCubeFile(import_file))
@@ -362,7 +362,7 @@ namespace Bamboo
 				stop_watch.start();
 
 				as->importTextureCube(import_file, import_folder);
-				LOG_INFO("import texture cube {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stop());
+				LOG_INFO("import texture cube {} to {}, elapsed time: {}ms", import_file, import_folder, stop_watch.stopMs());
 				iter = m_imported_files.erase(iter);
 			}
 			else

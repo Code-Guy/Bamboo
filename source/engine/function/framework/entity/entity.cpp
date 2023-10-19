@@ -7,6 +7,10 @@
 
 namespace Bamboo
 {
+	RTTR_REGISTRATION
+	{
+	rttr::registration::class_<Bamboo::Entity>("Entity");
+	}
 
 	Entity::~Entity()
 	{

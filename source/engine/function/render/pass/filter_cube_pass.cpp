@@ -214,7 +214,7 @@ namespace Bamboo
 			VulkanUtil::transitionImageLayout(cube_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_formats[i], m_mip_levels[i], 6);
 		}
 	
-		LOG_INFO("filter cube pass elapsed time: {}ms", stop_watch.stop());
+		LOG_INFO("filter cube pass elapsed time: {}ms", stop_watch.stopMs());
 	}
 
 	void FilterCubePass::destroy()

@@ -14,7 +14,6 @@ namespace Bamboo
 
 	private:
 		REGISTER_REFLECTION(PointLightComponent)
-		POLYMORPHIC_DECLARATION
 
 		template<class Archive>
 		void serialize(Archive& ar)

@@ -1,6 +1,7 @@
 #include "world.h"
 #include "engine/core/base/macro.h"
 #include "engine/function/framework/component/camera_component.h"
+#include "engine/function/framework/component/transform_component.h"
 #include "engine/function/framework/world/world_manager.h"
 #include <fstream>
 
@@ -9,6 +10,14 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::World)
 
 namespace Bamboo
 {
+	World::World()
+	{
+		auto derived_entity_types = rttr::type::get_by_name("Entity").get_derived_classes();
+		for (const auto& derived_entity_type : derived_entity_types)
+		{
+			m_entity_class_names.push_back(derived_entity_type.get_name().to_string());
+		}
+	}
 
 	World::~World()
 	{
@@ -41,6 +50,14 @@ namespace Bamboo
 
 			// update next entity id
 			m_next_entity_id = std::max(m_next_entity_id, entity->getID() + 1);
+		}
+	}
+
+	void World::beginPlay()
+	{
+		for (const auto& iter : m_entities)
+		{
+			iter.second->beginPlay();
 		}
 	}
 
@@ -96,14 +113,28 @@ namespace Bamboo
 
 	const std::shared_ptr<Entity>& World::createEntity(const std::string& name)
 	{
-		std::shared_ptr<Entity> entity = std::shared_ptr<Entity>(new Entity);
+		std::shared_ptr<Entity> entity;
+		if (std::find(m_entity_class_names.begin(), m_entity_class_names.end(), name) == m_entity_class_names.end())
+		{
+			entity = std::make_shared<Entity>();
+		}
+		else
+		{
+			rttr::type type = rttr::type::get_by_name(name);
+			rttr::variant variant = type.create();
+			entity = variant.get_value<std::shared_ptr<Entity>>();
+		}
+
 		entity->m_id = m_next_entity_id++;
 		entity->m_name = name;
 		entity->m_world = weak_from_this();
-		
+
+		// every entity has transform component
+		entity->addComponent(std::make_shared<TransformComponent>());
+
 		if (g_engine.isSimulating())
 		{
-			entity->beginPlay();	
+			entity->beginPlay();
 		}
 
 		m_entities[entity->m_id] = entity;

@@ -65,16 +65,16 @@ namespace Bamboo
 		m_start_time = std::chrono::high_resolution_clock::now();
 	}
 
-	long long StopWatch::stop()
+	long long StopWatch::stopMs()
 	{
 		m_end_time = std::chrono::high_resolution_clock::now();
 		return std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_start_time).count();
 	}
 
-	float StopWatch::stopHP()
+	float StopWatch::stop()
 	{
 		m_end_time = std::chrono::high_resolution_clock::now();
-		return std::chrono::duration_cast<std::chrono::nanoseconds>(m_end_time - m_start_time).count() * 1e-6f;
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(m_end_time - m_start_time).count() * 1e-9f;
 	}
 
 	TimeOuter::TimeOuter(float out_time) : out_time(out_time)

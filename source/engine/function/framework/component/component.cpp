@@ -3,6 +3,11 @@
 
 namespace Bamboo
 {
+	RTTR_REGISTRATION
+	{
+	rttr::registration::class_<Bamboo::Component>("Component");
+	}
+
 	void ITickable::tickable(float delta_time)
 	{
 		if (!m_tick_enabled)
