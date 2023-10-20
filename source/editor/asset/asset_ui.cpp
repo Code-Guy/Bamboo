@@ -57,6 +57,22 @@ namespace Bamboo
 		constructFolderTree();
 		ImGui::EndChild();
 
+		ImGui::BeginChild("folder_tree");
+		if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+		{
+			if (is_folder_tree_hovered)
+			{
+				ImGui::OpenPopup("folder_op_tree_hovered_popups");
+			}
+			else
+			{
+				ImGui::OpenPopup("folder_op_background_hovered_popups");
+			}
+		}
+		constructFolderOpPopups("folder_op_background_hovered_popups");
+		constructFolderOpPopups("folder_op_tree_hovered_popups", true);
+		ImGui::EndChild();
+
 		ImGui::SameLine();
 
 		// folder files
@@ -76,6 +92,15 @@ namespace Bamboo
 		ImGui::PopFont();
 		ImGui::EndChild();
 
+		ImGui::BeginChild("folder_files");
+		if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !is_asset_hovered)
+		{
+			ImGui::OpenPopup("folder_op_background_hovered_popups");
+		}
+		constructFolderOpPopups("folder_op_background_hovered_popups");
+		constructFolderOpPopups("folder_op_dir_hovered_popups", true);
+		ImGui::EndChild();
+
 		// get folder window rect
 		m_folder_rect.x = ImGui::GetItemRectMin().x;
 		m_folder_rect.y = ImGui::GetItemRectMax().x;
@@ -90,6 +115,10 @@ namespace Bamboo
 
 		// construct popup modal windows
 		constructImportPopups();
+
+		// reset bool status
+		is_folder_tree_hovered = false;
+		is_asset_hovered = false;
 	}
 
 	void AssetUI::destroy()
@@ -143,6 +172,8 @@ namespace Bamboo
 
 		float clip_rect_min_y = ImGui::GetCursorScreenPos().y + ImGui::GetScrollY();
 		float clip_rect_max_y = clip_rect_min_y + ImGui::GetContentRegionAvail().y;
+
+		constructAssetFilePopups();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(15.0f, 24.0f));
 		for (size_t i = 0; i < m_selected_files.size(); ++i)
@@ -259,7 +290,7 @@ namespace Bamboo
 		ImGui::EndGroup();
 
 		// update asset hover and selection status
-		hover_state.is_hovered = ImGui::IsItemHovered();
+		is_asset_hovered |= hover_state.is_hovered = ImGui::IsItemHovered();
 		if (ImGui::IsItemClicked())
 		{
 			m_selected_file = filename;
@@ -278,17 +309,7 @@ namespace Bamboo
 			}
 		}
 
-		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
-		{
-			if (g_engine.fileSystem()->isDir(filename))
-			{
-				openFolder(filename);
-			}
-			else
-			{
-				LOG_INFO("open asset {}", basename);
-			}
-		}
+		onAssetRightClick(filename);
 	}
 
 	void AssetUI::constructImportPopups()
@@ -373,6 +394,81 @@ namespace Bamboo
 		}
 	}
 
+	void AssetUI::constructAssetFilePopups()
+	{
+		// right click option
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {2.0f, 8.0f});
+		ImGui::PushStyleColor(ImGuiCol_PopupBg, { 0.2f, 0.2f, 0.2f, 1.0f });
+		ImGui::PushFont(defaultFont());
+		if (ImGui::BeginPopup("AssetPopups"))
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 8.0f,8.0f });
+			createCustomSeperatorText("COMMON");
+			if (ImGui::MenuItem("  Edit"))
+			{
+				LOG_INFO("Edit");
+			}
+			if (ImGui::MenuItem("  Delete"))
+			{
+				LOG_INFO("Delete");
+			}
+			if (ImGui::MenuItem("  Export"))
+			{
+				LOG_INFO("Export");
+			}
+			ImGui::Separator();
+
+			createCustomSeperatorText("EXPLORE");
+			if (ImGui::MenuItem("  Show in Explorer"))
+			{
+				LOG_INFO("Show in Explorer");
+			}
+			ImGui::Separator();
+
+			createCustomSeperatorText("REFERENCES");
+			if (ImGui::MenuItem("  Copy URL"))
+			{
+				LOG_INFO("Copy URL");
+			}
+			if (ImGui::MenuItem("  Copy File Path"))
+			{
+				LOG_INFO("Copy file path");
+			}
+			ImGui::PopStyleVar();
+			ImGui::EndPopup();
+		}
+		ImGui::PopFont();
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+	}
+
+	void AssetUI::constructFolderOpPopups(const std::string& str_id, bool is_background_not_hoverd)
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 2.0f, 8.0f });
+		ImGui::PushStyleColor(ImGuiCol_PopupBg, { 0.2f, 0.2f, 0.2f, 1.0f });
+		if (ImGui::BeginPopup(str_id.c_str()))
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 8.0f, 8.0f });
+			createCustomSeperatorText("FOLDER");
+			if (ImGui::MenuItem("  New Folder"))
+			{
+				createFolder();
+			}
+
+			if (is_background_not_hoverd)
+			{
+				if (ImGui::MenuItem("  Delete"))
+				{
+					deleteFolder();
+				}
+			}
+			ImGui::PopStyleVar();
+			ImGui::EndPopup();
+		}
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar();
+	}
+
 	void AssetUI::openFolder(std::string folder)
 	{
 		if (!g_engine.fileSystem()->exists(m_selected_folder))
@@ -423,6 +519,49 @@ namespace Bamboo
 		}
 
 		m_imported_files = drop_event->filenames;
+	}
+
+	void AssetUI::onAssetRightClick(const std::string& filename)
+	{
+		if (ImGui::IsItemHovered())
+		{
+			if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+			{
+				if (g_engine.fileSystem()->isDir(filename))
+				{
+					openFolder(filename);
+				}
+				else
+				{
+					std::string basename = g_engine.fileSystem()->basename(filename);
+					LOG_INFO("open asset {}", basename);
+				}
+			}
+			else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			{
+				if (g_engine.fileSystem()->isDir(filename))
+				{
+					// Dir right-click event
+					ImGui::OpenPopup("folder_op_dir_hovered_popups");
+				}
+				else
+				{
+					ImGui::OpenPopup("AssetPopups");
+				}
+			}
+		}
+	}
+
+	void AssetUI::createCustomSeperatorText(const std::string& text)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextPadding, ImVec2(0.0f, 0.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 0.0f);
+		ImGui::PushFont(smallFont());
+		ImGui::SeparatorText(text.c_str());
+		ImGui::PopFont();
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor();
 	}
 
 }
