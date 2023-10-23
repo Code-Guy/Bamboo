@@ -8,9 +8,16 @@ rttr::registration::class_<Bamboo::CylinderColliderComponent>("CylinderColliderC
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::CylinderColliderComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::CylinderColliderComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::ColliderComponent, Bamboo::CylinderColliderComponent)
 
 namespace Bamboo
 {
 	
+	CylinderColliderComponent::CylinderColliderComponent()
+	{
+		m_type = EColliderType::Cylinder;
+		m_radius = 1.0f;
+		m_height = 2.0f;
+	}
+
 }

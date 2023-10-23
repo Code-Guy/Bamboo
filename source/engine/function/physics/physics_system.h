@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <vector>
+#include <map>
 #include <glm/glm.hpp>
 
 namespace JPH
@@ -28,12 +28,10 @@ namespace Bamboo
 		void init();
 		void destroy();
 
-		uint32_t addRigidbody(const glm::mat4& global_matrix, class RigidbodyComponent* rigidbody_component,
-			const std::vector<std::shared_ptr<class ColliderComponent>>& collider_components);
-		void removeRigidbody(uint32_t body_id);
-
 	private:
 		void tick();
+		void collectRigidbodies();
+		void clearRigidbodies();
 
 		std::unique_ptr<class PhysicsSettings> m_physics_settings;
 
@@ -49,6 +47,6 @@ namespace Bamboo
 		std::unique_ptr<class JPH::BodyActivationListener> m_body_activation_listener;
 
 		uint32_t m_tick_timer_handle;
-		std::vector<uint32_t> m_pending_remove_body_ids;
+		std::map<uint32_t, std::shared_ptr<class TransformComponent>> m_body_transforms;
 	};
 }

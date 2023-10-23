@@ -8,7 +8,7 @@ namespace Bamboo
 	class MeshColliderComponent : public ColliderComponent, public IAssetRef
 	{
 	public:
-		MeshColliderComponent() { m_type = EColliderType::Mesh; }
+		MeshColliderComponent();
 
 		void setStaticMesh(std::shared_ptr<StaticMesh>& static_mesh);
 		std::shared_ptr<StaticMesh> getStaticMesh() { return m_static_mesh; }

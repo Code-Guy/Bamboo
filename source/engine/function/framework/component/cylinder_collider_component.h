@@ -7,10 +7,10 @@ namespace Bamboo
 	class CylinderColliderComponent : public ColliderComponent
 	{
 	public:
-		CylinderColliderComponent() { m_type = EColliderType::Cylinder; }
+		CylinderColliderComponent();
 
-		float m_radius = 0.5f;
-		float m_height = 2.0f;
+		float m_radius;
+		float m_height;
 
 	private:
 		REGISTER_REFLECTION(ColliderComponent)
@@ -18,7 +18,7 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			ar(cereal::make_nvp("component", cereal::base_class<ColliderComponent>(this)));
+			ar(cereal::make_nvp("collider_component", cereal::base_class<ColliderComponent>(this)));
 			ar(cereal::make_nvp("radius", m_radius));
 			ar(cereal::make_nvp("height", m_height));
 		}

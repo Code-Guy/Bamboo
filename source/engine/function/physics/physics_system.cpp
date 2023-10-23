@@ -1,6 +1,9 @@
 #include "physics_system.h"
 #include "engine/core/base/macro.h"
 #include "engine/platform/timer/timer.h"
+#include "engine/core/math/math_util.h"
+#include "engine/function/framework/world/world_manager.h"
+#include "engine/function/framework/component/transform_component.h"
 #include "engine/function/framework/component/rigidbody_component.h"
 #include "engine/function/framework/component/box_collider_component.h"
 #include "engine/function/framework/component/sphere_collider_component.h"
@@ -20,6 +23,7 @@
 #include <Jolt/Physics/Collision/Shape/CylinderShape.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
@@ -164,7 +168,7 @@ namespace Bamboo
 	public:
 		virtual JPH::ValidateResult	OnContactValidate(const JPH::Body& body1, const JPH::Body& body2, JPH::RVec3Arg base_offset, const JPH::CollideShapeResult& collision_result) override
 		{
-			LOG_INFO("jolt on contact validate");
+			//LOG_INFO("jolt on contact validate");
 
 			// allows you to ignore a contact before it is created (using layers to not make objects collide is cheaper!)
 			return JPH::ValidateResult::AcceptAllContactsForThisBodyPair;
@@ -172,17 +176,17 @@ namespace Bamboo
 
 		virtual void OnContactAdded(const JPH::Body& body1, const JPH::Body& body2, const JPH::ContactManifold& manifold, JPH::ContactSettings& settings) override
 		{
-			LOG_INFO("jolt on contact added");
+			//LOG_INFO("jolt on contact added");
 		}
 
 		virtual void OnContactPersisted(const JPH::Body& body1, const JPH::Body& body2, const JPH::ContactManifold& manifold, JPH::ContactSettings& settings) override
 		{
-			LOG_INFO("jolt on contact persisted");
+			//LOG_INFO("jolt on contact persisted");
 		}
 
 		virtual void OnContactRemoved(const JPH::SubShapeIDPair& inSubShapePair) override
 		{
-			LOG_INFO("jolt on contact removed");
+			//LOG_INFO("jolt on contact removed");
 		}
 	};
 
@@ -192,12 +196,12 @@ namespace Bamboo
 	public:
 		virtual void OnBodyActivated(const JPH::BodyID& body_id, uint64_t body_user_data) override
 		{
-			LOG_INFO("jolt on body activated");
+			//LOG_INFO("jolt on body activated");
 		}
 
 		virtual void OnBodyDeactivated(const JPH::BodyID& body_id, uint64_t body_user_data) override
 		{
-			LOG_INFO("jolt on body deactivated");
+			//LOG_INFO("jolt on body deactivated");
 		}
 	};
 
@@ -253,6 +257,9 @@ namespace Bamboo
 
 	void PhysicsSystem::destroy()
 	{
+		// remove and destroy all rigidbodies
+		clearRigidbodies();
+
 		// unregister all jolt types
 		JPH::UnregisterTypes();
 
@@ -269,9 +276,67 @@ namespace Bamboo
 		return JPH::Vec3(v.x, v.y, v.z);
 	}
 
+	glm::vec3 JPHVec3ToGlmVec3(const JPH::Vec3& v)
+	{
+		return glm::vec3(v[0], v[1], v[2]);
+	}
+
 	JPH::Quat glmQuatToJPHQuat(const glm::quat& q)
 	{
 		return JPH::Quat(q.x, q.y, q.z, q.w);
+	}
+
+	glm::vec3 JPHQuatToGlmRot(const JPH::Quat& q)
+	{
+		JPH::Vec3 r = q.GetEulerAngles();
+		return glm::degrees(glm::vec3(r[0], r[1], r[2]));
+	}
+
+	JPH::Quat glmRotToJPHQuat(const glm::vec3& r)
+	{
+		return JPH::Quat::sEulerAngles(JPH::Vec3(
+			glm::radians(r[0]),
+			glm::radians(r[1]),
+			glm::radians(r[2])
+		));
+	}
+
+	void PhysicsSystem::tick()
+	{
+		static StopWatch stop_watch;
+		static bool last_playing = false;
+		float delta_time = stop_watch.stop();
+
+		if (g_engine.isPlaying())
+		{
+			// collect bodies
+			collectRigidbodies();
+
+			// update bodies
+			int collision_step = (int)std::ceilf(delta_time / m_physics_settings->m_update_delta_time);
+			m_physics_system->Update(delta_time, collision_step, m_temp_allocator.get(), m_job_system.get());
+
+			// update transforms of rigidbody components
+			for (auto iter : m_body_transforms)
+			{
+				uint32_t body_id = iter.first;
+				auto transform_component = iter.second;
+
+				JPH::Vec3 position;
+				JPH::Quat rotation;
+				m_body_interface->GetPositionAndRotation(JPH::BodyID(body_id), position, rotation);
+				transform_component->setPosition(JPHVec3ToGlmVec3(position));
+				transform_component->setRotation(JPHQuatToGlmRot(rotation));
+			}
+		}
+		else if (last_playing && !g_engine.isPlaying())
+		{
+			// remove all rigidbodies when pie stop playing
+			clearRigidbodies();
+		}
+
+		last_playing = g_engine.isPlaying();
+		stop_watch.start();
 	}
 
 	JPH::ObjectLayer motionTypeToObjectLayer(EMotionType motion_type)
@@ -327,71 +392,104 @@ namespace Bamboo
 		return shape_settings;
 	}
 
-	uint32_t PhysicsSystem::addRigidbody(const glm::mat4& global_matrix, class RigidbodyComponent* rigidbody_component,
-		const std::vector<std::shared_ptr<class ColliderComponent>>& collider_components)
+	void PhysicsSystem::collectRigidbodies()
 	{
-		glm::quat rotation;
-		glm::vec3 scale, translation, skew;
-		glm::vec4 perspective;
-		glm::decompose(global_matrix, scale, rotation, translation, skew, perspective);
-		std::vector<JPH::ShapeSettings*> shape_settings_list;
-		for (const auto& collider_component : collider_components)
+		const auto& world = g_engine.worldManager()->getCurrentWorld();
+		const auto& entities = world->getEntities();
+		std::vector<uint32_t> m_current_body_ids;
+		for (const auto& iter : entities)
 		{
-			shape_settings_list.push_back(makeShapeSettingsFromCollider(scale, collider_component));
-		}
-
-		JPH::ShapeSettings* shape_settings;
-		if (shape_settings_list.size() == 1)
-		{
-			shape_settings = shape_settings_list.front();
-		}
-		else
-		{
-			JPH::StaticCompoundShapeSettings* compound_shape_settings = new JPH::StaticCompoundShapeSettings;
-			for (JPH::ShapeSettings* sub_shape_settings : shape_settings_list)
-			{
-				compound_shape_settings->AddShape(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), sub_shape_settings);
+			const auto& entity = iter.second;
+			auto rigidbody_component = entity->getComponent(RigidbodyComponent);
+			if (!rigidbody_component)
+			{ 
+				continue;
 			}
-			shape_settings = compound_shape_settings;
+
+			if (rigidbody_component->m_body_id == UINT_MAX)
+			{
+				auto transform_component = entity->getComponent(TransformComponent);
+				auto collider_components = entity->getChildComponents(ColliderComponent);
+				if (!collider_components.empty())
+				{
+					glm::quat rotation;
+					glm::vec3 scale, position, skew;
+					glm::vec4 perspective;
+					glm::mat4 global_matrix = transform_component->getGlobalMatrix();
+					glm::decompose(global_matrix, scale, rotation, position, skew, perspective);
+
+					std::vector<JPH::ShapeSettings*> shape_settings_list;
+					for (const auto& collider_component : collider_components)
+					{
+						shape_settings_list.push_back(makeShapeSettingsFromCollider(scale, collider_component));
+					}
+
+					JPH::ShapeSettings* shape_settings;
+					bool is_compound_shape = collider_components.size() > 1;
+					if (is_compound_shape)
+					{
+						JPH::StaticCompoundShapeSettings* compound_shape_settings = new JPH::StaticCompoundShapeSettings;
+						for (size_t i = 0; i < shape_settings_list.size(); ++i)
+						{
+							compound_shape_settings->AddShape(glmVec3ToJPHVec3(collider_components[i]->m_position),
+								glmRotToJPHQuat(collider_components[i]->m_rotation), shape_settings_list[i]);
+						}
+						shape_settings = compound_shape_settings;
+					}
+					else
+					{
+						shape_settings = new JPH::RotatedTranslatedShapeSettings(
+							glmVec3ToJPHVec3(collider_components.front()->m_position * scale),
+							glmRotToJPHQuat(collider_components.front()->m_rotation),
+							shape_settings_list.front()
+						);
+					}
+
+					EMotionType motion_type = rigidbody_component->m_motion_type;
+					JPH::BodyCreationSettings body_creation_settings(shape_settings, glmVec3ToJPHVec3(position),
+						glmQuatToJPHQuat(rotation), (JPH::EMotionType)motion_type, motionTypeToObjectLayer(motion_type));
+					JPH::BodyID body_id = m_body_interface->CreateAndAddBody(body_creation_settings,
+						motion_type == EMotionType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate);
+
+					ASSERT(!body_id.IsInvalid(), "jolt run out of bodies");
+					rigidbody_component->m_body_id = body_id.GetIndexAndSequenceNumber();
+					m_body_transforms[rigidbody_component->m_body_id] = transform_component;
+					LOG_INFO("add body {}", rigidbody_component->m_body_id);
+				}
+			}
+
+			m_current_body_ids.push_back(rigidbody_component->m_body_id);
 		}
 
-		EMotionType motion_type = rigidbody_component->m_motion_type;
-		JPH::BodyCreationSettings body_creation_settings(shape_settings, glmVec3ToJPHVec3(translation), 
-			glmQuatToJPHQuat(rotation), (JPH::EMotionType)motion_type, motionTypeToObjectLayer(motion_type));
-		JPH::BodyID body_id = m_body_interface->CreateAndAddBody(body_creation_settings, 
-			motion_type == EMotionType::Static ? JPH::EActivation::DontActivate : JPH::EActivation::Activate);
-
-		ASSERT(!body_id.IsInvalid(), "jolt run out of bodies");
-		return body_id.GetIndexAndSequenceNumber();
+		// remove rigidbodies that owned rigidbody component have been removed
+		for (auto iter = m_body_transforms.begin(); iter != m_body_transforms.end(); )
+		{
+			uint32_t body_id = iter->first;
+			if (std::find(m_current_body_ids.begin(), m_current_body_ids.end(), body_id) == m_current_body_ids.end())
+			{
+				m_body_interface->RemoveBody(JPH::BodyID(body_id));
+				m_body_interface->DestroyBody(JPH::BodyID(body_id));
+				iter = m_body_transforms.erase(iter);
+				LOG_INFO("remove body {}", body_id);
+			}
+			else
+			{
+				++iter;
+			}
+		}
 	}
 
-	void PhysicsSystem::removeRigidbody(uint32_t body_id)
+	void PhysicsSystem::clearRigidbodies()
 	{
-		m_pending_remove_body_ids.push_back(body_id);
-	}
-
-	void PhysicsSystem::tick()
-	{
-		static StopWatch stop_watch;
-		float delta_time = stop_watch.stop();
-
-		if (delta_time > 0.001f && g_engine.isPlaying())
+		for (auto iter : m_body_transforms)
 		{
-			// update bodies
-			int collision_step = (int)std::ceilf(delta_time / m_physics_settings->m_update_delta_time);
-			m_physics_system->Update(delta_time, collision_step, m_temp_allocator.get(), m_job_system.get());
+			uint32_t body_id = iter.first;
 
-			// remove bodies
-			for (uint32_t remove_body_id : m_pending_remove_body_ids)
-			{
-				LOG_INFO("remove body {}", remove_body_id);
-				m_body_interface->RemoveBody(JPH::BodyID(remove_body_id));
-				m_body_interface->DestroyBody(JPH::BodyID(remove_body_id));
-			}
-			m_pending_remove_body_ids.clear();
+			m_body_interface->RemoveBody(JPH::BodyID(body_id));
+			m_body_interface->DestroyBody(JPH::BodyID(body_id));
+			LOG_INFO("remove body {}", body_id);
 		}
-
-		stop_watch.start();
+		m_body_transforms.clear();
 	}
 
 }

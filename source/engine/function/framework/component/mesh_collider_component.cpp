@@ -8,10 +8,16 @@ rttr::registration::class_<Bamboo::MeshColliderComponent>("MeshColliderComponent
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::MeshColliderComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::MeshColliderComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::ColliderComponent, Bamboo::MeshColliderComponent)
 
 namespace Bamboo
 {
+
+	MeshColliderComponent::MeshColliderComponent()
+	{
+		m_type = EColliderType::Mesh;
+	}
+
 	void MeshColliderComponent::setStaticMesh(std::shared_ptr<StaticMesh>& static_mesh)
 	{
 		REF_ASSET(m_static_mesh, static_mesh)

@@ -8,9 +8,16 @@ rttr::registration::class_<Bamboo::CapsuleColliderComponent>("CapsuleColliderCom
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::CapsuleColliderComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::CapsuleColliderComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::ColliderComponent, Bamboo::CapsuleColliderComponent)
 
 namespace Bamboo
 {
+
+	CapsuleColliderComponent::CapsuleColliderComponent()
+	{
+		m_type = EColliderType::Capsule;
+		m_radius = 1.0f;
+		m_height = 2.0f;
+	}
 
 }

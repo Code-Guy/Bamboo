@@ -7,7 +7,7 @@ rttr::registration::class_<Bamboo::DirectionalLightComponent>("DirectionalLightC
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::DirectionalLightComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::DirectionalLightComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::LightComponent, Bamboo::DirectionalLightComponent)
 
 namespace Bamboo
 {

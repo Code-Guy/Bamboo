@@ -53,10 +53,10 @@ namespace Bamboo
 
     void Engine::logicTick(float delta_time)
     {
-        g_engine.timerManager()->tick(delta_time);
         g_engine.eventSystem()->tick();
         g_engine.worldManager()->tick(delta_time);
-    }
+		g_engine.timerManager()->tick(delta_time);
+	}
 
     void Engine::renderTick(float delta_time)
     {

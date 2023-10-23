@@ -7,9 +7,9 @@ namespace Bamboo
 	class SphereColliderComponent : public ColliderComponent
 	{
 	public:
-		SphereColliderComponent() { m_type = EColliderType::Sphere; }
+		SphereColliderComponent();
 
-		float m_radius = 1.0f;
+		float m_radius;
 
 	private:
 		REGISTER_REFLECTION(ColliderComponent)
@@ -17,7 +17,7 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			ar(cereal::make_nvp("component", cereal::base_class<ColliderComponent>(this)));
+			ar(cereal::make_nvp("collider_component", cereal::base_class<ColliderComponent>(this)));
 			ar(cereal::make_nvp("radius", m_radius));
 		}
 	};

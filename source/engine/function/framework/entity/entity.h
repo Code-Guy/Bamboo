@@ -81,9 +81,9 @@ namespace Bamboo
 #define hasComponent(TComponent) hasComponent(#TComponent)
 
 	protected:
-		virtual void beginPlay() {}
+		virtual void beginPlay();
 		virtual void tick(float delta_time) override;
-		virtual void endPlay() {}
+		virtual void endPlay();
 
 	private:
 		RTTR_ENABLE()

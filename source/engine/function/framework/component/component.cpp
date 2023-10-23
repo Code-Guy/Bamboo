@@ -43,7 +43,7 @@ namespace Bamboo
 		m_parent = parent;
 	}
 
-	void Component::dettach()
+	void Component::detach()
 	{
 		m_parent.reset();
 	}

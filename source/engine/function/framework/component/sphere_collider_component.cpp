@@ -7,9 +7,15 @@ rttr::registration::class_<Bamboo::SphereColliderComponent>("SphereColliderCompo
 }
 
 CEREAL_REGISTER_TYPE(Bamboo::SphereColliderComponent)
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::SphereColliderComponent)
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::ColliderComponent, Bamboo::SphereColliderComponent)
 
 namespace Bamboo
 {
+
+	SphereColliderComponent::SphereColliderComponent()
+	{
+		m_type = EColliderType::Sphere;
+		m_radius = 1.0f;
+	}
 
 }

@@ -16,6 +16,7 @@ target_link_libraries(${TARGET_NAME} PUBLIC yaml-cpp)
 target_link_libraries(${TARGET_NAME} PUBLIC rttr_core_lib)
 target_link_libraries(${TARGET_NAME} PRIVATE ktx)
 target_link_libraries(${TARGET_NAME} PRIVATE Jolt)
+target_link_libraries(${TARGET_NAME} PRIVATE effolkronium_random)
 
 target_include_directories(${TARGET_NAME} PUBLIC ${BAMBOO_ROOT_DIR}/source)
 target_include_directories(${TARGET_NAME} PUBLIC ${BAMBOO_ROOT_DIR}/external)

@@ -7,9 +7,9 @@ namespace Bamboo
 	class BoxColliderComponent : public ColliderComponent
 	{
 	public:
-		BoxColliderComponent() { m_type = EColliderType::Box; }
+		BoxColliderComponent();
 
-		glm::vec3 m_size = glm::vec3(1.0f);
+		glm::vec3 m_size;
 
 	private:
 		REGISTER_REFLECTION(ColliderComponent)
@@ -17,7 +17,7 @@ namespace Bamboo
 		template<class Archive>
 		void serialize(Archive& ar)
 		{
-			ar(cereal::make_nvp("component", cereal::base_class<ColliderComponent>(this)));
+			ar(cereal::make_nvp("collider_component", cereal::base_class<ColliderComponent>(this)));
 			ar(cereal::make_nvp("size", m_size));
 		}
 	};
