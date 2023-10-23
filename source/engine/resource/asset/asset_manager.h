@@ -30,6 +30,9 @@ namespace Bamboo
 		bool isTexture2DFile(const std::string& filename);
 		bool isTextureCubeFile(const std::string& filename);
 
+		static void* compressTexture2D(const uint8_t* p_image_RGBA, uint32_t width, uint32_t height, uint32_t pitch_in_pixels, size_t& data_size);
+		static void* compressTexture2D(const std::string& filename, basisu::image& source_image, size_t& data_size);
+
 		EAssetType getAssetType(const URL& url);
 
 		template<typename AssetClass>
@@ -51,8 +54,5 @@ namespace Bamboo
 		std::map<EAssetType, std::string> m_asset_type_exts;
 		std::map<EAssetType, EArchiveType> m_asset_archive_types;
 		std::map<std::string, EAssetType> m_ext_asset_types;
-
-	private:
-		void* compressTexture2D(const std::string& filename, basisu::image& source_image, size_t& data_size);
 	};
 }

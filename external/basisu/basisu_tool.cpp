@@ -1799,7 +1799,7 @@ static bool unpack_and_validate_basis_file(
 	if (!opts.m_fuzz_testing)
 	{
 		// Skip the full validation, which CRC16's the entire file.
-
+	
 		// Validate the file - note this isn't necessary for transcoding
 		if (!dec.validate_file_checksums(&basis_file_data[0], (uint32_t)basis_file_data.size(), true))
 		{
@@ -4501,34 +4501,34 @@ static int main_internal(int argc, const char **argv)
 	return status ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
-int main(int argc, const char** argv)
-{
-#ifdef _WIN32
-	SetConsoleOutputCP(CP_UTF8);
-#endif
-#ifdef _DEBUG
-	printf("DEBUG\n");
-#endif
-		
-	int status = EXIT_FAILURE;
-
-#if BASISU_CATCH_EXCEPTIONS
-	try
-	{
-		 status = main_internal(argc, argv);
-	}
-	catch (const std::exception &exc)
-	{
-		 fprintf(stderr, "Fatal error: Caught exception \"%s\"\n", exc.what());
-	}
-	catch (...)
-	{
-		fprintf(stderr, "Fatal error: Uncaught exception!\n");
-	}
-#else
-	status = main_internal(argc, argv);
-#endif
-
-	return status;
-}
+// int main(int argc, const char** argv)
+// {
+// #ifdef _WIN32
+// 	SetConsoleOutputCP(CP_UTF8);
+// #endif
+// #ifdef _DEBUG
+// 	printf("DEBUG\n");
+// #endif
+// 		
+// 	int status = EXIT_FAILURE;
+//
+// #if BASISU_CATCH_EXCEPTIONS
+// 	try
+// 	{
+// 		 status = main_internal(argc, argv);
+// 	}
+// 	catch (const std::exception &exc)
+// 	{
+// 		 fprintf(stderr, "Fatal error: Caught exception \"%s\"\n", exc.what());
+// 	}
+// 	catch (...)
+// 	{
+// 		fprintf(stderr, "Fatal error: Uncaught exception!\n");
+// 	}
+// #else
+// 	status = main_internal(argc, argv);
+// #endif
+//
+// 	return status;
+// }
 

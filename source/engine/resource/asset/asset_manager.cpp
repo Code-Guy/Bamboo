@@ -66,7 +66,6 @@ namespace Bamboo
 		// uint8_t* image_data = stbi_load(filename.c_str(), (int*)&width, (int*)&height, 0, k_channels);
 		// ASSERT(image_data != nullptr, "failed to import texture: {}", filename)
 
-		// todo load from file
 		basisu::image image;
 		size_t image_size = 0;
 		void* p_image_data = compressTexture2D(filename, image, image_size);
@@ -239,6 +238,29 @@ namespace Bamboo
 		return g_engine.fileSystem()->format("%s_%s_%d.%s", ext.c_str(), basename.c_str(), asset_index, ext.c_str());
 	}
 
+	void* AssetManager::compressTexture2D(const uint8_t* p_image_RGBA, uint32_t width, uint32_t height, uint32_t pitch_in_pixels, size_t& data_size)
+	{
+		basisu::basisu_encoder_init();
+
+		basisu::image_stats stats;
+		uint32_t flags_and_quality;
+		float uastc_rdo_quality = 1.0f;
+
+		// UASTC
+		flags_and_quality = basisu::cFlagThreaded | basisu::cFlagUASTCRDO | basisu::cFlagPrintStats | basisu::cFlagPrintStatus;
+
+		void* p_image_data = basis_compress(p_image_RGBA, width, height, pitch_in_pixels, flags_and_quality, uastc_rdo_quality, &data_size, &stats);
+
+		if (!p_image_data)
+		{
+			basisu::error_printf("basis_compress() failed!\n");
+			return nullptr;
+		}
+
+		printf("UASTC Size: %u, PSNR: %f\n", (uint32_t)data_size, stats.m_basis_rgba_avg_psnr);
+		return p_image_data;
+	}
+
 	void* AssetManager::compressTexture2D(const std::string& filename, basisu::image& source_image, size_t& data_size)
 	{
 		basisu::basisu_encoder_init();
@@ -260,16 +282,17 @@ namespace Bamboo
 		float uastc_rdo_quality = 1.0f;
 
 		// UASTC
-		flags_and_quality = basisu::cFlagThreaded | basisu::cFlagUASTCRDO | basisu::cFlagPrintStats | basisu::cFlagPrintStatus;
+		flags_and_quality = basisu::cFlagThreaded | basisu::cFlagUASTCRDO| basisu::cFlagUASTC | basisu::cFlagPrintStats | basisu::cFlagPrintStatus;
+		// flags_and_quality = basisu::cFlagThreaded | basisu::cFlagPrintStats | basisu::cFlagPrintStatus;
 
 		source_images[0] = source_image;
-		void* p_image_data = nullptr;
-		p_image_data = basis_compress(source_images, flags_and_quality, uastc_rdo_quality, &data_size, &stats);
+		void* p_image_data = basis_compress(source_images, flags_and_quality, uastc_rdo_quality, &data_size, &stats);
 		if (!p_image_data)
 		{
 			basisu::error_printf("basis_compress() failed!\n");
 			return nullptr;
 		}
+		printf("UASTC data %p", static_cast<int*>(p_image_data));
 
 		printf("UASTC Size: %u, PSNR: %f\n", (uint32_t)data_size, stats.m_basis_rgba_avg_psnr);
 		return p_image_data;

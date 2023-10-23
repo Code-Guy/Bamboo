@@ -7,6 +7,7 @@
 
 #include <queue>
 #include <algorithm>
+#include <basisu/encoder/basisu_comp.h>
 
 namespace Bamboo
 {
@@ -169,7 +170,18 @@ namespace Bamboo
 	{
 		texture->m_width = gltf_image.width;
 		texture->m_height = gltf_image.height;
-		texture->m_image_data = gltf_image.image;
+
+		size_t image_size;
+		void* p_compressed_data = AssetManager::compressTexture2D(gltf_image.image.data(), gltf_image.width, gltf_image.height, gltf_image.width, image_size);
+		if (p_compressed_data == nullptr)
+		{
+			printf("Compress Texture2D failed\n");
+			return;
+		}
+		texture->m_image_data.resize(image_size);
+		memcpy(texture->m_image_data.data(), p_compressed_data, image_size);
+		basisu::basis_free_data(p_compressed_data);
+		// texture->m_image_data = gltf_image.image;
 
 		texture->m_min_filter = getVkFilterFromGltf(gltf_sampler.minFilter);
 		texture->m_mag_filter = getVkFilterFromGltf(gltf_sampler.magFilter);
