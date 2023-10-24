@@ -72,17 +72,12 @@ namespace Bamboo
 
 		VulkanUtil::extractImage(m_image_view.image(), m_width, m_height, m_format, texture->m_image_data, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		//VulkanUtil::saveImage(m_image_view.image(), m_width, m_height, m_format, "D:/Test/brdf_lut.bin", VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		// todo
-		size_t image_size;
-		void* p_compressed_data = AssetManager::compressTexture2D(texture->m_image_data.data(), m_width, m_height, m_width, image_size);
-		if (p_compressed_data == nullptr)
+
+		if(!texture->compressTexture(texture->m_image_data.data(), m_width, m_height, 0.0f))
 		{
-			printf("Compress Texture2D failed\n");
+			LOG_ERROR("Compress Texture2D failed");
 			return;
 		}
-		texture->m_image_data.resize(image_size);
-		memcpy(texture->m_image_data.data(), p_compressed_data, image_size);
-		basisu::basis_free_data(p_compressed_data);
 
 		texture->inflate();
 		g_engine.assetManager()->serializeAsset(texture);
