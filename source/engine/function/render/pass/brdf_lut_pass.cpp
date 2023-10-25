@@ -1,11 +1,8 @@
 #include "brdf_lut_pass.h"
 
-#include <basisu/encoder/basisu_comp.h>
-
 #include "engine/core/vulkan/vulkan_rhi.h"
 #include "engine/resource/shader/shader_manager.h"
 #include "engine/resource/asset/asset_manager.h"
-#include "engine/platform/timer/timer.h"
 #include "engine/resource/asset/texture_2d.h"
 
 namespace Bamboo
@@ -73,6 +70,7 @@ namespace Bamboo
 		VulkanUtil::extractImage(m_image_view.image(), m_width, m_height, m_format, texture->m_image_data, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		//VulkanUtil::saveImage(m_image_view.image(), m_width, m_height, m_format, "D:/Test/brdf_lut.bin", VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+		// No Texture Compression
 		if(!texture->compressTexture(texture->m_image_data.data(), m_width, m_height, 0.0f))
 		{
 			LOG_ERROR("Compress Texture2D failed");

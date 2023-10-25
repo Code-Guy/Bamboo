@@ -43,7 +43,7 @@ namespace Bamboo
 
 	enum class EAssetType
 	{
-		Invalid, Texture2D, Texture2D_Ktx, TextureCube, Material, Skeleton, StaticMesh, SkeletalMesh, Animation, World
+		Invalid, Texture2D, TextureCube, Material, Skeleton, StaticMesh, SkeletalMesh, Animation, World
 	};
 
 	class IAssetRef

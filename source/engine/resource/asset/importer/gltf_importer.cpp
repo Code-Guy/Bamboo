@@ -6,8 +6,6 @@
 #include "engine/resource/asset/asset_manager.h"
 
 #include <queue>
-#include <algorithm>
-#include <basisu/encoder/basisu_comp.h>
 
 namespace Bamboo
 {

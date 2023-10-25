@@ -4501,34 +4501,34 @@ static int main_internal(int argc, const char **argv)
 	return status ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
-// int main(int argc, const char** argv)
-// {
-// #ifdef _WIN32
-// 	SetConsoleOutputCP(CP_UTF8);
-// #endif
-// #ifdef _DEBUG
-// 	printf("DEBUG\n");
-// #endif
-// 		
-// 	int status = EXIT_FAILURE;
-//
-// #if BASISU_CATCH_EXCEPTIONS
-// 	try
-// 	{
-// 		 status = main_internal(argc, argv);
-// 	}
-// 	catch (const std::exception &exc)
-// 	{
-// 		 fprintf(stderr, "Fatal error: Caught exception \"%s\"\n", exc.what());
-// 	}
-// 	catch (...)
-// 	{
-// 		fprintf(stderr, "Fatal error: Uncaught exception!\n");
-// 	}
-// #else
-// 	status = main_internal(argc, argv);
-// #endif
-//
-// 	return status;
-// }
+int main(int argc, const char** argv)
+{
+#ifdef _WIN32
+	SetConsoleOutputCP(CP_UTF8);
+#endif
+#ifdef _DEBUG
+	printf("DEBUG\n");
+#endif
+		
+	int status = EXIT_FAILURE;
+
+#if BASISU_CATCH_EXCEPTIONS
+	try
+	{
+		 status = main_internal(argc, argv);
+	}
+	catch (const std::exception &exc)
+	{
+		 fprintf(stderr, "Fatal error: Caught exception \"%s\"\n", exc.what());
+	}
+	catch (...)
+	{
+		fprintf(stderr, "Fatal error: Uncaught exception!\n");
+	}
+#else
+	status = main_internal(argc, argv);
+#endif
+
+	return status;
+}
 

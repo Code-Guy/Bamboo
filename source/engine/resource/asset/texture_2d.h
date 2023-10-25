@@ -27,7 +27,6 @@ namespace Bamboo
 
 		// Unpack Compressed Texture
 		float m_compress_intensity = 1.0f;
-		bool unpackKTX(std::vector<uint8_t>& image_data);
 		bool unpackUASTC(const std::vector<uint8_t>& image_data, std::vector<uint8_t>& output_data);
 	};
 }

@@ -9,7 +9,6 @@
 #include <tinygltf/stb_image.h>
 
 #include <fstream>
-#include <basisu/encoder/basisu_comp.h>
 
 namespace Bamboo
 {
@@ -17,7 +16,6 @@ namespace Bamboo
 	{
 		m_asset_type_exts = {
 			{ EAssetType::Texture2D, "tex" },
-			{ EAssetType::Texture2D_Ktx, "ktx" },
 			{ EAssetType::TextureCube, "texc" }, 
 			{ EAssetType::Material, "mat" }, 
 			{ EAssetType::Skeleton, "skl" },
@@ -29,7 +27,6 @@ namespace Bamboo
 
 		m_asset_archive_types = {
 			{ EAssetType::Texture2D, EArchiveType::Binary },
-			{ EAssetType::Texture2D_Ktx, EArchiveType::Binary },
 			{ EAssetType::TextureCube, EArchiveType::Binary },
 			{ EAssetType::Material, EArchiveType::Json },
 			{ EAssetType::Skeleton, EArchiveType::Binary },
@@ -64,7 +61,7 @@ namespace Bamboo
 		basisu::image source_image;
 		if (!basisu::load_image(filename.c_str(), source_image))
 		{
-			LOG_ERROR("Failed loading test image {}", filename.c_str());
+			LOG_ERROR("Failed loading image {}", filename.c_str());
 			return false;
 		}
 

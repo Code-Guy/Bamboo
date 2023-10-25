@@ -2,7 +2,6 @@
 
 #include "engine/resource/asset/base/asset.h"
 #include "importer/import_option.h"
-#include <basisu/encoder/basisu_enc.h>
 
 #define DEFAULT_MATERIAL_URL "asset/engine/material/mat_default.mat"
 #define DEFAULT_TEXTURE_2D_URL "asset/engine/material/tex_dummy.tex"
