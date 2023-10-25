@@ -12,7 +12,6 @@
 #include "engine/core/base/macro.h"
 #include "engine/core/vulkan/vulkan_rhi.h"
 #include "engine/core/event/event_system.h"
-#include "engine/resource/asset/asset_manager.h"
 
 namespace Bamboo
 {

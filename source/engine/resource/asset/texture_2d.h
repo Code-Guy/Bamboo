@@ -23,6 +23,7 @@ namespace Bamboo
 		void serialize(Archive& ar)
 		{
 			ar(cereal::make_nvp("texture", cereal::base_class<Texture>(this)));
+			ar(cereal::make_nvp("compress_intensity", m_compress_intensity));
 		}
 
 		// Unpack Compressed Texture

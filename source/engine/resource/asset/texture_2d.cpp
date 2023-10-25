@@ -240,7 +240,6 @@ namespace Bamboo
 					output_data.resize(image_size);
 					memcpy(output_data.data(), img.get_ptr(), image_size);
 					img.clear();
-					img.clear();
 					return true;
 				}
 			}
