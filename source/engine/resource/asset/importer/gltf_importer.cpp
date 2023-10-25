@@ -71,9 +71,9 @@ namespace Bamboo
 		return matrix;
 	}
 
-	QTranform GltfImporter::getGltfNodeTransform(const tinygltf::Node* node)
+	QTransform GltfImporter::getGltfNodeTransform(const tinygltf::Node* node)
 	{
-		QTranform transform;
+		QTransform transform;
 		if (!node->translation.empty())
 		{
 			transform.m_position = glm::make_vec3(node->translation.data());

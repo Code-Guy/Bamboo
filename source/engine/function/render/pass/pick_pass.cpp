@@ -131,7 +131,7 @@ namespace Bamboo
 		uint32_t entity_id = decodeEntityID(&image_data[(m_mouse_y * m_width + m_mouse_x) * 4]);
 		g_engine.eventSystem()->asyncDispatch(std::make_shared<SelectEntityEvent>(entity_id));
 
-		//LOG_INFO("pick entity {} elapsed time : {}ms", entity_id, stop_watch.stop());
+		//LOG_INFO("pick entity {} elapsed time : {}ms", entity_id, stop_watch.stopMs());
 		m_enabled = false;
 	}
 

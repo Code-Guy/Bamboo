@@ -6,6 +6,7 @@
 #include "engine/core/event/event_system.h"
 #include "engine/function/render/window_system.h"
 #include "engine/function/framework/world/world_manager.h"
+#include "engine/function/physics/physics_system.h"
 #include "engine/function/render/render_system.h"
 #include "engine/function/render/debug_draw_manager.h"
 #include "engine/resource/shader/shader_manager.h"
@@ -47,6 +48,9 @@ namespace Bamboo
         m_world_manager = std::make_shared<WorldManager>();
         m_world_manager->init();
 
+		m_physics_system = std::make_shared<PhysicsSystem>();
+        m_physics_system->init();
+
         m_render_system = std::make_shared<RenderSystem>();
         m_render_system->init();
 
@@ -62,6 +66,7 @@ namespace Bamboo
         // destroy with reverse initialize order
         m_debug_draw_system->destroy();
         m_render_system->destroy();
+        m_physics_system->destroy();
         m_world_manager->destroy();
 		m_asset_manager->destroy();
         m_shader_manager->destroy();

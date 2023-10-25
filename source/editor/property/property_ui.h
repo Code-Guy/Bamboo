@@ -30,8 +30,7 @@ namespace Bamboo
 
 	private:
 		void onSelectEntity(const std::shared_ptr<class Event>& event);
-
-		void constructComponent(const std::shared_ptr<class Component>& component);
+		void constructEntity(const rttr::instance& instance);
 
 		void constructPropertyBool(const std::string& name, rttr::variant& variant);
 		void constructPropertyIntegar(const std::string& name, rttr::variant& variant);

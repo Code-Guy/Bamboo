@@ -12,5 +12,8 @@ namespace Bamboo
 
 	private:
 		void constructCreateEntityPopup();
+
+		std::vector<std::string> entity_categories;
+		std::vector<std::vector<std::string>> entity_typess;
 	};
 }

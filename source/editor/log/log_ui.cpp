@@ -14,7 +14,7 @@ namespace Bamboo
 		std::vector<std::string> lastest_logs = g_engine.logSystem()->getLastestLogs();
 
 		ImGuiWindowFlags window_flags = 0;
-		window_flags |= ImGuiWindowFlags_AlwaysHorizontalScrollbar;
+		window_flags |= ImGuiWindowFlags_HorizontalScrollbar;
 		sprintf(m_title_buf, "%s %s###%s", ICON_FA_RECEIPT, m_title.c_str(), m_title.c_str());
 		if (!ImGui::Begin(m_title_buf, nullptr, window_flags))
 		{

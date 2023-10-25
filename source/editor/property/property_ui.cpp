@@ -51,9 +51,10 @@ namespace Bamboo
 				ImGui::TableSetupColumn("column_0", ImGuiTableColumnFlags_WidthFixed, 100.0f);
 				ImGui::TableSetupColumn("column_1", ImGuiTableColumnFlags_WidthStretch);
 
+				constructEntity(*selected_entity.get());
 				for (const auto& component : selected_entity->getComponents())
 				{
-					constructComponent(component);
+					constructEntity(*component.get());
 				}
 				ImGui::EndTable();
 			}
@@ -81,17 +82,25 @@ namespace Bamboo
 		m_selected_entity = current_world->getEntity(p_event->entity_id);
 	}
 
-	void PropertyUI::constructComponent(const std::shared_ptr<class Component>& component)
+	void PropertyUI::constructEntity(const rttr::instance& instance)
 	{
+		const auto p_entity = instance.try_convert<Entity>();
+		const auto p_component = instance.try_convert<Component>();
+		auto properties = instance.get_derived_type().get_properties();
+		
+		if (p_entity != nullptr && properties.empty())
+		{
+			return;
+		}
+
 		// add name title
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 
 		ImGuiTreeNodeFlags tree_node_flags = 0;
-		tree_node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | 
+		tree_node_flags |= ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
 			ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_AllowItemOverlap;
-
-		const std::string& type_name = component->getTypeName();
+		const std::string& type_name = p_component != nullptr ? p_component->getTypeName() : "Entity";
 		std::string title = type_name.substr(0, type_name.length() - 9);
 		bool is_tree_open = ImGui::TreeNodeEx(title.c_str(), tree_node_flags);
 
@@ -103,20 +112,24 @@ namespace Bamboo
 		ImVec2 p_min = ImGui::GetCursorScreenPos();
 		ImVec2 p_max = ImVec2(p_min.x + ImGui::GetContentRegionAvail().x, p_min.y + ImGui::GetItemRectSize().y);
 		ImGui::GetWindowDrawList()->AddRectFilled(p_min, p_max, ImGui::GetColorU32(rect_color));
-		ImVec4 button_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
-		button_color.w = 0.0f;
-		ImGui::PushStyleColor(ImGuiCol_Button, button_color);
-		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - 50);
-		if (ImGui::Button(ICON_FA_PLUS))
+
+		if (p_component != nullptr)
 		{
-			LOG_INFO("add component");
+			ImVec4 button_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
+			button_color.w = 0.0f;
+			ImGui::PushStyleColor(ImGuiCol_Button, button_color);
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - 50);
+			if (ImGui::Button(ICON_FA_PLUS))
+			{
+				LOG_INFO("add component");
+			}
+			ImGui::SameLine(0, 5);
+			if (ImGui::Button(ICON_FA_TRASH))
+			{
+				LOG_INFO("remove component");
+			}
+			ImGui::PopStyleColor();
 		}
-		ImGui::SameLine(0, 5);
-		if (ImGui::Button(ICON_FA_TRASH))
-		{
-			LOG_INFO("remove component");
-		}
-		ImGui::PopStyleColor();
 
 		// add properties
 		if (is_tree_open)
@@ -124,18 +137,17 @@ namespace Bamboo
 			ImGui::PushFont(smallFont());
 			ImGui::TableNextRow();
 
-			rttr::type component_type = rttr::type::get(*component.get());
-			for (auto& prop : component_type.get_properties())
+			for (auto& prop : properties)
 			{
 				std::string prop_name = prop.get_name().to_string();
 				EPropertyType property_type = getPropertyType(prop.get_type());
 				ASSERT(property_type.second != EPropertyContainerType::Map, "don't support map container property type now");
 
-				rttr::variant& variant = prop.get_value(*component.get());
+				rttr::variant& variant = prop.get_value(instance);
 				if (property_type.second == EPropertyContainerType::Mono)
 				{
 					m_property_constructors[property_type.first](prop_name, variant);
-					prop.set_value(*component.get(), variant);
+					prop.set_value(instance, variant);
 				}
 				else if (property_type.second == EPropertyContainerType::Array)
 				{
@@ -147,7 +159,7 @@ namespace Bamboo
 						m_property_constructors[property_type.first](sub_prop_name, sub_variant);
 						view.set_value(i, sub_variant);
 					}
-					prop.set_value(*component.get(), variant);
+					prop.set_value(instance, variant);
 				}
 			}
 			ImGui::TreePop();

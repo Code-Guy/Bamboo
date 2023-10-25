@@ -20,10 +20,15 @@ namespace Bamboo
 		void constructFolderFiles();
 		void constructAsset(const std::string& filename, const ImVec2& size);
 		void constructImportPopups();
+		void constructAssetFilePopups();
+		void constructFolderOpPopups(const std::string& str_id, bool is_background_not_hoverd = false);
 
 		virtual void openFolder(std::string folder) override;
 
 		void onDropFiles(const std::shared_ptr<class Event>& event);
+		void onAssetRightClick(const std::string& filename);
+
+		void createCustomSeperatorText(const std::string& text);
 
 		// icon images
 		std::map<EAssetType, std::shared_ptr<ImGuiImage>> m_asset_images;
@@ -41,5 +46,7 @@ namespace Bamboo
 		// import files
 		glm::vec4 m_folder_rect;
 		std::vector<std::string> m_imported_files;
+
+		bool is_asset_hovered = false;
 	};
 }

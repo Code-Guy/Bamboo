@@ -7,6 +7,10 @@
 
 namespace Bamboo
 {
+	RTTR_REGISTRATION
+	{
+	rttr::registration::class_<Bamboo::Entity>("Entity");
+	}
 
 	Entity::~Entity()
 	{
@@ -17,12 +21,28 @@ namespace Bamboo
 		m_components.clear();
 	}
 
+	void Entity::beginPlay()
+	{
+		for (auto& component : m_components)
+		{
+			component->beginPlay();
+		}
+	}
+
 	void Entity::tick(float delta_time)
 	{
 		// tick components
 		for (auto& component : m_components)
 		{
 			component->tickable(delta_time);
+		}
+	}
+
+	void Entity::endPlay()
+	{
+		for (auto& component : m_components)
+		{
+			component->endPlay();
 		}
 	}
 
@@ -68,13 +88,22 @@ namespace Bamboo
 		// attach to current entity
 		component->attach(weak_from_this());
 		component->inflate();
+		
+		if (g_engine.isSimulating())
+		{
+			component->beginPlay();
+		}
 
 		m_components.push_back(component);
 	}
 
 	void Entity::removeComponent(std::shared_ptr<Component> component)
 	{
-		component->dettach();
+		if (g_engine.isSimulating())
+		{
+			component->endPlay();
+		}
+		component->detach();
 		m_components.erase(std::remove(m_components.begin(), m_components.end(), component), m_components.end());
 	}
 

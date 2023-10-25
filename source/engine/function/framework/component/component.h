@@ -47,7 +47,7 @@ namespace Bamboo
 		virtual ~Component() = default;
 
 		void attach(std::weak_ptr<Entity>& parent);
-		void dettach();
+		void detach();
 		std::weak_ptr<Entity>& getParent() { return m_parent; }
 		const std::string& getTypeName() { return m_type_name; }
 		void setTypeName(const std::string& type_name) { m_type_name = type_name; }

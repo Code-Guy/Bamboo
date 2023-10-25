@@ -208,10 +208,6 @@ namespace Bamboo
 		const auto& world = g_engine.worldManager()->getCurrentWorld();
 		m_created_entity = world->createEntity(basename);
 
-		// add transform component
-		std::shared_ptr<TransformComponent> transform_component = std::make_shared<TransformComponent>();
-		m_created_entity->addComponent(transform_component);
-
 		if (asset_type == EAssetType::StaticMesh)
 		{
 			std::shared_ptr<StaticMeshComponent> static_mesh_component = std::make_shared<StaticMeshComponent>();
@@ -496,46 +492,51 @@ namespace Bamboo
 					StopWatch stop_watch;
 					stop_watch.start();
 					loadAsset(url);
-					LOG_INFO("load asset {}, elapsed time: {}ms", url, stop_watch.stop());
+					LOG_INFO("load asset {}, elapsed time: {}ms", url, stop_watch.stopMs());
 				}
 			}
 			else if (payload = ImGui::AcceptDragDropPayload("create_entity", flags))
 			{
 				if (!m_created_entity)
 				{
-					std::string entity_type((const char*)payload->Data, payload->DataSize);
-					if (entity_type.find("light") != std::string::npos)
-					{
-						const auto& world = g_engine.worldManager()->getCurrentWorld();
-						m_created_entity = world->createEntity(entity_type);
+					const auto& world = g_engine.worldManager()->getCurrentWorld();
+					std::string playload_str((const char*)payload->Data, payload->DataSize);
+					std::vector<std::string> splits = StringUtil::split(playload_str, "-");
+					const std::string& entity_category = splits[0];
+					const std::string& entity_type = splits[1];
 
-						// add transform component
-						auto transform_component = std::make_shared<TransformComponent>();
-						m_created_entity->addComponent(transform_component);
+					if (entity_category == "Entities")
+					{
+						m_created_entity = world->createEntity(entity_type);
+					}
+					else if (entity_category == "Lights")
+					{
+						m_created_entity = world->createEntity(entity_type);
+						auto transform_component = m_created_entity->getComponent(TransformComponent);
 
 						// add light component
-						if (entity_type.find("directional") != std::string::npos)
+						if (entity_type.find("Directional") != std::string::npos)
 						{
 							transform_component->setRotation(glm::vec3(0.0f, 135.0f, -35.2f));
 							m_created_entity->addComponent(std::make_shared<DirectionalLightComponent>());
 						}
-						else if (entity_type.find("sky") != std::string::npos)
+						else if (entity_type.find("Sky") != std::string::npos)
 						{
 							auto sky_light_component = std::make_shared<SkyLightComponent>();
 							auto sky_texture_cube = g_engine.assetManager()->loadAsset<TextureCube>("asset/engine/texture/ibl/texc_cloudy.texc");
 							sky_light_component->setTextureCube(sky_texture_cube);
 							m_created_entity->addComponent(sky_light_component);
 						}
-						else if (entity_type.find("point") != std::string::npos)
+						else if (entity_type.find("Point") != std::string::npos)
 						{
 							m_created_entity->addComponent(std::make_shared<PointLightComponent>());
 						}
-						else if (entity_type.find("spot") != std::string::npos)
+						else if (entity_type.find("Spot") != std::string::npos)
 						{
 							m_created_entity->addComponent(std::make_shared<SpotLightComponent>());
 						}
 					}
-					else if (entity_type != "empty entity")
+					else if (entity_category == "Primitives")
 					{
 						std::string url = StringUtil::format("asset/engine/mesh/primitive/sm_%s.sm", entity_type.c_str());
 						loadAsset(url);

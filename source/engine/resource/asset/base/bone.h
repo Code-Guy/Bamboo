@@ -14,7 +14,7 @@ namespace Bamboo
 		uint8_t m_parent = INVALID_BONE_INDEX;
 		std::vector<uint8_t> m_children;
 
-		QTranform m_local_bind_pose_transform;
+		QTransform m_local_bind_pose_transform;
 		glm::mat4 m_global_inverse_bind_pose_matrix;
 		glm::mat4 m_global_bind_pose_matrix;
 

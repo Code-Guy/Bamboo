@@ -81,6 +81,11 @@ namespace Bamboo
 		return m_imgui_images[url];
 	}
 
+	ImFont* EditorUI::defaultFont()
+	{
+		return ImGui::GetIO().Fonts->Fonts[0];
+	}
+
 	ImFont* EditorUI::smallFont()
 	{
 		return ImGui::GetIO().Fonts->Fonts[1];

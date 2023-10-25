@@ -33,6 +33,7 @@ namespace Bamboo
 		std::shared_ptr<ImGuiImage> loadImGuiImageFromFile(const std::string& filename);
 		std::shared_ptr<ImGuiImage> loadImGuiImageFromTexture2D(std::shared_ptr<class Texture2D>& texture);
 		std::shared_ptr<ImGuiImage> getImGuiImageFromCache(const URL& url);
+		ImFont* defaultFont();
 		ImFont* smallFont();
 		ImFont* bigIconFont();
 

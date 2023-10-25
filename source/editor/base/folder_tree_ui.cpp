@@ -109,6 +109,11 @@ namespace Bamboo
 			openFolder(folder_node.dir);
 		}
 
+		if (ImGui::IsItemHovered())
+		{
+			is_folder_tree_hovered |= true;
+		}
+
 		if (is_treenode_opened)
 		{
 			if (!folder_node.child_folders.empty())
@@ -134,4 +139,15 @@ namespace Bamboo
 		}
 	}
 
+	bool IFolderTreeUI::createFolder()
+	{
+		LOG_INFO("create folder");
+		return true;
+	}
+
+	bool IFolderTreeUI::deleteFolder()
+	{
+		LOG_INFO("delete folder");
+		return true;
+	}
 }
