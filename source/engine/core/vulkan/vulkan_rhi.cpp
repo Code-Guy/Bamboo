@@ -174,6 +174,9 @@ namespace Bamboo
 		const uint32_t k_max_push_constant_size = 256;
 		ASSERT(m_physical_device_properties.limits.maxPushConstantsSize >= k_max_push_constant_size, 
 			"push constants size must be greater than {}", k_max_push_constant_size);
+
+		vkGetPhysicalDeviceFeatures(m_physical_device, &m_physical_device_features);
+		ASSERT(m_physical_device_features.textureCompressionBC, "doesn't support bc block texture compression");
 	}
 
 	void VulkanRHI::createLogicDevice()
@@ -541,27 +544,24 @@ namespace Bamboo
 
 	VkPhysicalDeviceFeatures VulkanRHI::getRequiredDeviceFeatures()
 	{
-		VkPhysicalDeviceFeatures supported_device_features{};
-		vkGetPhysicalDeviceFeatures(m_physical_device, &supported_device_features);
-
 		// set required device features
 		VkPhysicalDeviceFeatures required_device_features{};
-		if (supported_device_features.sampleRateShading)
+		if (m_physical_device_features.sampleRateShading)
 		{
 			required_device_features.sampleRateShading = VK_TRUE;
 		}
 
-		if (supported_device_features.samplerAnisotropy)
+		if (m_physical_device_features.samplerAnisotropy)
 		{
 			required_device_features.samplerAnisotropy = VK_TRUE;
 		}
 
-		if (supported_device_features.geometryShader)
+		if (m_physical_device_features.geometryShader)
 		{
 			required_device_features.geometryShader = VK_TRUE;
 		}
 
-		if (supported_device_features.fillModeNonSolid)
+		if (m_physical_device_features.fillModeNonSolid)
 		{
 			required_device_features.fillModeNonSolid = VK_TRUE;
 		}

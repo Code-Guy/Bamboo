@@ -9,7 +9,7 @@ namespace Bamboo
 		m_min_filter = m_mag_filter = VK_FILTER_LINEAR;
 		setAddressMode(VK_SAMPLER_ADDRESS_MODE_REPEAT);
 		m_mip_levels = 0;
-		m_texture_type = ETextureType::Invalid;
+		m_texture_type = ETextureType::BaseColor;
 		m_pixel_type = EPixelType::RGBA8;
 	}
 

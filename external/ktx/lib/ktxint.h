@@ -1,31 +1,22 @@
 /* -*- tab-width: 4; -*- */
 /* vi: set sw=2 ts=4 expandtab: */
 
-/* $Id: 3dd768b381113d67ca7e4bde10e6252900bff845 $ */
+/* $Id$ */
 
 /*
- * Copyright (c) 2010-2018 The Khronos Group Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 The Khronos Group Inc.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 
-/* 
+/*
  * Author: Mark Callow from original code by Georg Kolling
  */
 
 #ifndef KTXINT_H
 #define KTXINT_H
+
+#include <math.h>
 
 /* Define this to include the ETC unpack software in the library. */
 #ifndef SUPPORT_SOFTWARE_ETC_UNPACK
@@ -38,9 +29,15 @@
 #ifndef MAX
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
+#define QUOTE(x) #x
+#define STR(x) QUOTE(x)
 
 #define KTX2_IDENTIFIER_REF  { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A }
-#define KTX2_HEADER_SIZE     (64)
+#define KTX2_HEADER_SIZE     (80)
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,9 +57,9 @@ extern GLboolean _ktxSupportsSRGB;
 /**
  * @internal
  * @~English
- * @brief KTX file header
+ * @brief KTX file header.
  *
- * See the KTX specification for descriptions
+ * See the KTX specification for descriptions.
  */
 typedef struct KTX_header {
     ktx_uint8_t  identifier[12];
@@ -77,12 +74,70 @@ typedef struct KTX_header {
     ktx_uint32_t pixelDepth;
     ktx_uint32_t numberOfArrayElements;
     ktx_uint32_t numberOfFaces;
-    ktx_uint32_t numberOfMipmapLevels;
+    ktx_uint32_t numberOfMipLevels;
     ktx_uint32_t bytesOfKeyValueData;
 } KTX_header;
 
 /* This will cause compilation to fail if the struct size doesn't match */
 typedef int KTX_header_SIZE_ASSERT [sizeof(KTX_header) == KTX_HEADER_SIZE];
+
+/**
+ * @internal
+ * @~English
+ * @brief 32-bit KTX 2 index entry.
+ */
+typedef struct ktxIndexEntry32 {
+    ktx_uint32_t byteOffset; /*!< Offset of item from start of file. */
+    ktx_uint32_t byteLength; /*!< Number of bytes of data in the item. */
+} ktxIndexEntry32;
+/**
+ * @internal
+ * @~English
+ * @brief 64-bit KTX 2 index entry.
+ */
+typedef struct ktxIndexEntry64 {
+    ktx_uint64_t byteOffset; /*!< Offset of item from start of file. */
+    ktx_uint64_t byteLength; /*!< Number of bytes of data in the item. */
+} ktxIndexEntry64;
+
+/**
+ * @internal
+ * @~English
+ * @brief KTX 2 file header.
+ *
+ * See the KTX 2 specification for descriptions.
+ */
+typedef struct KTX_header2 {
+    ktx_uint8_t  identifier[12];
+    ktx_uint32_t vkFormat;
+    ktx_uint32_t typeSize;
+    ktx_uint32_t pixelWidth;
+    ktx_uint32_t pixelHeight;
+    ktx_uint32_t pixelDepth;
+    ktx_uint32_t layerCount;
+    ktx_uint32_t faceCount;
+    ktx_uint32_t levelCount;
+    ktx_uint32_t supercompressionScheme;
+    ktxIndexEntry32 dataFormatDescriptor;
+    ktxIndexEntry32 keyValueData;
+    ktxIndexEntry64 supercompressionGlobalData;
+} KTX_header2;
+
+/* This will cause compilation to fail if the struct size doesn't match */
+typedef int KTX_header2_SIZE_ASSERT [sizeof(KTX_header2) == KTX2_HEADER_SIZE];
+
+/**
+ * @internal
+ * @~English
+ * @brief KTX 2 level index entry.
+ */
+typedef struct ktxLevelIndexEntry {
+    ktx_uint64_t byteOffset; /*!< Offset of level from start of file. */
+    ktx_uint64_t byteLength;
+                /*!< Number of bytes of compressed image data in the level. */
+    ktx_uint64_t uncompressedByteLength;
+                /*!< Number of bytes of uncompressed image data in the level. */
+} ktxLevelIndexEntry;
 
 /**
  * @internal
@@ -119,22 +174,36 @@ typedef struct KTX_supplemental_info
 
 /*
  * @internal
- * CheckHeader
- * 
+ * CheckHeader1
+ *
  * Reads the KTX file header and performs some sanity checking on the values
  */
-KTX_error_code _ktxCheckHeader(KTX_header* pHeader,
-                               KTX_supplemental_info* pSuppInfo);
+KTX_error_code ktxCheckHeader1_(KTX_header* pHeader,
+                                KTX_supplemental_info* pSuppInfo);
+
+/*
+ * @internal
+ * CheckHeader2
+ *
+ * Reads the KTX 2 file header and performs some sanity checking on the values
+ */
+KTX_error_code ktxCheckHeader2_(KTX_header2* pHeader,
+                                KTX_supplemental_info* pSuppInfo);
 
 /*
  * SwapEndian16: Swaps endianness in an array of 16-bit values
  */
-void _ktxSwapEndian16(ktx_uint16_t* pData16, int count);
+void _ktxSwapEndian16(ktx_uint16_t* pData16, ktx_size_t count);
 
 /*
  * SwapEndian32: Swaps endianness in an array of 32-bit values
  */
-void _ktxSwapEndian32(ktx_uint32_t* pData32, int count);
+void _ktxSwapEndian32(ktx_uint32_t* pData32, ktx_size_t count);
+
+/*
+ * SwapEndian32: Swaps endianness in an array of 64-bit values
+ */
+void _ktxSwapEndian64(ktx_uint64_t* pData64, ktx_size_t count);
 
 /*
  * UnpackETC: uncompresses an ETC compressed texture image
@@ -146,15 +215,46 @@ KTX_error_code _ktxUnpackETC(const GLubyte* srcETC, const GLenum srcFormat,
                              GLint R16Formats, GLboolean supportsSRGB);
 
 /*
+ * @internal
+ * ktxCompressZLIBBounds
+ *
+ * Returns upper bound for compresses data using miniz (ZLIB)
+ */
+ktx_size_t ktxCompressZLIBBounds(ktx_size_t srcLength);
+
+/*
+ * @internal
+ * ktxCompressZLIBInt
+ *
+ * Compresses data using miniz (ZLIB)
+ */
+KTX_error_code ktxCompressZLIBInt(unsigned char* pDest,
+                                  ktx_size_t* pDestLength,
+                                  const unsigned char* pSrc,
+                                  ktx_size_t srcLength,
+                                  ktx_uint32_t level);
+
+/*
+ * @internal
+ * ktxUncompressZLIBInt
+ *
+ * Uncompresses data using miniz (ZLIB)
+ */
+KTX_error_code ktxUncompressZLIBInt(unsigned char* pDest,
+                                    ktx_size_t* pDestLength,
+                                    const unsigned char* pSrc,
+                                    ktx_size_t srcLength);
+
+/*
  * Pad nbytes to next multiple of n
  */
-/* Equivalent to n * ceil(nbytes / n) */
-#define _KTX_PADN(n, nbytes) (nbytes + (n-1) & ~(ktx_uint32_t)(n-1))
+#define _KTX_PADN(n, nbytes) (ktx_uint32_t)(n * ceilf((float)(nbytes) / n))
 /*
  * Calculate bytes of of padding needed to reach next multiple of n.
  */
 /* Equivalent to (n * ceil(nbytes / n)) - nbytes */
-#define _KTX_PADN_LEN(n, nbytes) ((n-1) - (nbytes + (n-1) & (n-1)))
+#define _KTX_PADN_LEN(n, nbytes) \
+    (ktx_uint32_t)((n * ceilf((float)(nbytes) / n)) - (nbytes))
 
 /*
  * Pad nbytes to next multiple of 4
@@ -164,6 +264,15 @@ KTX_error_code _ktxUnpackETC(const GLubyte* srcETC, const GLenum srcFormat,
  * Calculate bytes of of padding needed to reach next multiple of 4.
  */
 #define _KTX_PAD4_LEN(nbytes) _KTX_PADN_LEN(4, nbytes)
+
+/*
+ * Pad nbytes to next multiple of 8
+ */
+#define _KTX_PAD8(nbytes) _KTX_PADN(8, nbytes)
+/*
+ * Calculate bytes of of padding needed to reach next multiple of 8.
+ */
+#define _KTX_PAD8_LEN(nbytes) _KTX_PADN_LEN(8, nbytes)
 
 /*
  * Pad nbytes to KTX_GL_UNPACK_ALIGNMENT
@@ -178,25 +287,11 @@ KTX_error_code _ktxUnpackETC(const GLubyte* srcETC, const GLenum srcFormat,
 
 /*
  ======================================
-     Internal ktxTexture functions
+     Internal utility functions
  ======================================
 */
 
-KTX_error_code
-ktxTexture_iterateLoadedImages(ktxTexture* This, PFNKTXITERCB iterCb,
-                               void* userdata);
-KTX_error_code
-ktxTexture_iterateSourceImages(ktxTexture* This, PFNKTXITERCB iterCb,
-                               void* userdata);
-    
-ktx_uint32_t ktxTexture_glTypeSize(ktxTexture* This);
-ktx_size_t ktxTexture_imageSize(ktxTexture* This, ktx_uint32_t level);
-ktx_bool_t ktxTexture_isActiveStream(ktxTexture* This);
-ktx_size_t ktxTexture_levelSize(ktxTexture* This, ktx_uint32_t level);
-ktx_size_t ktxTexture_faceLodSize(ktxTexture* This, ktx_uint32_t level);
-void ktxTexture_rowInfo(ktxTexture* This, ktx_uint32_t level,
-                        ktx_uint32_t* numRows, ktx_uint32_t* rowBytes,
-                        ktx_uint32_t* rowPadding);
+KTX_error_code printKTX2Info2(ktxStream* src, KTX_header2* header);
 
 #ifdef __cplusplus
 }

@@ -106,6 +106,7 @@ namespace Bamboo
 		VkInstance m_instance;
 		VkPhysicalDevice m_physical_device;
 		VkPhysicalDeviceProperties m_physical_device_properties;
+		VkPhysicalDeviceFeatures m_physical_device_features;
 		VkDevice m_device;
 		VkQueue m_graphics_queue;
 		VkQueue m_transfer_queue;

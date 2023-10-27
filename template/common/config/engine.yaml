@@ -1,0 +1,9 @@
+window:
+  width: 1280
+  height: 720
+  fullscreen: true
+
+default_world_url: "asset/world/physics.world"
+editor_layout: "default.layout"
+save_layout: false
+is_editor: true

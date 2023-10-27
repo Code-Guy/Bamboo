@@ -168,11 +168,7 @@ namespace Bamboo
 	{
 		texture->m_width = gltf_image.width;
 		texture->m_height = gltf_image.height;
-		if (!texture->compressTexture(gltf_image.image.data(), gltf_image.width, gltf_image.height))
-		{
-			LOG_ERROR("Compress Texture2D failed");
-			return;
-		}
+		texture->m_image_data = gltf_image.image;
 
 		texture->m_min_filter = getVkFilterFromGltf(gltf_sampler.minFilter);
 		texture->m_mag_filter = getVkFilterFromGltf(gltf_sampler.magFilter);

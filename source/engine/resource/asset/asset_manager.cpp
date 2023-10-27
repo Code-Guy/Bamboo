@@ -1,5 +1,4 @@
 #include "asset_manager.h"
-
 #include "engine/resource/asset/texture_2d.h"
 #include "engine/resource/asset/texture_cube.h"
 #include "engine/function/framework/world/world.h"
@@ -58,26 +57,23 @@ namespace Bamboo
 
 	bool AssetManager::importTexture2D(const std::string& filename, const URL& folder)
 	{
-		basisu::image source_image;
-		if (!basisu::load_image(filename.c_str(), source_image))
-		{
-			LOG_ERROR("Failed loading image {}", filename.c_str());
-			return false;
-		}
+		uint32_t width, height;
+		uint32_t k_channels = 4;
+		uint8_t* image_data = stbi_load(filename.c_str(), (int*)&width, (int*)&height, 0, k_channels);
+		ASSERT(image_data != nullptr, "failed to import texture: {}", filename);
 
 		std::shared_ptr<Texture2D> texture = std::make_shared<Texture2D>();
 		std::string asset_name = getAssetName(filename, EAssetType::Texture2D);
 		URL url = URL::combine(folder.str(), asset_name);
 		texture->setURL(url);
 
-		texture->m_width = source_image.get_width();
-		texture->m_height = source_image.get_height();
+		texture->m_width = width;
+		texture->m_height = height;
 
-		if (!texture->compressTexture(source_image))
-		{
-			LOG_ERROR("Compress Texture2D failed\n");
-			return false;
-		}
+		size_t image_size = width * height * k_channels;
+		texture->m_image_data.resize(image_size);
+		memcpy(texture->m_image_data.data(), image_data, image_size);
+		stbi_image_free(image_data);
 
 		texture->inflate();
 		serializeAsset(texture);

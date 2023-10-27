@@ -21,7 +21,7 @@ namespace Bamboo
 		m_mip_levels = ktx_texture->numLevels;
 
 		ktx_uint8_t* ktx_texture_data = ktxTexture_GetData(ktx_texture);
-		ktx_size_t ktx_texture_size = ktxTexture_GetSize(ktx_texture);
+		ktx_size_t ktx_texture_size = ktxTexture_GetDataSize(ktx_texture);
 
 		// create a staging buffer
 		VmaBuffer staging_buffer;

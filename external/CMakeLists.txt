@@ -68,8 +68,10 @@ if (NOT TARGET rttr_core_lib)
 endif()
 
 if (NOT TARGET ktx)
+    option(KTX_FEATURE_TESTS "" OFF)
+    option(KTX_FEATURE_GL_UPLOAD "" OFF)
+    
     add_subdirectory(ktx)
-    target_include_directories(ktx PUBLIC ${Vulkan_INCLUDE_DIR})
     target_link_libraries(ktx PUBLIC ${Vulkan_LIBRARY})
     set_target_properties(ktx PROPERTIES FOLDER ${external_folder}/ktx)
 endif()
@@ -83,11 +85,6 @@ if(NOT TARGET Jolt)
 
     add_subdirectory(jolt)
     set_target_properties(Jolt PROPERTIES FOLDER ${external_folder}/jolt)
-endif()
-
-if (NOT TARGET basisu)
-    add_subdirectory(basisu)
-    set_target_properties(basisu PROPERTIES FOLDER ${external_folder}/basisu)
 endif()
 
 if (NOT TARGET effolkronium_random)

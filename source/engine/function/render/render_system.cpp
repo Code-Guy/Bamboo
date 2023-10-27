@@ -34,6 +34,9 @@ namespace Bamboo
 
 	void RenderSystem::init()
 	{
+		// import tests
+		g_engine.assetManager()->importTexture2D("D:/Test/milk galaxy.jpg", "asset");
+
 		m_directional_light_shadow_pass = std::make_shared<DirectionalLightShadowPass>();
 		m_point_light_shadow_pass = std::make_shared<PointLightShadowPass>();
 		m_spot_light_shadow_pass = std::make_shared<SpotLightShadowPass>();

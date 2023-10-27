@@ -5,7 +5,7 @@
 
 enum class ETextureType
 {
-	Invalid, BaseColor, MetallicRoughnessOcclusion, Normal, Emissive, Cube, UI, Data
+	BaseColor, MetallicRoughnessOcclusion, Normal, Emissive, Cube, UI, Data
 };
 
 enum class EPixelType
