@@ -64,8 +64,9 @@ namespace Bamboo
 		texture->m_width = m_width;
 		texture->m_height = m_height;
 		texture->setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-		texture->m_texture_type = ETextureType::Cube;
+		texture->m_texture_type = ETextureType::Data;
 		texture->m_pixel_type = EPixelType::RG16;
+		texture->m_compression_mode = ETextureCompressionMode::ZSTD;
 
 		VulkanUtil::extractImage(m_image_view.image(), m_width, m_height, m_format, texture->m_image_data, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		//VulkanUtil::saveImage(m_image_view.image(), m_width, m_height, m_format, "D:/Test/brdf_lut.bin", VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

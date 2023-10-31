@@ -41,6 +41,12 @@ namespace Bamboo
 
 	void SkyLightComponent::inflate()
 	{
+		// create ibl textures
+		createIBLTextures();
+	}
+
+	void SkyLightComponent::createIBLTextures()
+	{
 		// create brdf lut texture if not exist
 		const auto& as = g_engine.assetManager();
 		if (!g_engine.fileSystem()->exists(BRDF_TEXTURE_URL))
@@ -51,12 +57,7 @@ namespace Bamboo
 			brdf_pass->destroy();
 		}
 
-		// create ibl textures
-		createIBLTextures();
-	}
-
-	void SkyLightComponent::createIBLTextures()
-	{
+		// create filter cubemap
 		std::shared_ptr<FilterCubePass> filter_cube_pass = std::make_shared<FilterCubePass>(m_texture_cube);
 		filter_cube_pass->init();
 		filter_cube_pass->render();

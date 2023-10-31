@@ -261,6 +261,11 @@ namespace Bamboo
 		return std::filesystem::remove(path);
 	}
 
+	void FileSystem::copyFile(const std::string& from, const std::string& to)
+	{
+		std::filesystem::copy(from, to, std::filesystem::copy_options::overwrite_existing);
+	}
+
 	bool FileSystem::loadBinary(const std::string& filename, std::vector<uint8_t>& data)
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);

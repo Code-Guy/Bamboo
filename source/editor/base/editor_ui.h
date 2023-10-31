@@ -14,7 +14,7 @@ namespace Bamboo
 		VmaImageViewSampler image_view_sampler;
 		VkDescriptorSet tex_id;
 
-		bool is_from_file;
+		bool is_owned;
 
 		void destroy();
 	};
@@ -22,7 +22,7 @@ namespace Bamboo
 	class EditorUI
 	{
 	public:
-		virtual void init() = 0;
+		virtual void init();
 		virtual void construct() = 0;
 		virtual void destroy();
 		virtual void onWindowResize() {}
@@ -32,6 +32,7 @@ namespace Bamboo
 		void updateWindowRegion();
 		std::shared_ptr<ImGuiImage> loadImGuiImageFromFile(const std::string& filename);
 		std::shared_ptr<ImGuiImage> loadImGuiImageFromTexture2D(std::shared_ptr<class Texture2D>& texture);
+		std::shared_ptr<ImGuiImage> loadImGuiImageFromImageViewSampler(const VmaImageViewSampler& image_view_sampler);
 		std::shared_ptr<ImGuiImage> getImGuiImageFromCache(const URL& url);
 		ImFont* defaultFont();
 		ImFont* smallFont();
@@ -48,6 +49,7 @@ namespace Bamboo
 	private:
 		bool isMouseFocused();
 
+		VkSampler m_texture_2d_sampler;
 		std::map<URL, std::shared_ptr<ImGuiImage>> m_imgui_images;
 	};
 }

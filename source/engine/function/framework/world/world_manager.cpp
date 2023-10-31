@@ -95,15 +95,17 @@ namespace Bamboo
 		}
 
 		m_world_mode = world_mode;
-		std::string cache_dir = g_engine.fileSystem()->getCacheDir();
-		std::string pie_world_url = g_engine.fileSystem()->combine(cache_dir, std::string("pie.world"));
-		pie_world_url = g_engine.fileSystem()->relative(pie_world_url);
+		const auto& fs = g_engine.fileSystem();
+		std::string cache_dir = fs->getCacheDir();
+		std::string pie_world_url = fs->combine(cache_dir, std::string("pie.world"));
+		pie_world_url = fs->relative(pie_world_url);
 		switch (m_world_mode)
 		{
 		case EWorldMode::Edit:
 		{
 			// load world from cache
-			openWorld(pie_world_url);
+			g_engine.fileSystem()->copyFile(fs->absolute(pie_world_url), fs->absolute(m_current_world->getURL().str()));
+			openWorld(m_current_world->getURL().str());
 		}
 			break;
 		case EWorldMode::Play:

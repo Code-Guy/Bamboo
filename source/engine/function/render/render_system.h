@@ -55,9 +55,8 @@ namespace Bamboo
 
 		// render datas
 		std::vector<VmaBuffer> m_lighting_ubs;
-		std::shared_ptr<class Texture2D> m_default_texture_2d;
 		std::shared_ptr<class TextureCube> m_default_texture_cube;
-		std::map<ELightType, std::shared_ptr<class Texture2D>> m_lighting_icons;
+		std::map<ELightType, VmaImageViewSampler> m_lighting_icons;
 
 		// render options
 		int m_shader_debug_option = 0;

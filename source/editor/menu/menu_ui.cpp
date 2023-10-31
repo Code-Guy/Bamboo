@@ -20,8 +20,8 @@ namespace Bamboo
 		ImGui::LoadIniSettingsFromDisk(m_layout_path.c_str());
 
 		m_template_worlds = {
-			{ "Empty", "asset/engine/world/empty.world", loadImGuiImageFromFile("asset/engine/world/empty.png")},
-			{ "Basic", "asset/engine/world/basic.world", loadImGuiImageFromFile("asset/engine/world/basic.png")}
+			{ "empty", "asset/engine/world/empty.world", loadImGuiImageFromFile("asset/engine/world/empty.png")},
+			{ "basic", "asset/engine/world/basic.world", loadImGuiImageFromFile("asset/engine/world/basic.png")}
 		};
 		for (const auto& template_world : m_template_worlds)
 		{

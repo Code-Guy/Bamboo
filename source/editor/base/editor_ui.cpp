@@ -1,5 +1,6 @@
 #include "editor_ui.h"
 #include "engine/function/render/window_system.h"
+#include "engine/core/vulkan/vulkan_rhi.h"
 
 #include <imgui/backends/imgui_impl_vulkan.h>
 #include <imgui/imgui_internal.h>
@@ -8,12 +9,18 @@ namespace Bamboo
 {
 	void ImGuiImage::destroy()
 	{
-		if (is_from_file)
+		if (is_owned)
 		{
 			image_view_sampler.destroy();
 		}
 		
 		ImGui_ImplVulkan_RemoveTexture(tex_id);
+	}
+
+	void EditorUI::init()
+	{
+		m_texture_2d_sampler = VulkanUtil::createSampler(VK_FILTER_LINEAR, VK_FILTER_LINEAR, 0,
+			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 	}
 
 	void EditorUI::destroy()
@@ -23,6 +30,7 @@ namespace Bamboo
 			iter.second->destroy();
 		}
 		m_imgui_images.clear();
+		vkDestroySampler(VulkanRHI::get().getDevice(), m_texture_2d_sampler, nullptr);
 	}
 
 	void EditorUI::updateWindowRegion()
@@ -59,7 +67,7 @@ namespace Bamboo
 		std::shared_ptr<ImGuiImage> image = std::make_shared<ImGuiImage>();
 		image->image_view_sampler = VulkanUtil::loadImageViewSampler(filename);
 		image->tex_id = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		image->is_from_file = true;
+		image->is_owned = true;
 		m_imgui_images[filename] = image;
 
 		return image;
@@ -69,9 +77,23 @@ namespace Bamboo
 	{
 		std::shared_ptr<ImGuiImage> image = std::make_shared<ImGuiImage>();
 		image->image_view_sampler = texture->m_image_view_sampler;
-		image->tex_id = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		image->is_from_file = false;
+		image->tex_id = ImGui_ImplVulkan_AddTexture(m_texture_2d_sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		image->is_owned = false;
 		m_imgui_images[texture->getURL()] = image;
+
+		return image;
+	}
+
+	std::shared_ptr<Bamboo::ImGuiImage> EditorUI::loadImGuiImageFromImageViewSampler(const VmaImageViewSampler& image_view_sampler)
+	{
+		std::shared_ptr<ImGuiImage> image = std::make_shared<ImGuiImage>();
+		image->image_view_sampler = image_view_sampler;
+		image->tex_id = ImGui_ImplVulkan_AddTexture(image->image_view_sampler.sampler, image->image_view_sampler.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		image->is_owned = false;
+
+		uint64_t hash_id = reinterpret_cast<uint64_t>(image_view_sampler.view);
+		std::string hash_str = std::to_string(hash_id);
+		m_imgui_images[hash_str] = image;
 
 		return image;
 	}

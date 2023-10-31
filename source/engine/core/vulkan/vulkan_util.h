@@ -98,7 +98,7 @@ namespace Bamboo
 		static void transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, 
 			VkFormat format = VK_FORMAT_B8G8R8A8_SRGB, uint32_t mip_levels = 1, uint32_t layers = 1);
 		static void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-		static void createImageMipmaps(VkImage image, VkFormat image_format, uint32_t width, uint32_t height, uint32_t mip_levels);
+		static void createImageMipmaps(VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels);
 
 		static bool hasStencil(VkFormat format);
 		static bool hasDepth(VkFormat format);

@@ -7,7 +7,7 @@ namespace Bamboo
 {
 	enum class ETextureCompressionMode
 	{
-		ETC1S, ASTC, ZSTD
+		None, ETC1S, ASTC, ZSTD
 	};
 
 	class Texture2D : public Texture, public Asset
@@ -25,10 +25,10 @@ namespace Bamboo
 		void serialize(Archive& ar)
 		{
 			ar(cereal::make_nvp("texture", cereal::base_class<Texture>(this)));
+			ar(cereal::make_nvp("compression_mode", m_compression_mode));
 		}
 
 		bool compress();
 		bool transcode();
-		bool upload();
 	};
 }

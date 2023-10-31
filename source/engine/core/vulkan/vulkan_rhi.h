@@ -95,6 +95,7 @@ namespace Bamboo
 		VkExtent2D getProperSwapchainSurfaceExtent(const SwapchainSupportDetails& details);
 		VkImageUsageFlags getProperSwapchainSurfaceImageUsage(const SwapchainSupportDetails& details);
 		VkFormat getProperImageFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+		bool isFormatSupported(VkFormat format);
 
 		static VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsMessengerCallback(
 			VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

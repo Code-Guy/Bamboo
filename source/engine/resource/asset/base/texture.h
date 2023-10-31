@@ -37,7 +37,9 @@ namespace Bamboo
 
 	protected:
 		bool isSRGB();
+		bool isMipmap();
 		VkFormat getFormat();
+		void uploadKtxTexture(void* p_ktx_texture, VkFormat format = VK_FORMAT_UNDEFINED);
 
 	private:
 		friend class cereal::access;

@@ -253,7 +253,7 @@ namespace Bamboo
 			vmaDestroyBuffer(VulkanRHI::get().getAllocator(), staging_buffer.buffer, staging_buffer.allocation);
 
 			// generate image mipmaps, and transition image to READ_ONLY_OPT state for shader reading
-			createImageMipmaps(image, format, width, height, mip_levels);
+			createImageMipmaps(image, width, height, mip_levels);
 		}
 	}
 
@@ -502,7 +502,7 @@ namespace Bamboo
 		endInstantCommands(command_buffer);
 	}
 
-	void VulkanUtil::createImageMipmaps(VkImage image, VkFormat image_format, uint32_t width, uint32_t height, uint32_t mip_levels)
+	void VulkanUtil::createImageMipmaps(VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels)
 	{
 		VkCommandBuffer command_buffer = beginInstantCommands();
 

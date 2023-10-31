@@ -177,6 +177,7 @@ namespace Bamboo
 
 		vkGetPhysicalDeviceFeatures(m_physical_device, &m_physical_device_features);
 		ASSERT(m_physical_device_features.textureCompressionBC, "doesn't support bc block texture compression");
+		ASSERT(isFormatSupported(VK_FORMAT_BC7_UNORM_BLOCK) && isFormatSupported(VK_FORMAT_BC7_SRGB_BLOCK), "doesn't support bc block formats");
 	}
 
 	void VulkanRHI::createLogicDevice()
@@ -784,6 +785,15 @@ namespace Bamboo
 
 		LOG_FATAL("failed to find a proper image format");
 		return VK_FORMAT_UNDEFINED;
+	}
+
+	bool VulkanRHI::isFormatSupported(VkFormat format)
+	{
+		VkFormatProperties format_properties;
+		vkGetPhysicalDeviceFormatProperties(m_physical_device, format, &format_properties);
+		VkFormatFeatureFlags required_format_features = VK_FORMAT_FEATURE_TRANSFER_DST_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+
+		return (format_properties.optimalTilingFeatures & required_format_features) == required_format_features;
 	}
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanRHI::debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data, void* p_user_data)

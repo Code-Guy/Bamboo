@@ -8,6 +8,7 @@ namespace Bamboo
 {
 	void AssetUI::init()
 	{
+		EditorUI::init();
 		m_title = "Asset";
 
 		// set poll folder timer
@@ -16,17 +17,17 @@ namespace Bamboo
 		openFolder(g_engine.fileSystem()->getAssetDir());
 
 		// load icon images
-		m_asset_images[EAssetType::Invalid] = loadImGuiImageFromFile("asset/engine/texture/asset/invalid.png");
-		m_asset_images[EAssetType::Texture2D] = loadImGuiImageFromFile("asset/engine/texture/asset/texture_2d.png");
-		m_asset_images[EAssetType::TextureCube] = loadImGuiImageFromFile("asset/engine/texture/asset/texture_cube.png");
-		m_asset_images[EAssetType::Material] = loadImGuiImageFromFile("asset/engine/texture/asset/material.png");
-		m_asset_images[EAssetType::Skeleton] = loadImGuiImageFromFile("asset/engine/texture/asset/skeleton.png");
-		m_asset_images[EAssetType::StaticMesh] = loadImGuiImageFromFile("asset/engine/texture/asset/static_mesh.png");
-		m_asset_images[EAssetType::SkeletalMesh] = loadImGuiImageFromFile("asset/engine/texture/asset/skeletal_mesh.png");
-		m_asset_images[EAssetType::Animation] = loadImGuiImageFromFile("asset/engine/texture/asset/animation.png");
-		m_asset_images[EAssetType::World] = loadImGuiImageFromFile("asset/engine/texture/asset/world.png");
-		m_empty_folder_image = loadImGuiImageFromFile("asset/engine/texture/asset/empty_folder.png");
-		m_non_empty_folder_image = loadImGuiImageFromFile("asset/engine/texture/asset/non_empty_folder.png");
+		m_asset_images[EAssetType::Invalid] = loadImGuiImageFromFile("asset/engine/texture/ui/invalid.png");
+		m_asset_images[EAssetType::Texture2D] = loadImGuiImageFromFile("asset/engine/texture/ui/texture_2d.png");
+		m_asset_images[EAssetType::TextureCube] = loadImGuiImageFromFile("asset/engine/texture/ui/texture_cube.png");
+		m_asset_images[EAssetType::Material] = loadImGuiImageFromFile("asset/engine/texture/ui/material.png");
+		m_asset_images[EAssetType::Skeleton] = loadImGuiImageFromFile("asset/engine/texture/ui/skeleton.png");
+		m_asset_images[EAssetType::StaticMesh] = loadImGuiImageFromFile("asset/engine/texture/ui/static_mesh.png");
+		m_asset_images[EAssetType::SkeletalMesh] = loadImGuiImageFromFile("asset/engine/texture/ui/skeletal_mesh.png");
+		m_asset_images[EAssetType::Animation] = loadImGuiImageFromFile("asset/engine/texture/ui/animation.png");
+		m_asset_images[EAssetType::World] = loadImGuiImageFromFile("asset/engine/texture/ui/world.png");
+		m_empty_folder_image = loadImGuiImageFromFile("asset/engine/texture/ui/empty_folder.png");
+		m_non_empty_folder_image = loadImGuiImageFromFile("asset/engine/texture/ui/non_empty_folder.png");
 
 		// register drop callback
 		g_engine.eventSystem()->addListener(EEventType::WindowDrop, std::bind(&AssetUI::onDropFiles, this, std::placeholders::_1));

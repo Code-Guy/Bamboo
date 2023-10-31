@@ -44,6 +44,7 @@ namespace Bamboo
 		bool createDir(const std::string& path, bool is_recursive = false);
 		bool removeFile(const std::string& filename);
 		bool removeDir(const std::string& path, bool is_recursive = false);
+		void copyFile(const std::string& from, const std::string& to);
 
 		bool loadBinary(const std::string& filename, std::vector<uint8_t>& data);
 		bool writeString(const std::string& filename, const std::string& str);

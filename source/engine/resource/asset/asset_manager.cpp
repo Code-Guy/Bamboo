@@ -39,6 +39,9 @@ namespace Bamboo
 		{
 			m_ext_asset_types[iter.second] = iter.first;
 		}
+
+		// load default texture
+		m_default_texture_2d = VulkanUtil::loadImageViewSampler(DEFAULT_TEXTURE_2D_FILE);
 	}
 
 	void AssetManager::destroy()
@@ -48,6 +51,7 @@ namespace Bamboo
 			iter.second.reset();
 		}
 		m_assets.clear();
+		m_default_texture_2d.destroy();
 	}
 
 	bool AssetManager::importGltf(const std::string& filename, const URL& folder, const GltfImportOption& option)

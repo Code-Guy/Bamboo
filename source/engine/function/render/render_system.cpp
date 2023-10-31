@@ -34,9 +34,6 @@ namespace Bamboo
 
 	void RenderSystem::init()
 	{
-		// import tests
-		g_engine.assetManager()->importTexture2D("D:/Test/milk galaxy.jpg", "asset");
-
 		m_directional_light_shadow_pass = std::make_shared<DirectionalLightShadowPass>();
 		m_point_light_shadow_pass = std::make_shared<PointLightShadowPass>();
 		m_spot_light_shadow_pass = std::make_shared<SpotLightShadowPass>();
@@ -75,7 +72,6 @@ namespace Bamboo
 
 		// get dummy texture2d
 		const auto& as = g_engine.assetManager();
-		m_default_texture_2d = as->loadAsset<Texture2D>(DEFAULT_TEXTURE_2D_URL);
 		m_default_texture_cube = as->loadAsset<TextureCube>(DEFAULT_TEXTURE_CUBE_URL);
 
 		// create lighting uniform buffers
@@ -85,10 +81,10 @@ namespace Bamboo
 			VulkanUtil::createBuffer(sizeof(LightingUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer);
 		}
 		m_lighting_icons = {
-			{ ELightType::DirectionalLight, as->loadAsset<Texture2D>("asset/engine/texture/gizmo/tex_directional_light.tex") },
-			{ ELightType::SkyLight, as->loadAsset<Texture2D>("asset/engine/texture/gizmo/tex_sky_light.tex") },
-			{ ELightType::PointLight, as->loadAsset<Texture2D>("asset/engine/texture/gizmo/tex_point_light.tex") },
-			{ ELightType::SpotLight, as->loadAsset<Texture2D>("asset/engine/texture/gizmo/tex_spot_light.tex") }
+			{ ELightType::DirectionalLight, VulkanUtil::loadImageViewSampler("asset/engine/texture/gizmo/directional_light.png") },
+			{ ELightType::SkyLight, VulkanUtil::loadImageViewSampler("asset/engine/texture/gizmo/sky_light.png") },
+			{ ELightType::PointLight, VulkanUtil::loadImageViewSampler("asset/engine/texture/gizmo/point_light.png") },
+			{ ELightType::SpotLight, VulkanUtil::loadImageViewSampler("asset/engine/texture/gizmo/spot_light.png") }
 		};
 	}
 
@@ -114,10 +110,9 @@ namespace Bamboo
 
 		for (auto& iter : m_lighting_icons)
 		{
-			iter.second.reset();
+			iter.second.destroy();
 		}
 
-		m_default_texture_2d.reset();
 		m_default_texture_cube.reset();
 	}
 
@@ -194,9 +189,10 @@ namespace Bamboo
 		auto camera_component = camera_entity.lock()->getComponent(CameraComponent);
 
 		// set render datas
+		const VmaImageViewSampler& default_texture_2d = g_engine.assetManager()->getDefaultTexture2D();
 		std::shared_ptr<LightingRenderData> lighting_render_data = std::make_shared<LightingRenderData>();
 		lighting_render_data->camera_view_proj = camera_component->getViewProjectionMatrix();
-		lighting_render_data->brdf_lut_texture = m_default_texture_2d->m_image_view_sampler;
+		lighting_render_data->brdf_lut_texture = default_texture_2d;
 		lighting_render_data->irradiance_texture = m_default_texture_cube->m_image_view_sampler;
 		lighting_render_data->prefilter_texture = m_default_texture_cube->m_image_view_sampler;
 		lighting_render_data->directional_light_shadow_texture = m_directional_light_shadow_pass->getShadowImageViewSampler();
@@ -208,7 +204,7 @@ namespace Bamboo
 		}
 		for (uint32_t i = 0; i < MAX_SPOT_LIGHT_NUM; ++i)
 		{
-			lighting_render_data->spot_light_shadow_textures[i] = m_default_texture_2d->m_image_view_sampler;
+			lighting_render_data->spot_light_shadow_textures[i] = default_texture_2d;
 		}
 		std::shared_ptr<SkyboxRenderData> skybox_render_data = nullptr;
 
@@ -321,15 +317,11 @@ namespace Bamboo
 						material_pco.has_normal_texture = sub_mesh.m_material->m_normal_texure != nullptr;
 						static_mesh_render_data->material_pcos.push_back(material_pco);
 
-						std::shared_ptr<Texture2D> base_color_texture = sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure : m_default_texture_2d;
-						std::shared_ptr<Texture2D> metallic_roughness_occlusion_texure = sub_mesh.m_material->m_metallic_roughness_occlusion_texure ? sub_mesh.m_material->m_metallic_roughness_occlusion_texure : m_default_texture_2d;
-						std::shared_ptr<Texture2D> normal_texure = sub_mesh.m_material->m_normal_texure ? sub_mesh.m_material->m_normal_texure : m_default_texture_2d;
-						std::shared_ptr<Texture2D> emissive_texture = sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure : m_default_texture_2d;
 						static_mesh_render_data->pbr_textures.push_back({
-							base_color_texture->m_image_view_sampler,
-							metallic_roughness_occlusion_texure->m_image_view_sampler,
-							normal_texure->m_image_view_sampler,
-							emissive_texture->m_image_view_sampler
+							sub_mesh.m_material->m_base_color_texure ? sub_mesh.m_material->m_base_color_texure->m_image_view_sampler : default_texture_2d,
+							sub_mesh.m_material->m_metallic_roughness_occlusion_texure ? sub_mesh.m_material->m_metallic_roughness_occlusion_texure->m_image_view_sampler : default_texture_2d,
+							sub_mesh.m_material->m_normal_texure ? sub_mesh.m_material->m_normal_texure->m_image_view_sampler : default_texture_2d,
+							sub_mesh.m_material->m_emissive_texure ? sub_mesh.m_material->m_emissive_texure->m_image_view_sampler : default_texture_2d
 						});
 					}
 
@@ -568,7 +560,7 @@ namespace Bamboo
 		billboard_render_data->position = camera_component->getViewProjectionMatrix() * glm::vec4(billboard_pos, 1.0f);
 		billboard_render_data->position /= billboard_render_data->position.w;
 		billboard_render_data->size = glm::vec2(size, size * camera_component->m_aspect_ratio);
-		billboard_render_data->texture = m_lighting_icons[light_type]->m_image_view_sampler;
+		billboard_render_data->texture = m_lighting_icons[light_type];
 
 		uint32_t entity_id = transform_component->getParent().lock()->getID();
 		billboard_render_datas.push_back(billboard_render_data);

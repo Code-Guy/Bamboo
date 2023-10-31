@@ -1,10 +1,11 @@
 #pragma once
 
 #include "engine/resource/asset/base/asset.h"
+#include "engine/core/vulkan/vulkan_util.h"
 #include "importer/import_option.h"
 
 #define DEFAULT_MATERIAL_URL "asset/engine/material/mat_default.mat"
-#define DEFAULT_TEXTURE_2D_URL "asset/engine/material/tex_dummy.tex"
+#define DEFAULT_TEXTURE_2D_FILE "asset/engine/material/tex_default.png"
 #define DEFAULT_TEXTURE_CUBE_URL "asset/engine/texture/ibl/texc_cloudy.texc"
 #define BRDF_TEXTURE_URL "asset/engine/texture/ibl/tex_brdf_lut.tex"
 
@@ -40,6 +41,8 @@ namespace Bamboo
 
 		void serializeAsset(std::shared_ptr<Asset> asset, const URL& url = "");
 
+		const VmaImageViewSampler& getDefaultTexture2D() { return m_default_texture_2d; }
+
 	private:
 		friend class GltfImporter;
 
@@ -50,5 +53,7 @@ namespace Bamboo
 		std::map<EAssetType, std::string> m_asset_type_exts;
 		std::map<EAssetType, EArchiveType> m_asset_archive_types;
 		std::map<std::string, EAssetType> m_ext_asset_types;
+
+		VmaImageViewSampler m_default_texture_2d;
 	};
 }
