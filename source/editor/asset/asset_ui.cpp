@@ -72,6 +72,7 @@ namespace Bamboo
 		}
 		constructFolderOpPopups("folder_op_background_hovered_popups");
 		constructFolderOpPopups("folder_op_tree_hovered_popups", true);
+		constructFolderOpPopupModal(m_selected_folder);
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -100,6 +101,7 @@ namespace Bamboo
 		}
 		constructFolderOpPopups("folder_op_background_hovered_popups");
 		constructFolderOpPopups("folder_op_dir_hovered_popups", true);
+		constructFolderOpPopupModal(m_selected_file);
 		ImGui::EndChild();
 
 		// get folder window rect
@@ -276,7 +278,12 @@ namespace Bamboo
 		// draw asset name text
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 20.0f);
 		float text_width = ImGui::CalcTextSize(basename.c_str()).x;
-		if (text_width > size.x)
+
+		if (is_renaming && m_selected_file == filename)
+		{
+			is_renaming = rename(filename, size);
+		}
+		else if (text_width > size.x)
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + size.x);
 			ImGui::Text(basename.c_str());
@@ -287,12 +294,11 @@ namespace Bamboo
 			ImGui::SetCursorPosX(ImGui::GetCursorPos().x + (size.x - text_width) * 0.5f);
 			ImGui::Text(basename.c_str());
 		}
-
 		ImGui::EndGroup();
 
 		// update asset hover and selection status
 		is_asset_hovered |= hover_state.is_hovered = ImGui::IsItemHovered();
-		if (ImGui::IsItemClicked())
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Left) || ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			m_selected_file = filename;
 		}
@@ -445,6 +451,8 @@ namespace Bamboo
 
 	void AssetUI::constructFolderOpPopups(const std::string& str_id, bool is_background_not_hoverd)
 	{
+		bool is_delete_folder = false;
+
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 2.0f, 8.0f });
 		ImGui::PushStyleColor(ImGuiCol_PopupBg, { 0.2f, 0.2f, 0.2f, 1.0f });
 		if (ImGui::BeginPopup(str_id.c_str()))
@@ -453,21 +461,66 @@ namespace Bamboo
 			createCustomSeperatorText("FOLDER");
 			if (ImGui::MenuItem("  New Folder"))
 			{
-				createFolder();
+				std::string new_folder = createFolder();
+				is_renaming = true;
+				m_selected_file = new_folder;
 			}
 
 			if (is_background_not_hoverd)
 			{
 				if (ImGui::MenuItem("  Delete"))
 				{
-					deleteFolder();
+					is_delete_folder = true;
+				}
+				if (ImGui::MenuItem("  Rename"))
+				{
+					is_renaming = true;
 				}
 			}
+
 			ImGui::PopStyleVar();
 			ImGui::EndPopup();
 		}
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar();
+
+		if (is_delete_folder)
+		{
+			ImGui::OpenPopup("Delete?");
+		}
+	}
+
+	void AssetUI::constructFolderOpPopupModal(const std::string& path)
+	{
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		if (ImGui::BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			std::string text = " Do you really want to delete " + g_engine.fileSystem()->relative(path) + "? ";
+			ImGui::Text(text.c_str());
+			ImGui::Separator();
+
+			float current_width = ImGui::GetWindowWidth();
+			ImVec2 button_size{ current_width / 2 - 3.5f, 0.0f };
+
+			if (ImGui::Button("Yes", button_size))
+			{
+				deleteFolder(path);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SetItemDefaultFocus();
+			ImGui::SameLine(current_width / 2 + 2.0f);
+			
+			if (ImGui::Button("No", button_size))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
+		if (ImGui::BeginPopupModal("Create?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::EndPopup();
+		}
 	}
 
 	void AssetUI::openFolder(std::string folder)
@@ -483,7 +536,6 @@ namespace Bamboo
 
 			m_formatted_selected_folder = g_engine.fileSystem()->relative(m_selected_folder);
 			StringUtil::replace_all(m_formatted_selected_folder, "/", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
-			StringUtil::replace_all(m_formatted_selected_folder, "\\", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
 		}
 
 		if (!m_selected_folder.empty())
@@ -564,5 +616,4 @@ namespace Bamboo
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor();
 	}
-
 }

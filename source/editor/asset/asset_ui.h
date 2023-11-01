@@ -22,6 +22,7 @@ namespace Bamboo
 		void constructImportPopups();
 		void constructAssetFilePopups();
 		void constructFolderOpPopups(const std::string& str_id, bool is_background_not_hoverd = false);
+		void constructFolderOpPopupModal(const std::string& path);
 
 		virtual void openFolder(std::string folder) override;
 

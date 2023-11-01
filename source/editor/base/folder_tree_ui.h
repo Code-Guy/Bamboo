@@ -33,13 +33,17 @@ namespace Bamboo
 		void constructFolderTree();
 
 		virtual void openFolder(std::string folder);
-		bool createFolder();
-		bool deleteFolder();
+		std::string createFolder();
+		bool deleteFolder(const std::string& folder_name);
+		bool rename(const std::string& filename, const ImVec2& size = { 0.0f, 0.0f });
 
 		std::string m_selected_folder;
 		std::vector<FolderNode> m_folder_nodes;
 		bool show_engine_assets = false;
 		bool is_folder_tree_hovered = false;
+		bool is_renaming = false;
+
+		char new_name_buffer[64] = "";
 
 	private:
 		void constructFolderTree(const std::vector<FolderNode>& folder_nodes, uint32_t index);

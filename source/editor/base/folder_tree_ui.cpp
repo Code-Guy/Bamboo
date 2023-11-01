@@ -37,7 +37,8 @@ namespace Bamboo
 				folder_node.is_root = folders[i] == fs->getAssetDir();
 				for (auto& file : std::filesystem::directory_iterator(folders[i]))
 				{
-					std::string filename = file.path().string();
+					std::string filename = file.path().generic_string();
+					
 					if (file.is_regular_file())
 					{
 						// don't show invalid asset type
@@ -104,7 +105,7 @@ namespace Bamboo
 
 		bool is_treenode_opened = ImGui::TreeNodeEx((void*)(intptr_t)index, tree_node_flags, "%s %s", m_folder_opened_map[folder_node.name] ? ICON_FA_FOLDER_OPEN : ICON_FA_FOLDER, folder_node.name.c_str());
 		m_folder_opened_map[folder_node.name] = is_treenode_opened && !folder_node.is_leaf;
-		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+		if ((ImGui::IsItemClicked(ImGuiMouseButton_Left) || ImGui::IsItemClicked(ImGuiMouseButton_Right)) && !ImGui::IsItemToggledOpen())
 		{
 			openFolder(folder_node.dir);
 		}
@@ -139,15 +140,48 @@ namespace Bamboo
 		}
 	}
 
-	bool IFolderTreeUI::createFolder()
+	std::string IFolderTreeUI::createFolder()
 	{
 		LOG_INFO("create folder");
+		std::string new_folder_name = m_selected_folder + "/NewFolder";
+
+		int index = 1;
+		while (!g_engine.fileSystem()->createDir(new_folder_name))
+		{
+			new_folder_name = m_selected_folder + "/NewFolder_" + std::to_string(index++);
+		}
+		pollFolders();
+		return new_folder_name;
+	}
+
+	bool IFolderTreeUI::deleteFolder(const std::string& folder_name)
+	{
+		LOG_INFO("delete folder: {}", folder_name);
+		g_engine.fileSystem()->removeDir(folder_name, true);
+		pollFolders();
 		return true;
 	}
 
-	bool IFolderTreeUI::deleteFolder()
+	bool IFolderTreeUI::rename(const std::string& filename, const ImVec2& size)
 	{
-		LOG_INFO("delete folder");
+		std::string basename = g_engine.fileSystem()->basename(filename);
+		std::string dir = g_engine.fileSystem()->dir(filename) + "/";
+		ImGui::PushItemWidth(size.x);
+		strcpy(new_name_buffer, basename.c_str());
+
+		ImGui::SetKeyboardFocusHere();
+		ImGui::InputText("##NewName", new_name_buffer, IM_ARRAYSIZE(new_name_buffer), ImGuiInputTextFlags_AutoSelectAll);
+		ImGui::PopItemWidth();
+
+		// if press enter or not focus, exit renaming status, else maintain renaming status
+		if (ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter) 
+			|| (!ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)))
+		{
+			g_engine.fileSystem()->renameFile(dir, basename, new_name_buffer);
+			pollFolders();
+			return false;
+		}
 		return true;
 	}
+
 }

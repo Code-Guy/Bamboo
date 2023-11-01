@@ -135,7 +135,7 @@ namespace Bamboo
 		memcpy(m_image_data.data(), p_compressed_data, compressed_size);
 		delete[] p_compressed_data;
 
-		LOG_INFO("finished to compress ktx_texture texture, compression ratio: {0:.2f}%", compressed_size * 100.0f / original_size);
+		LOG_INFO("finished to compress ktx_texture, compression ratio: {0:.2f}%%", compressed_size * 100.0f / original_size);
 
 		return true;
 	}

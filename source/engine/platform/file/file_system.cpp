@@ -41,24 +41,23 @@ namespace Bamboo
 	std::string FileSystem::absolute(const std::string& path)
 	{
 		std::filesystem::path header = m_header;
-		return header.append(path).string();
+		return header.append(path).generic_string();
 	}
 
 	std::string FileSystem::global(const std::string& path)
 	{
-		return std::filesystem::absolute(path).string();
+		return std::filesystem::absolute(path).generic_string();
 	}
 
 	std::string FileSystem::relative(const std::string& path)
 	{
-		std::string rel_path = std::filesystem::relative(path, m_header).string();
-		StringUtil::replace_all(rel_path, "\\", "/");
+		std::string rel_path = std::filesystem::relative(path, m_header).generic_string();
 		return rel_path;
 	}
 
 	std::string FileSystem::extension(const std::string& path)
 	{
-		std::string extension = std::filesystem::path(path).extension().string();
+		std::string extension = std::filesystem::path(path).extension().generic_string();
 		if (!extension.empty() && extension[0] == '.')
 		{
 			extension.erase(0, 1);
@@ -68,17 +67,17 @@ namespace Bamboo
 
 	std::string FileSystem::basename(const std::string& path)
 	{
-		return std::filesystem::path(path).stem().string();
+		return std::filesystem::path(path).stem().generic_string();
 	}
 
 	std::string FileSystem::filename(const std::string& path)
 	{
-		return std::filesystem::path(path).filename().string();
+		return std::filesystem::path(path).filename().generic_string();
 	}
 
 	std::string FileSystem::dir(const std::string& path)
 	{
-		return std::filesystem::path(path).parent_path().string();
+		return std::filesystem::path(path).parent_path().generic_string();
 	}
 
 	std::string FileSystem::modifiedTime(const std::string& path)
@@ -116,14 +115,14 @@ namespace Bamboo
 		{
 			for (const auto& file : std::filesystem::recursive_directory_iterator(path))
 			{
-				filenames.push_back(file.path().string());
+				filenames.push_back(file.path().generic_string());
 			}
 		}
 		else
 		{
 			for (const auto& file : std::filesystem::directory_iterator(path))
 			{
-				filenames.push_back(file.path().string());
+				filenames.push_back(file.path().generic_string());
 			}
 		}
 
@@ -154,7 +153,7 @@ namespace Bamboo
 	std::string FileSystem::validateBasename(const std::string& basename)
 	{
 		std::vector<char> invalid_chars = {
-			'\\', '/', ':', '*', '?', '"', '<', '>', '|'
+			'/', ':', '*', '?', '"', '<', '>', '|'
 		};
 
 		std::string validated_basename;
@@ -264,6 +263,21 @@ namespace Bamboo
 	void FileSystem::copyFile(const std::string& from, const std::string& to)
 	{
 		std::filesystem::copy(from, to, std::filesystem::copy_options::overwrite_existing);
+	}
+
+	void FileSystem::renameFile(const std::string& dir, const std::string& old_name, const std::string& new_name)
+	{
+		if (old_name.compare(new_name))
+		{
+			try
+			{
+				std::filesystem::rename(dir + old_name, dir + new_name);
+			}
+			catch (const std::filesystem::filesystem_error& e)
+			{
+				LOG_WARNING("rename file error: {}", e.what());
+			}
+		}
 	}
 
 	bool FileSystem::loadBinary(const std::string& filename, std::vector<uint8_t>& data)

@@ -45,6 +45,7 @@ namespace Bamboo
 		bool removeFile(const std::string& filename);
 		bool removeDir(const std::string& path, bool is_recursive = false);
 		void copyFile(const std::string& from, const std::string& to);
+		void renameFile(const std::string& dir, const std::string& old_name, const std::string& new_name);
 
 		bool loadBinary(const std::string& filename, std::vector<uint8_t>& data);
 		bool writeString(const std::string& filename, const std::string& str);
@@ -53,7 +54,7 @@ namespace Bamboo
 		template<typename T, typename... Ts>
 		std::string combine(const T& first, const Ts&... rest)
 		{
-			return std::filesystem::path(first).append(combine(rest...)).string();
+			return std::filesystem::path(first).append(combine(rest...)).generic_string();
 		}
 
 		template<typename T>
