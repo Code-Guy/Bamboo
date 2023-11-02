@@ -1,6 +1,7 @@
 #include "tool_ui.h"
 #include "engine/core/base/macro.h"
 #include "engine/function/framework/world/world_manager.h"
+#include "engine/function/physics/physics_system.h"
 #include <map>
 
 namespace Bamboo
@@ -102,6 +103,7 @@ namespace Bamboo
 		}
 		if (ImGui::Button(ICON_FA_STEP_FORWARD, kButtonSize))
 		{
+			g_engine.physicsSystem()->step();
 			wm->getCurrentWorld()->step();
 		}
 		if (current_world_mode != EWorldMode::Pause)

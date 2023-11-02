@@ -73,8 +73,13 @@ namespace Bamboo
 		for (const auto& channel : animation->m_channels)
 		{
 			Bone* bone = m_skeleton_inst.getBone(channel.m_bone_name);
-			const auto& sampler = animation->m_samplers[channel.m_sampler_index];
+			if (!bone)
+			{
+				// skip invalid channel
+				continue;
+			}
 
+			const auto& sampler = animation->m_samplers[channel.m_sampler_index];
 			for (size_t i = 0; i < sampler.m_times.size() - 1; ++i)
 			{
 				if (m_time >= sampler.m_times[i] && m_time <= sampler.m_times[i + 1])

@@ -22,9 +22,17 @@ vec3 calc_normal()
 	}
 
 	// Perturb normal, see http://www.thetenthplanet.de/archives/1180
-	vec3 tangent_normal;
-	tangent_normal.xy = texture(normal_texture_sampler, f_tex_coord).xw * 2.0 - 1.0;
-	tangent_normal.z = sqrt(1 - dot(tangent_normal.xy, tangent_normal.xy));
+	vec4 texel = texture(normal_texture_sampler, f_tex_coord);
+	vec3 tangent_normal = texel.xyz;
+	if (texel.w > 0.999)
+	{
+		tangent_normal = tangent_normal * 2.0 - 1.0;
+	}
+	else
+	{
+		tangent_normal.xy = texel.xw * 2.0 - 1.0;
+		tangent_normal.z = sqrt(1 - dot(tangent_normal.xy, tangent_normal.xy));
+	}
 
 	vec3 q1 = dFdx(f_position);
 	vec3 q2 = dFdy(f_position);

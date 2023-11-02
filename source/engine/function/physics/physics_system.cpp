@@ -271,6 +271,11 @@ namespace Bamboo
 		g_engine.timerManager()->removeTimer(m_tick_timer_handle);
 	}
 
+	void PhysicsSystem::step()
+	{
+		is_stepping = true;
+	}
+
 	JPH::Vec3 glmVec3ToJPHVec3(const glm::vec3& v)
 	{
 		return JPH::Vec3(v.x, v.y, v.z);
@@ -304,10 +309,10 @@ namespace Bamboo
 	void PhysicsSystem::tick()
 	{
 		static StopWatch stop_watch;
-		static bool last_playing = false;
+		static bool last_simulating = false;
 		float delta_time = stop_watch.stop();
 
-		if (g_engine.isPlaying())
+		if (g_engine.isPlaying() || is_stepping)
 		{
 			// collect bodies
 			collectRigidbodies();
@@ -329,14 +334,20 @@ namespace Bamboo
 				transform_component->setRotation(JPHQuatToGlmRot(rotation));
 			}
 		}
-		else if (last_playing && !g_engine.isPlaying())
+
+		if (last_simulating && !g_engine.isSimulating())
 		{
 			// remove all rigidbodies when pie stop playing
 			clearRigidbodies();
 		}
 
-		last_playing = g_engine.isPlaying();
+		last_simulating = g_engine.isSimulating();
 		stop_watch.start();
+
+		if (is_stepping)
+		{
+			is_stepping = false;
+		}
 	}
 
 	JPH::ObjectLayer motionTypeToObjectLayer(EMotionType motion_type)
@@ -396,7 +407,7 @@ namespace Bamboo
 	{
 		const auto& world = g_engine.worldManager()->getCurrentWorld();
 		const auto& entities = world->getEntities();
-		std::vector<uint32_t> m_current_body_ids;
+		std::vector<uint32_t> current_body_ids;
 		for (const auto& iter : entities)
 		{
 			const auto& entity = iter.second;
@@ -458,14 +469,14 @@ namespace Bamboo
 				}
 			}
 
-			m_current_body_ids.push_back(rigidbody_component->m_body_id);
+			current_body_ids.push_back(rigidbody_component->m_body_id);
 		}
 
 		// remove rigidbodies that owned rigidbody component have been removed
 		for (auto iter = m_body_transforms.begin(); iter != m_body_transforms.end(); )
 		{
 			uint32_t body_id = iter->first;
-			if (std::find(m_current_body_ids.begin(), m_current_body_ids.end(), body_id) == m_current_body_ids.end())
+			if (std::find(current_body_ids.begin(), current_body_ids.end(), body_id) == current_body_ids.end())
 			{
 				m_body_interface->RemoveBody(JPH::BodyID(body_id));
 				m_body_interface->DestroyBody(JPH::BodyID(body_id));

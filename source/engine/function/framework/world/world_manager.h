@@ -29,8 +29,8 @@ namespace Bamboo
 
 		std::shared_ptr<World> m_current_world;
 
-		URL m_open_world_url;
-		URL m_template_url, m_save_as_url;
+		URL m_open_world_url, m_template_url, m_save_as_url;
+		URL m_current_world_url, m_pie_world_url;
 
 		EWorldMode m_world_mode;
 	};

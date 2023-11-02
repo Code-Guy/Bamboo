@@ -29,6 +29,16 @@ namespace Bamboo
 			return m_url < other.m_url;
 		}
 
+		bool operator==(const URL& other) const
+		{
+			return m_url == other.m_url;
+		}
+
+		bool operator!=(const URL& other) const
+		{
+			return m_url != other.m_url;
+		}
+
 		std::string getAbsolute() const;
 		std::string getBareName() const;
 		std::string getFolder() const;

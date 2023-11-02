@@ -18,6 +18,9 @@ namespace Bamboo
 	void WorldManager::init()
 	{
 		URL default_world_url = g_engine.configManager()->getDefaultWorldUrl();
+		const auto& fs = g_engine.fileSystem();
+		std::string cache_dir = fs->getCacheDir();
+		m_pie_world_url = fs->relative(fs->combine(cache_dir, std::string("pie.world")));
 		m_world_mode = g_engine.isEditor() ? EWorldMode::Edit : EWorldMode::Play;
 
 		loadWorld(default_world_url);
@@ -66,8 +69,8 @@ namespace Bamboo
 
 	bool WorldManager::saveWorld()
 	{
-		g_engine.assetManager()->serializeAsset(m_current_world);
-		LOG_INFO("save world: {}", m_current_world->getURL().str());
+		g_engine.assetManager()->serializeAsset(m_current_world, m_current_world_url);
+		LOG_INFO("save world: {}", m_current_world_url.str());
 		return true;
 	}
 
@@ -79,7 +82,7 @@ namespace Bamboo
 
 	std::string WorldManager::getCurrentWorldName()
 	{
-		return g_engine.fileSystem()->basename(m_current_world->getURL().str());
+		return g_engine.fileSystem()->basename(m_current_world_url.str());
 	}
 
 	std::weak_ptr<CameraComponent> WorldManager::getCameraComponent()
@@ -94,32 +97,31 @@ namespace Bamboo
 			return;
 		}
 
-		m_world_mode = world_mode;
 		const auto& fs = g_engine.fileSystem();
-		std::string cache_dir = fs->getCacheDir();
-		std::string pie_world_url = fs->combine(cache_dir, std::string("pie.world"));
-		pie_world_url = fs->relative(pie_world_url);
-		switch (m_world_mode)
+		switch (world_mode)
 		{
 		case EWorldMode::Edit:
 		{
 			// load world from cache
-			g_engine.fileSystem()->copyFile(fs->absolute(pie_world_url), fs->absolute(m_current_world->getURL().str()));
-			openWorld(m_current_world->getURL().str());
+			openWorld(m_pie_world_url);
 		}
 			break;
 		case EWorldMode::Play:
 		{
-			// save world to cache
-			saveAsWorld(pie_world_url);
+			if (m_world_mode == EWorldMode::Edit)
+			{
+				// save world to cache
+				saveAsWorld(m_pie_world_url);
 
-			// call beginPlay of all entities
-			m_current_world->beginPlay();
+				// call beginPlay of all entities
+				m_current_world->beginPlay();
+			}
 		}
 			break;
 		default:
 			break;
 		}
+		m_world_mode = world_mode;
 	}
 
 	bool WorldManager::loadWorld(const URL& url)
@@ -130,6 +132,11 @@ namespace Bamboo
 		}
 
 		m_current_world = g_engine.assetManager()->loadAsset<World>(url);
+		if (url != m_pie_world_url)
+		{
+			m_current_world_url = url;
+		}
 		return true;
 	}
+
 }

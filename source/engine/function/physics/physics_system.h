@@ -27,6 +27,7 @@ namespace Bamboo
 
 		void init();
 		void destroy();
+		void step();
 
 	private:
 		void tick();
@@ -48,5 +49,7 @@ namespace Bamboo
 
 		uint32_t m_tick_timer_handle;
 		std::map<uint32_t, std::shared_ptr<class TransformComponent>> m_body_transforms;
+
+		bool is_stepping = false;
 	};
 }
