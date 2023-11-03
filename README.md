@@ -1,3 +1,5 @@
+
+
 # Bamboo
 
 ## What is Bamboo
@@ -10,29 +12,29 @@
 
 ## Features
 - UE-like Editor
-- Flexible panel docking
-- Static mesh rendering
-- Skeletal mesh rendering
-- Asset drag-drop importing
-- Asset drag-drop placing
-- Pixel-perfect picking and outline highlighting
+- Static/Skeletal mesh rendering
+- Asset System
+- Pixel-perfect picking and outlining
 - 3D translation/rotation/scale gizmos
 - Reflection and serialization system
 - Physically-Based Rendering
 - Deferred and forward mixing rendering paths
 - Multiple light types(Directional/Sky/Point/Spot)
-- Shadow rendering for every light type
 - Postprocessing(Color Grading)
+- Play in Editor(PIE)
+- Physicis System
+- Texture Compression
+- Engine/Editor/Game code isolation
 
 ## How to build
-**I don't want to build anyway**
+**I just wanna give it a try**
 
-Well, if you're using Windows, you can download the prebuild engine zip file(Bamboo.zip) in the release page:)
+Well, if you're using Windows, you can download the prebuild package(Release.zip) in the latest release page:)
 
 **Supported Platforms**
 - Windows
 - Linux(WIP)
-- MacOS(ToDo)
+- MacOS(TODO)
 
 **Prerequites**
 - [Git](http://git-scm.com/downloads).
@@ -40,26 +42,29 @@ Well, if you're using Windows, you can download the prebuild engine zip file(Bam
 - [Vulkan Sdk](https://www.lunarg.com/vulkan-sdk/). Verison 1.3 or later is prefered.
 - [Visual Studio](https://visualstudio.microsoft.com/). Version 2022 is prefered.
 
-**Step 1.** Clone the sources and create a build directory.
+**Step 1.** Clone the Bamboo repository. Now the engine and editor modules will be compiled to two static libraries rather than one engine library and one editor executable.
 
 ```shell
 git clone https://github.com/Code-Guy/Bamboo.git
-cd Bamboo
-mkdir build && cd build
 ```
-**Step 2.** Use CMake to generate project file using any [desired generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html). 
+
+**Step 2.** Download the lastest version's Project.zip file, unzip to somewhere. It's a demo project which relies on the engine and editor sources to compile, and contains "asset" "config" "source" and "CMakeLists.txt" four items.
+![4](snapshot/project_files.png)
+
+**Step 3.** Open "CMakeLists.txt" file, modify TARGET_NAME property to whatever you want, and modify BAMBOO_DIR to the absolute path of where you put Bamboo repository. **(That's very important!)**
+![5](snapshot/cmakelists_properties.png)
+
+**Step 4.** Go to Project folder, use CMake to generate build files using any [desired generator](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html). The generating command maybe like this:
 
 ```shell
-cmake -G "Visual Studio 17 Win64" -S . -B build
+cmake -G "Visual Studio 17 2022" -A x64 -S . -B build
 ```
 
-**Step 3.** You can use any IDE according to you selected generator, but you can also just build straight from CMake.
+**Step 5.** Then you can use any IDE according to you selected generator, but you can also just build straight from CMake.
 
 ```shell
 cmake --build build --config Release
 ```
-
-**Step 4.** Don't forget to download Bamboo.zip file from github repo, unzip it, and copy the asset folder to the path of BambooEditor.exe to cover the existing one, then we can run the Bamboo editor finally! 
 
 ## External libraries
 All external libraries' source codes have been integrated into this repo, so there is no need to clone those libraries manually:)
@@ -70,8 +75,10 @@ All external libraries' source codes have been integrated into this repo, so the
 - [spdlog](https://github.com/gabime/spdlog)(logging)
 - [yaml-cpp](https://github.com/jbeder/yaml-cpp)(config)
 - [tinygltf](https://github.com/syoyo/tinygltf)(model loading)
-- [ktx](https://github.com/KhronosGroup/KTX-Software)(texture loading)
+- [ktx](https://github.com/KhronosGroup/KTX-Software)(texture compression and loading)
 - [cereal](https://uscilab.github.io/cereal/)(serialization)
 - [json](https://www.json.org/json-en.html)(required by cereal)
 - [rttr](https://www.rttr.org/)(reflection)
 - [eventpp](https://github.com/wqking/eventpp)(event system)
+- [jolt](https://github.com/jrouwe/JoltPhysics)(physics system)
+- [random](https://github.com/effolkronium/random)(random number generator)
