@@ -138,7 +138,7 @@ namespace Bamboo
 		{
 			VkPhysicalDeviceProperties physical_device_properties;
 			vkGetPhysicalDeviceProperties(physical_devices[i], &physical_device_properties);
-			LOG_INFO("device[{}]: {} {} {}.{}.{}", 
+			LOG_INFO("device {}: {} {} {}.{}.{}", 
 				i, physical_device_properties.deviceName, 
 				vkPhysicalDeviceTypeString(physical_device_properties.deviceType),
 				physical_device_properties.apiVersion >> 22,
@@ -161,12 +161,7 @@ namespace Bamboo
 		}
 		m_physical_device = discrete_physical_devices[selected_device_index];
 		m_physical_device_properties = discrete_physical_device_propertiess[selected_device_index];
-		LOG_INFO("selected device: {} {} {}.{}.{}",
-			m_physical_device_properties.deviceName,
-			vkPhysicalDeviceTypeString(m_physical_device_properties.deviceType),
-			m_physical_device_properties.apiVersion >> 22,
-			(m_physical_device_properties.apiVersion >> 12) & 0x3ff,
-			m_physical_device_properties.apiVersion & 0xfff);
+		LOG_INFO("select device {}", selected_device_index);
 	}
 
 	void VulkanRHI::validatePhysicalDevice()

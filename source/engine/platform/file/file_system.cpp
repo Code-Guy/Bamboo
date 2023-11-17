@@ -6,15 +6,15 @@ namespace Bamboo
 {
 	void FileSystem::init()
 	{
-		if (std::filesystem::exists(std::filesystem::path("asset")))
+		std::vector<std::string> headers = { "./", "../", "../../" };
+		for (const std::string& header : headers)
 		{
-			m_header = std::filesystem::path(".");
+			if (std::filesystem::exists(std::filesystem::path(header + "asset")))
+			{
+				m_header = header;
+			}
 		}
-		else if (std::filesystem::exists(std::filesystem::path("../asset")))
-		{
-			m_header = std::filesystem::path("../");
-		}
-		else
+		if (m_header.empty())
 		{
 			LOG_FATAL("failed to find engine asset");
 		}

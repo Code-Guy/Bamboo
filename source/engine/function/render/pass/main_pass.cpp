@@ -104,7 +104,7 @@ namespace Bamboo
 				m_pipeline_layouts[2], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 			vkCmdDraw(command_buffer, 3, 1, 0, 0);
 		}
-		
+
 		// 3.forward subpass
 		vkCmdNextSubpass(command_buffer, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -226,39 +226,72 @@ namespace Bamboo
 		subpass_descs[2].pDepthStencilAttachment = &references[5];
 
 		// subpass dependencies
-		std::array<VkSubpassDependency, 4> dependencies{};
-		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass = 0;
-		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dependencyFlags = 0;
+		std::array<VkSubpassDependency, 8> dependencies{};
 
 		// transitions the gbuffer input attachment from color attachment to shader read
-		dependencies[1].srcSubpass = 0;
+		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass = 1;
+		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[0].dependencyFlags = 0;
+
+		dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
 		dependencies[1].dstSubpass = 1;
-		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+		dependencies[1].dependencyFlags = 0;
 
 		dependencies[2].srcSubpass = 1;
-		dependencies[2].dstSubpass = 2;
-		dependencies[2].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[2].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[2].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+		dependencies[2].dstSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[2].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[2].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[2].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[2].dependencyFlags = 0;
 
-		dependencies[3].srcSubpass = 2;
+		dependencies[3].srcSubpass = 1;
 		dependencies[3].dstSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[3].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[3].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[3].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[3].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+		dependencies[3].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[3].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependencies[3].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[3].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dependencies[3].dependencyFlags = 0;
+
+		dependencies[4].srcSubpass = 0;
+		dependencies[4].dstSubpass = 1;
+		dependencies[4].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[4].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[4].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[4].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[4].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		dependencies[5].srcSubpass = 0;
+		dependencies[5].dstSubpass = 1;
+		dependencies[5].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		dependencies[5].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[5].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dependencies[5].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[5].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		dependencies[6].srcSubpass = 1;
+		dependencies[6].dstSubpass = 2;
+		dependencies[6].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[6].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependencies[6].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[6].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dependencies[6].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+		dependencies[7].srcSubpass = 2;
+		dependencies[7].dstSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[7].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependencies[7].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dependencies[7].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		dependencies[7].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dependencies[7].dependencyFlags = 0;
 
 		// create render pass
 		VkRenderPassCreateInfo render_pass_ci{};
@@ -628,19 +661,19 @@ namespace Bamboo
 		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[0],
 			VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_color_texture_sampler,
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[1], 
-			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_normal_texture_sampler, 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[1],
+			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_normal_texture_sampler,
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[2], 
-			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_base_color_texture_sampler, 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[2],
+			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_base_color_texture_sampler,
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[3],
-			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_emissive_texture_sampler, 
+			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_emissive_texture_sampler,
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[4], 
-			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_metallic_roughness_occlusion_texture_sampler, 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[4],
+			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_metallic_roughness_occlusion_texture_sampler,
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[5], 
+		VulkanUtil::createImageViewSampler(m_width, m_height, nullptr, 1, 1, m_formats[5],
 			VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, m_depth_stencil_texture_sampler,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 
@@ -745,10 +778,10 @@ namespace Bamboo
 				}
 
 				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size()], m_lighting_render_data->point_light_shadow_textures, ibl_textures.size() + k_binding_offset);
-				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size() + m_lighting_render_data->point_light_shadow_textures.size()], 
+				addImagesDescriptorSet(desc_writes, &desc_image_infos[ibl_textures.size() + m_lighting_render_data->point_light_shadow_textures.size()],
 					m_lighting_render_data->spot_light_shadow_textures, ibl_textures.size() + k_binding_offset + 1);
 			}
-			
+
 			// image sampler
 			std::vector<VmaImageViewSampler> pbr_textures = {
 				static_mesh_render_data->pbr_textures[i].base_color_texure,
