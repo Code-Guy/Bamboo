@@ -59,6 +59,10 @@ namespace Bamboo
 
 	void VmaBuffer::destroy()
 	{
+		if (data)
+		{
+			vmaUnmapMemory(VulkanRHI::get().getAllocator(), allocation);
+		}
 		if (buffer != VK_NULL_HANDLE)
 		{
 			vmaDestroyBuffer(VulkanRHI::get().getAllocator(), buffer, allocation);
@@ -141,7 +145,7 @@ namespace Bamboo
 		vkFreeCommandBuffers(VulkanRHI::get().getDevice(), VulkanRHI::get().getInstantCommandPool(), 1, &command_buffer);
 	}
 
-	void VulkanUtil::createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer)
+	void VulkanUtil::createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer, bool persistent_mapping)
 	{
 		VkBufferCreateInfo buffer_ci{};
 		buffer_ci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -159,6 +163,11 @@ namespace Bamboo
 		
 		buffer.size = size;
 		vmaCreateBuffer(VulkanRHI::get().getAllocator(), &buffer_ci, &vma_alloc_ci, &buffer.buffer, &buffer.allocation, nullptr);
+
+		if (persistent_mapping)
+		{
+			vmaMapMemory(VulkanRHI::get().getAllocator(), buffer.allocation, &buffer.data);
+		}
 	}
 
 	void VulkanUtil::copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
@@ -174,10 +183,24 @@ namespace Bamboo
 
 	void VulkanUtil::updateBuffer(VmaBuffer& buffer, void* data, size_t size)
 	{
-		void* mapped_data;
-		vmaMapMemory(VulkanRHI::get().getAllocator(), buffer.allocation, &mapped_data);
-		memcpy(mapped_data, data, size);
-		vmaUnmapMemory(VulkanRHI::get().getAllocator(), buffer.allocation);
+		if (buffer.data)
+		{
+			memcpy(buffer.data, data, size);
+		}
+		else
+		{
+			void* mapped_data;
+			vmaMapMemory(VulkanRHI::get().getAllocator(), buffer.allocation, &mapped_data);
+			memcpy(mapped_data, data, size);
+			vmaUnmapMemory(VulkanRHI::get().getAllocator(), buffer.allocation);
+		}
+	}
+
+	VmaBuffer VulkanUtil::updateBuffer(std::vector<VmaBuffer>& buffers, void* data, size_t size)
+	{
+		VmaBuffer& buffer = buffers[VulkanRHI::get().getFlightIndex()];
+		updateBuffer(buffer, data, size);
+		return buffer;
 	}
 
 	VmaImageViewSampler VulkanUtil::loadImageViewSampler(const std::string& filename,

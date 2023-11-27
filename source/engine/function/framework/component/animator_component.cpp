@@ -21,7 +21,7 @@ namespace Bamboo
 		m_bone_ubs.resize(MAX_FRAMES_IN_FLIGHT);
 		for (VmaBuffer& bone_ub : m_bone_ubs)
 		{
-			VulkanUtil::createBuffer(sizeof(BoneUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, bone_ub);
+			VulkanUtil::createBuffer(sizeof(BoneUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, bone_ub, true);
 		}
 	}
 
@@ -130,12 +130,6 @@ namespace Bamboo
 		{
 			m_bone_ubo.bone_matrices[i] = m_skeleton_inst.m_bones[i].matrix();
 		}
-
-		// update uniform buffers
- 		for (VmaBuffer& bone_ub : m_bone_ubs)
- 		{
- 			VulkanUtil::updateBuffer(bone_ub, (void*)&m_bone_ubo, sizeof(BoneUBO));
- 		}
 	}
 
 	void AnimatorComponent::play(bool loop)
@@ -143,6 +137,11 @@ namespace Bamboo
 		m_loop = loop;
 		m_playing = true;
 		m_time = 0.0f;
+	}
+
+	VmaBuffer AnimatorComponent::updateUniformBuffer()
+	{
+		return VulkanUtil::updateBuffer(m_bone_ubs, (void*)&m_bone_ubo, sizeof(BoneUBO));
 	}
 
 	void AnimatorComponent::bindRefs()

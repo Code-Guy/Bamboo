@@ -30,14 +30,6 @@ namespace Bamboo
 		createSynchronizationPrimitives();
 	}
 
-	void VulkanRHI::render()
-	{
-		waitFrame();
-		recordFrame();
-		submitFrame();
-		presentFrame();
-	}
-
 	void VulkanRHI::destroy()
 	{
 		for (VkSemaphore image_avaliable_semaphore : m_image_avaliable_semaphores)
@@ -130,14 +122,16 @@ namespace Bamboo
 		ASSERT(gpu_count > 0, "failed to find a vulkan compatiable physical device");
 
 		std::vector<VkPhysicalDevice> physical_devices(gpu_count);
+		std::vector<VkPhysicalDeviceProperties> physical_device_propertiess(gpu_count);
 		vkEnumeratePhysicalDevices(m_instance, &gpu_count, physical_devices.data());
 
-		std::vector<VkPhysicalDevice> discrete_physical_devices;
-		std::vector<VkPhysicalDeviceProperties> discrete_physical_device_propertiess;
+		// set the selected device index
+		uint32_t selected_device_index = 0;
 		for (uint32_t i = 0; i < gpu_count; ++i)
 		{
 			VkPhysicalDeviceProperties physical_device_properties;
 			vkGetPhysicalDeviceProperties(physical_devices[i], &physical_device_properties);
+			physical_device_propertiess[i] = physical_device_properties;
 			LOG_INFO("device {}: {} {} {}.{}.{}", 
 				i, physical_device_properties.deviceName, 
 				vkPhysicalDeviceTypeString(physical_device_properties.deviceType),
@@ -146,21 +140,14 @@ namespace Bamboo
 				physical_device_properties.apiVersion & 0xfff);
 
 			// only use discrete gpu, for best performance
-			if (physical_device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			if (physical_device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && selected_device_index == 0)
 			{
-				discrete_physical_devices.push_back(physical_devices[i]);
-				discrete_physical_device_propertiess.push_back(physical_device_properties);
+				selected_device_index = i;
 			}
 		}
 
-		// set the selected device index
-		uint32_t selected_device_index = 0;
-		if (selected_device_index >= discrete_physical_devices.size())
-		{
-			LOG_FATAL("selected device index {} is out of range {}", selected_device_index, discrete_physical_devices.size());
-		}
-		m_physical_device = discrete_physical_devices[selected_device_index];
-		m_physical_device_properties = discrete_physical_device_propertiess[selected_device_index];
+		m_physical_device = physical_devices[selected_device_index];
+		m_physical_device_properties = physical_device_propertiess[selected_device_index];
 		LOG_INFO("select device {}", selected_device_index);
 	}
 
@@ -343,6 +330,7 @@ namespace Bamboo
 	void VulkanRHI::createSynchronizationPrimitives()
 	{
 		m_flight_index = 0;
+		m_frame_index = 0;
 
 		// semaphore: GPU-GPU
 		m_image_avaliable_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -434,6 +422,7 @@ namespace Bamboo
 			CHECK_VULKAN_RESULT(result, "present swapchain image");
 		}
 
+		++m_frame_index;
 		m_flight_index = (m_flight_index + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 

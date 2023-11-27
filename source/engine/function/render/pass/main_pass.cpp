@@ -42,7 +42,6 @@ namespace Bamboo
 		render_pass_bi.pClearValues = clear_values.data();
 
 		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
-		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
 		vkCmdBeginRenderPass(command_buffer, &render_pass_bi, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkViewport viewport{};
@@ -76,7 +75,7 @@ namespace Bamboo
 			std::array<VkDescriptorBufferInfo, 1> desc_buffer_infos{};
 
 			// lighting uniform buffer
-			addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ubs[flight_index], 11);
+			addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], m_lighting_render_data->lighting_ub, 11);
 
 			// input attachments and ibl textures
 			std::vector<VmaImageViewSampler> textures = {
@@ -226,72 +225,71 @@ namespace Bamboo
 		subpass_descs[2].pDepthStencilAttachment = &references[5];
 
 		// subpass dependencies
-		std::array<VkSubpassDependency, 8> dependencies{};
-
-		// transitions the gbuffer input attachment from color attachment to shader read
-		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass = 1;
-		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[0].dependencyFlags = 0;
-
-		dependencies[1].srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[1].dstSubpass = 1;
-		dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[1].dependencyFlags = 0;
-
-		dependencies[2].srcSubpass = 1;
-		dependencies[2].dstSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[2].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[2].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[2].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[2].dependencyFlags = 0;
-
-		dependencies[3].srcSubpass = 1;
-		dependencies[3].dstSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[3].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[3].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependencies[3].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[3].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		dependencies[3].dependencyFlags = 0;
-
-		dependencies[4].srcSubpass = 0;
-		dependencies[4].dstSubpass = 1;
-		dependencies[4].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[4].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[4].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[4].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[4].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		dependencies[5].srcSubpass = 0;
-		dependencies[5].dstSubpass = 1;
-		dependencies[5].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		dependencies[5].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[5].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		dependencies[5].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[5].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		dependencies[6].srcSubpass = 1;
-		dependencies[6].dstSubpass = 2;
-		dependencies[6].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[6].dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependencies[6].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[6].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		dependencies[6].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		dependencies[7].srcSubpass = 2;
-		dependencies[7].dstSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[7].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[7].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[7].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[7].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependencies[7].dependencyFlags = 0;
+		std::vector<VkSubpassDependency> dependencies = {
+			{
+				VK_SUBPASS_EXTERNAL,
+				1,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_DEPENDENCY_BY_REGION_BIT
+			},
+			{
+				VK_SUBPASS_EXTERNAL,
+				1,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				0
+			},
+			{
+				VK_SUBPASS_EXTERNAL,
+				1,
+				VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				0
+			},
+			{
+				0,
+				1,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+				VK_DEPENDENCY_BY_REGION_BIT
+			},
+			{
+				0,
+				1,
+				VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+				VK_DEPENDENCY_BY_REGION_BIT
+			},
+			{
+				1,
+				2,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+				VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+				VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				VK_DEPENDENCY_BY_REGION_BIT
+			},
+			{
+				2,
+				VK_SUBPASS_EXTERNAL,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				0
+			}
+		};
 
 		// create render pass
 		VkRenderPassCreateInfo render_pass_ci{};
@@ -715,7 +713,6 @@ namespace Bamboo
 	void MainPass::render_mesh(const std::shared_ptr<RenderData>& render_data, ERendererType renderer_type)
 	{
 		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
-		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
 
 		std::shared_ptr<SkeletalMeshRenderData> skeletal_mesh_render_data = nullptr;
 		std::shared_ptr<StaticMeshRenderData> static_mesh_render_data = std::static_pointer_cast<StaticMeshRenderData>(render_data);
@@ -755,14 +752,14 @@ namespace Bamboo
 			// bone matrix ubo
 			if (is_skeletal_mesh)
 			{
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ub, 0);
 			}
 
 			// forward rendering
 			if (renderer_type == ERendererType::Forward)
 			{
 				// lighting ubo
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_lighting_render_data->lighting_ubs[flight_index], 11);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_lighting_render_data->lighting_ub, 11);
 
 				// ibl textures
 				std::vector<VmaImageViewSampler> ibl_textures = {

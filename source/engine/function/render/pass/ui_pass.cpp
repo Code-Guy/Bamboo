@@ -119,7 +119,6 @@ namespace Bamboo
 	void UIPass::render()
 	{
 		VkCommandBuffer command_buffer = VulkanRHI::get().getCommandBuffer();
-		uint32_t flight_index = VulkanRHI::get().getFlightIndex();
 
 		// record render pass
 		VkRenderPassBeginInfo renderpass_bi{};
@@ -173,13 +172,18 @@ namespace Bamboo
 		subpass.colorAttachmentCount = 1;
 		subpass.pColorAttachments = &color_attachment;
 
-		VkSubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		std::vector<VkSubpassDependency> dependencies =
+		{
+			{
+				VK_SUBPASS_EXTERNAL,
+				0,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				0
+			}
+		};
 
 		VkRenderPassCreateInfo render_pass_ci{};
 		render_pass_ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -187,8 +191,8 @@ namespace Bamboo
 		render_pass_ci.pAttachments = &attachment;
 		render_pass_ci.subpassCount = 1;
 		render_pass_ci.pSubpasses = &subpass;
-		render_pass_ci.dependencyCount = 1;
-		render_pass_ci.pDependencies = &dependency;
+		render_pass_ci.dependencyCount = static_cast<uint32_t>(dependencies.size());
+		render_pass_ci.pDependencies = dependencies.data();
 		VkResult result = vkCreateRenderPass(VulkanRHI::get().getDevice(), &render_pass_ci, nullptr, &m_render_pass);
 		CHECK_VULKAN_RESULT(result, "create imgui render pass");
 	}

@@ -96,14 +96,18 @@ namespace Bamboo
 		subpass_desc.pColorAttachments = &color_reference;
 
 		// subpass dependencies
-		std::array<VkSubpassDependency, 1> dependencies{};
-		dependencies[0].srcSubpass = 0;
-		dependencies[0].dstSubpass = VK_SUBPASS_EXTERNAL;
-		dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dependencies[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		dependencies[0].dependencyFlags = 0;
+		std::vector<VkSubpassDependency> dependencies =
+		{
+			{
+				0,
+				VK_SUBPASS_EXTERNAL,
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				0
+			}
+		};
 
 		// create render pass
 		VkRenderPassCreateInfo render_pass_ci{};

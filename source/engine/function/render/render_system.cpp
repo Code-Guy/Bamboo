@@ -78,7 +78,7 @@ namespace Bamboo
 		m_lighting_ubs.resize(MAX_FRAMES_IN_FLIGHT);
 		for (VmaBuffer& uniform_buffer : m_lighting_ubs)
 		{
-			VulkanUtil::createBuffer(sizeof(LightingUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer);
+			VulkanUtil::createBuffer(sizeof(LightingUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer, true);
 		}
 		m_lighting_icons = {
 			{ ELightType::DirectionalLight, VulkanUtil::loadImageViewSampler("asset/engine/texture/gizmo/directional_light.png") },
@@ -90,11 +90,20 @@ namespace Bamboo
 
 	void RenderSystem::tick(float delta_time)
 	{
-		// collect render data from entities of current world
+		// wait command buffer submitted
+		VulkanRHI::get().waitFrame();
+
+		// collect render data
 		collectRenderDatas();
 
-		// vulkan rendering
-		VulkanRHI::get().render();
+		// record command buffer
+		VulkanRHI::get().recordFrame();
+
+		// submit command buffer
+		VulkanRHI::get().submitFrame();
+
+		// present swapchain image
+		VulkanRHI::get().presentFrame();
 	}
 
 	void RenderSystem::destroy()
@@ -289,7 +298,7 @@ namespace Bamboo
 					if (is_skeletal_mesh)
 					{
 						auto animator_component = entity->getComponent(AnimatorComponent);
-						skeletal_mesh_render_data->bone_ubs = animator_component->m_bone_ubs;
+						skeletal_mesh_render_data->bone_ub = animator_component->updateUniformBuffer();
 					}
 
 					// update push constants
@@ -511,9 +520,7 @@ namespace Bamboo
 		}
 
 		// update lighting uniform buffers
-		VmaBuffer uniform_buffer = m_lighting_ubs[VulkanRHI::get().getFlightIndex()];
-		VulkanUtil::updateBuffer(uniform_buffer, (void*)&lighting_ubo, sizeof(LightingUBO));
-		lighting_render_data->lighting_ubs = m_lighting_ubs;
+		lighting_render_data->lighting_ub = VulkanUtil::updateBuffer(m_lighting_ubs, (void*)&lighting_ubo, sizeof(LightingUBO));;
 
 		// pick pass
 		m_pick_pass->setRenderDatas(mesh_render_datas);

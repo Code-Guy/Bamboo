@@ -40,7 +40,6 @@ namespace Bamboo
 		render_pass_bi.framebuffer = m_framebuffer;
 
 		VkCommandBuffer command_buffer = VulkanUtil::beginInstantCommands();
-		uint32_t flight_index = 0;
 
 		VkViewport viewport{};
 		viewport.width = static_cast<float>(m_width);
@@ -99,7 +98,7 @@ namespace Bamboo
 					std::vector<VkWriteDescriptorSet> desc_writes;
 					std::array<VkDescriptorBufferInfo, 1> desc_buffer_infos{};
 
-					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ubs[flight_index], 0);
+					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ub, 0);
 
 					VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 						pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());

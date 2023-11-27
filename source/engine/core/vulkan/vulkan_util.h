@@ -27,6 +27,7 @@ namespace Bamboo
 		VkBuffer buffer = VK_NULL_HANDLE;
 		VmaAllocation allocation;
 		VkDeviceSize size;
+		void* data = nullptr;
 
 		void destroy();
 	};
@@ -71,9 +72,10 @@ namespace Bamboo
 		static VkCommandBuffer beginInstantCommands();
 		static void endInstantCommands(VkCommandBuffer command_buffer);
 
-		static void createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer);
+		static void createBuffer(VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaBuffer& buffer, bool persistent_mapping = false);
 		static void copyBuffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 		static void updateBuffer(VmaBuffer& buffer, void* data, size_t size);
+		static VmaBuffer updateBuffer(std::vector<VmaBuffer>& buffers, void* data, size_t size);
 
 		static VmaImageViewSampler loadImageViewSampler(const std::string& filename,
 			uint32_t mip_levels = 1, uint32_t layers = 1, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, 

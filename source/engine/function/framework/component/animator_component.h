@@ -17,8 +17,7 @@ namespace Bamboo
 		std::shared_ptr<Skeleton> getSkeleton() { return m_skeleton; }
 
 		void play(bool loop = true);
-
-		std::vector<VmaBuffer> m_bone_ubs;
+		VmaBuffer updateUniformBuffer();
 
 	protected:
 		virtual void inflate() override;
@@ -40,7 +39,9 @@ namespace Bamboo
 		Skeleton m_skeleton_inst;
 
 		std::shared_ptr<class AnimationComponent> m_animation_component;
+
 		BoneUBO m_bone_ubo;
+		std::vector<VmaBuffer> m_bone_ubs;
 
 		float m_time = 0.0f;
 		bool m_loop = true;

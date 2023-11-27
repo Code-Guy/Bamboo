@@ -29,7 +29,7 @@ namespace Bamboo
 
 		glm::mat4 camera_view_proj;
 
-		std::vector<VmaBuffer> lighting_ubs;
+		VmaBuffer lighting_ub;
 
 		VmaImageViewSampler irradiance_texture;
 		VmaImageViewSampler prefilter_texture;
@@ -61,7 +61,7 @@ namespace Bamboo
 	{
 		SkeletalMeshRenderData() { type = ERenderDataType::SkeletalMesh; }
 
-		std::vector<VmaBuffer> bone_ubs;
+		VmaBuffer bone_ub;
 	};
 
 	struct SkyboxRenderData : public RenderData

@@ -13,7 +13,10 @@ namespace Bamboo
 	{
 	public:
 		void init();
-		void render();
+		void waitFrame();
+		void recordFrame();
+		void submitFrame();
+		void presentFrame();
 		void destroy();
 
 		void waitDeviceIdle() { vkDeviceWaitIdle(m_device); }
@@ -76,11 +79,6 @@ namespace Bamboo
 		void createCommandBuffers();
 		void createSynchronizationPrimitives();
 
-		void waitFrame();
-		void recordFrame();
-		void submitFrame();
-		void presentFrame();
-
 		std::vector<const char*> getRequiredInstanceExtensions();
 		std::vector<const char*> getRequiredInstanceLayers();
 		std::vector<const char*> getRequiredDeviceExtensions();
@@ -141,9 +139,12 @@ namespace Bamboo
 		uint32_t m_swapchain_image_count;
 		std::vector<VkImageView> m_swapchain_image_views;
 
-		// synchronization primitives
+		// frame counters
 		uint32_t m_flight_index;
 		uint32_t m_image_index;
+		uint32_t m_frame_index;
+
+		// synchronization primitives
 		std::vector<VkSemaphore> m_image_avaliable_semaphores;
 		std::vector<VkSemaphore> m_render_finished_semaphores;
 		std::vector<VkFence> m_flight_fences;
