@@ -17,6 +17,7 @@
 #include "engine/function/framework/component/directional_light_component.h"
 #include "engine/function/framework/component/sky_light_component.h"
 #include "engine/function/framework/component/spot_light_component.h"
+#include "engine/function/framework/component/post_process_component.h"
 
 #include <GLFW/glfw3.h>
 #include <imgui/imgui_internal.h>
@@ -535,6 +536,11 @@ namespace Bamboo
 						{
 							m_created_entity->addComponent(std::make_shared<SpotLightComponent>());
 						}
+					}
+					else if (entity_category == "VFX")
+					{
+						m_created_entity = world->createEntity(entity_type);
+						m_created_entity->addComponent(std::make_shared<BloomFXComponent>());
 					}
 					else if (entity_category == "Primitives")
 					{

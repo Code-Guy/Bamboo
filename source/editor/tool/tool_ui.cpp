@@ -13,15 +13,23 @@ namespace Bamboo
 		entity_categories = {
 			std::string(ICON_FA_CUBE) + " Entities",
 			std::string(ICON_FA_LIGHTBULB) + " Lights",
+			std::string(ICON_FA_PAINT_BRUSH) + " VFX",
 			std::string(ICON_FA_SHAPES) + " Primitives"
 		};
 
 		entity_typess = {
-			{ std::string(ICON_FA_ASTERISK) + " Empty Entity" },
-			{ std::string(ICON_FA_SUN) + " Directional Light",
-			  std::string(ICON_FA_CLOUD_MEATBALL) + " Sky Light",
-			  std::string(ICON_FA_LIGHTBULB) + " Point Light",
-			  std::string(ICON_FA_FLASH_LIGHT) + " Spot Light"},
+			{
+				std::string(ICON_FA_ASTERISK) + " Empty Entity"
+			},
+			{
+				std::string(ICON_FA_SUN) + " Directional Light",
+				std::string(ICON_FA_CLOUD_MEATBALL) + " Sky Light",
+				std::string(ICON_FA_LIGHTBULB) + " Point Light",
+				std::string(ICON_FA_FLASH_LIGHT) + " Spot Light"
+			},
+			{
+				std::string(ICON_FA_RAINBOW) + " Postprocess"
+			},
 			{
 				std::string(ICON_FA_STAR) + " Cube",
 				std::string(ICON_FA_STAR) + " Sphere",

@@ -346,7 +346,7 @@ vec4 calc_pbr(MaterialInfo mat_info)
 	color = color * mat_info.occlusion + mat_info.emissive_color.xyz;
 
 	// tonemapping
-	color = tonemap(color, lighting_ubo.exposure);
+	// color = tonemap(color, lighting_ubo.exposure);
 
 	// get alpha from base_color's alpha
 	return vec4(color, mat_info.base_color.a);

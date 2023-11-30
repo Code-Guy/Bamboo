@@ -90,6 +90,17 @@ namespace Bamboo
 
 		const VmaImageViewSampler* p_color_texture;
 		const VmaImageViewSampler* outline_texture;
+
+		struct  
+		{
+			float exposure;
+		} lens_data;
+
+		struct  
+		{
+			float intensity;
+			float threshold;
+		} bloom_fx_data;
 	};
 
 	struct ShadowCascadeCreateInfo

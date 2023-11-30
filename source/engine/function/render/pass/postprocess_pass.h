@@ -28,5 +28,13 @@ namespace Bamboo
 		VkFormat m_format;
 		VmaImageViewSampler m_color_texture_sampler;
 		VmaImageViewSampler m_color_grading_texture_sampler;
+		VmaImageViewSampler m_color_outline_texture_sampler;
+
+		struct PostprocessData
+		{
+			float exposure;
+			float intensity;
+			float threshold;
+		};
 	};
 }

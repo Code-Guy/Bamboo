@@ -26,6 +26,7 @@
 #include "engine/function/framework/component/directional_light_component.h"
 #include "engine/function/framework/component/point_light_component.h"
 #include "engine/function/framework/component/spot_light_component.h"
+#include "engine/function/framework/component/post_process_component.h"
 
 #include <random>
 
@@ -216,6 +217,7 @@ namespace Bamboo
 			lighting_render_data->spot_light_shadow_textures[i] = default_texture_2d;
 		}
 		std::shared_ptr<SkyboxRenderData> skybox_render_data = nullptr;
+		std::shared_ptr<PostProcessRenderData> postprocess_render_data = std::make_shared<PostProcessRenderData>();
 
 		// shadow create infos
 		ShadowCascadeCreateInfo shadow_cascade_ci{};
@@ -448,6 +450,13 @@ namespace Bamboo
 				addBillboardRenderData(transform_component, camera_component, billboard_render_datas, 
 					selected_billboard_render_datas, billboard_entity_ids, ELightType::SpotLight);
 			}
+
+			auto bloom_fx_component = entity->getComponent(BloomFXComponent);
+			if (bloom_fx_component)
+			{
+				postprocess_render_data->bloom_fx_data.intensity = bloom_fx_component->m_intensity;
+				postprocess_render_data->bloom_fx_data.threshold = bloom_fx_component->m_threshold;
+			}
 		}
 
 		// directional light shadow pass: n mesh datas
@@ -539,7 +548,7 @@ namespace Bamboo
 		m_main_pass->setRenderDatas(mesh_render_datas);
 
 		// postprocess pass
-		std::shared_ptr<PostProcessRenderData> postprocess_render_data = std::make_shared<PostProcessRenderData>();
+		postprocess_render_data->lens_data.exposure = camera_component->m_exposure;
 		postprocess_render_data->p_color_texture = m_main_pass->getColorTexture();
 		postprocess_render_data->outline_texture = m_outline_pass->getColorTexture();
 		m_postprocess_pass->setRenderDatas({postprocess_render_data});
