@@ -199,7 +199,7 @@ namespace Bamboo
 
 	void UIPass::createDescriptorPool()
 	{
-		const uint32_t k_max_image_count = 128;
+		const uint32_t k_max_image_count = 512;
 		VkDescriptorPoolSize pool_sizes[] =
 		{
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, k_max_image_count }

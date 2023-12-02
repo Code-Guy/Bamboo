@@ -37,7 +37,6 @@ namespace Bamboo
 		std::shared_ptr<ImGuiImage> m_non_empty_folder_image;
 
 		// folder infos
-		uint32_t m_poll_folder_timer_handle;
 		std::string m_formatted_selected_folder;
 		std::string m_selected_file;
 		std::vector<std::string> m_selected_files;

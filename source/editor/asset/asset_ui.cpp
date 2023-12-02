@@ -13,7 +13,6 @@ namespace Bamboo
 
 		// set poll folder timer
 		const float k_poll_folder_time = 1.0f;
-		m_poll_folder_timer_handle = g_engine.timerManager()->addTimer(k_poll_folder_time, [this](){ pollFolders(); }, true, true);
 		openFolder(g_engine.fileSystem()->getAssetDir());
 
 		// load icon images
@@ -61,7 +60,7 @@ namespace Bamboo
 		ImGui::BeginChild("folder_tree");
 		if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 		{
-			if (is_folder_tree_hovered)
+			if (m_is_folder_tree_hovered)
 			{
 				ImGui::OpenPopup("folder_op_tree_hovered_popups");
 			}
@@ -120,15 +119,13 @@ namespace Bamboo
 		constructImportPopups();
 
 		// reset bool status
-		is_folder_tree_hovered = false;
+		m_is_folder_tree_hovered = false;
 		is_asset_hovered = false;
 	}
 
 	void AssetUI::destroy()
 	{
 		EditorUI::destroy();
-
-		g_engine.timerManager()->removeTimer(m_poll_folder_timer_handle);
 	}
 
 	void AssetUI::constructAssetNavigator()
@@ -157,9 +154,9 @@ namespace Bamboo
 
 		if (ImGui::BeginPopup("asset settings"))
 		{
-			if (ImGui::Checkbox("show engine assets", &show_engine_assets))
+			if (ImGui::Checkbox("show engine assets", &m_show_engine_assets))
 			{
-				pollFolders();
+
 			}
 			ImGui::EndPopup();
 		}
@@ -279,9 +276,9 @@ namespace Bamboo
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 20.0f);
 		float text_width = ImGui::CalcTextSize(basename.c_str()).x;
 
-		if (is_renaming && m_selected_file == filename)
+		if (m_is_renaming && m_selected_file == filename)
 		{
-			is_renaming = rename(filename, size);
+			m_is_renaming = rename(filename, size);
 		}
 		else if (text_width > size.x)
 		{
@@ -462,7 +459,7 @@ namespace Bamboo
 			if (ImGui::MenuItem("  New Folder"))
 			{
 				std::string new_folder = createFolder();
-				is_renaming = true;
+				m_is_renaming = true;
 				m_selected_file = new_folder;
 			}
 
@@ -474,7 +471,7 @@ namespace Bamboo
 				}
 				if (ImGui::MenuItem("  Rename"))
 				{
-					is_renaming = true;
+					m_is_renaming = true;
 				}
 			}
 
@@ -525,11 +522,14 @@ namespace Bamboo
 
 	void AssetUI::openFolder(std::string folder)
 	{
-		if (!g_engine.fileSystem()->exists(m_selected_folder))
+		// deal with the selected folder deletion and show engine asset option switch
+		if (!g_engine.fileSystem()->exists(m_selected_folder) &&
+			!m_show_engine_assets && isEngineFolder(folder))
 		{
 			folder = g_engine.fileSystem()->getAssetDir();
 		}
 
+		// generate formatted selected folder string
 		if (!folder.empty() && m_selected_folder != folder)
 		{
 			m_selected_folder = folder;
@@ -538,18 +538,10 @@ namespace Bamboo
 			StringUtil::replace_all(m_formatted_selected_folder, "/", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
 		}
 
+		// update selected folder's children states
 		if (!m_selected_folder.empty())
 		{
-			m_selected_files.clear();
-			const auto& iter = std::find_if(m_folder_nodes.begin(), m_folder_nodes.end(), 
-				[this](const FolderNode& folder_node) {
-					return folder_node.dir == m_selected_folder;
-				});
-			for (uint32_t child_folder : iter->child_folders)
-			{
-				m_selected_files.push_back(m_folder_nodes[child_folder].dir);
-			}
-			m_selected_files.insert(m_selected_files.end(), iter->child_files.begin(), iter->child_files.end());
+			m_selected_files = FileWatcher::get().getFolderFiles(m_selected_folder);
 			for (const std::string& selected_file : m_selected_files)
 			{
 				if (m_selected_file_hover_states.find(selected_file) == m_selected_file_hover_states.end())
