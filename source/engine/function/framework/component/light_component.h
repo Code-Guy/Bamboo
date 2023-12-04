@@ -5,6 +5,11 @@
 
 namespace Bamboo
 {
+	enum class ELightType
+	{
+		DirectionalLight, SkyLight, PointLight, SpotLight
+	};
+
 	class LightComponent : public Component
 	{
 	public:

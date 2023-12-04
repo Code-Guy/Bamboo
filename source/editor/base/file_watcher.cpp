@@ -16,12 +16,12 @@ namespace Bamboo
 		// initialize file watcher
 		const auto& fs = g_engine.fileSystem();
 		std::string asset_dir = fs->getAssetDir();
-		m_file_watcher = new filewatch::FileWatch<std::string>(
+		m_file_watcher = std::make_unique<filewatch::FileWatch<std::string>>(
 			asset_dir,
 			[this, asset_dir](const std::string& path, const filewatch::Event event)
 			{
 				std::string ppath = std::filesystem::path(asset_dir).append(path).generic_string();
-				bool is_dir = std::filesystem::is_directory(ppath);
+				bool is_dir = !std::filesystem::path(ppath).has_extension();
 				if (!is_dir && !isValidAssetFile(ppath))
 				{
 					return;
@@ -36,7 +36,7 @@ namespace Bamboo
 
 				FileChange file_change;
 				file_change.path = ppath;
-				file_change.type = (int)event > (int)(filewatch::Event::removed) ? (EFileChangeType)event : EFileChangeType::Renamed;
+				file_change.type = (int)event > (int)(filewatch::Event::modified) ? EFileChangeType::Renamed : (EFileChangeType)event;
 				file_change.is_dir = is_dir;
 				if (event == filewatch::Event::renamed_new)
 				{
@@ -84,7 +84,13 @@ namespace Bamboo
 
 	void FileWatcher::tick()
 	{
-		return;
+		static std::map<EFileChangeType, std::string> file_change_type_name_map = {
+			{ EFileChangeType::Added, "added" },
+			{ EFileChangeType::Removed, "removed" },
+			{ EFileChangeType::Modified, "modified" },
+			{ EFileChangeType::Renamed, "rename" }
+		};
+
 		while (!m_file_change_queue.empty())
 		{
 			FileChange file_change = m_file_change_queue.pop();
@@ -104,6 +110,7 @@ namespace Bamboo
 					std::string parent_path = g_engine.fileSystem()->dir(path);
 					std::shared_ptr<FolderNode>& parent_folder = m_folder_node_map[parent_path];
 					folder_node->parent_folder = parent_folder;
+					parent_folder->child_folders.insert(folder_node);
 
 					m_folder_node_map[path] = folder_node;
 				}
@@ -163,20 +170,24 @@ namespace Bamboo
 				}
 			}
 
-			LOG_WARNING("file_change: path {}, change_type {}{}", path, type,
-				type != EFileChangeType::Renamed ? "" : (" , old_path " + old_path));
+			if (!(file_change.is_dir && type == EFileChangeType::Modified))
+			{
+				LOG_INFO("path {} {}{}", path, file_change_type_name_map[type],
+					type != EFileChangeType::Renamed ? "" : (" , old_path: " + old_path));
+			}
 		}
 	}
 
 	void FileWatcher::destroy()
 	{
-		//delete m_file_watcher;
+		m_file_watcher.reset();
 		removeFolderNode(m_root_folder_node);
+		m_root_folder_node.reset();
 	}
 
-	std::vector<std::string> FileWatcher::getFolderFiles(const std::string& folder)
+	void FileWatcher::getFolderFiles(const std::string& folder, std::vector<std::string>& folder_files)
 	{
-		std::vector<std::string> files;
+		folder_files.clear();
 		if (m_folder_node_map.find(folder) != m_folder_node_map.end())
 		{
 			std::shared_ptr<FolderNode>& folder_node = m_folder_node_map[folder];
@@ -184,34 +195,30 @@ namespace Bamboo
 			// add child folders
 			for (const auto& child_folder : folder_node->child_folders)
 			{
-				files.push_back(child_folder->dir);
+				folder_files.push_back(child_folder->dir);
 			}
 
 			// add child files
 			for (const auto& child_file : folder_node->child_files)
 			{
-				files.push_back(child_file);
+				folder_files.push_back(child_file);
 			}
 		}
-
-		return files;
 	}
 
-	std::vector<std::string> FileWatcher::getAllFiles()
+	void FileWatcher::getAllFiles(std::vector<std::string>& all_files)
 	{
-		std::vector<std::string> files;
+		all_files.clear();
 		for (const auto& iter : m_folder_node_map)
 		{
 			for (const auto& child_file : iter.second->child_files)
 			{
-				files.push_back(child_file);
+				all_files.push_back(child_file);
 			}
 		}
-
-		return files;
 	}
 
-	void FileWatcher::removeFolderNode(std::shared_ptr<FolderNode>& folder_node)
+	void FileWatcher::removeFolderNode(std::shared_ptr<FolderNode> folder_node)
 	{
 		m_folder_node_map.erase(folder_node->dir);
 		if (folder_node->parent_folder.lock())

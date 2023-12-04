@@ -164,6 +164,16 @@ namespace Bamboo
 
 	void AssetUI::constructFolderFiles()
 	{
+		// update selected folder's children states
+		FileWatcher::get().getFolderFiles(m_selected_folder, m_selected_files);
+		for (const std::string& selected_file : m_selected_files)
+		{
+			if (m_selected_file_hover_states.find(selected_file) == m_selected_file_hover_states.end())
+			{
+				m_selected_file_hover_states[selected_file] = { false };
+			}
+		}
+
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
 
 		ImVec2 icon_size(80, 80);
@@ -536,19 +546,6 @@ namespace Bamboo
 
 			m_formatted_selected_folder = g_engine.fileSystem()->relative(m_selected_folder);
 			StringUtil::replace_all(m_formatted_selected_folder, "/", std::string(" ") + ICON_FA_ANGLE_RIGHT + " ");
-		}
-
-		// update selected folder's children states
-		if (!m_selected_folder.empty())
-		{
-			m_selected_files = FileWatcher::get().getFolderFiles(m_selected_folder);
-			for (const std::string& selected_file : m_selected_files)
-			{
-				if (m_selected_file_hover_states.find(selected_file) == m_selected_file_hover_states.end())
-				{
-					m_selected_file_hover_states[selected_file] = { false };
-				}
-			}
 		}
 	}
 

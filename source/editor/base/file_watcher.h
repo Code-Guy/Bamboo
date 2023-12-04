@@ -61,17 +61,17 @@ namespace Bamboo
 		}
 
 		std::shared_ptr<FolderNode>& getRootFolderNode() { return m_root_folder_node; }
-		std::vector<std::string> getFolderFiles(const std::string& folder);
-		std::vector<std::string> getAllFiles();
+		void getFolderFiles(const std::string& folder, std::vector<std::string>& folder_files);
+		void getAllFiles(std::vector<std::string>& all_files);
 
 	private:
 		FileWatcher() = default;
 		~FileWatcher() = default;
 
-		void removeFolderNode(std::shared_ptr<FolderNode>& folder_node);
+		void removeFolderNode(std::shared_ptr<FolderNode> folder_node);
 		bool isValidAssetFile(const std::string& filename);
 
-		filewatch::FileWatch<std::string>* m_file_watcher = nullptr;
+		std::unique_ptr<filewatch::FileWatch<std::string>> m_file_watcher;
 		TSQueue<FileChange> m_file_change_queue;
 
 		std::shared_ptr<FolderNode> m_root_folder_node = nullptr;

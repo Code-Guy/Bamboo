@@ -29,6 +29,7 @@ namespace Bamboo
 		void constructCheckboxPopup(const std::string& popup_name, std::vector<std::pair<std::string, bool>>& values);
 		void constructOperationModeButtons();
 		void constructImGuizmo();
+		void constructCreateLightPopupModal(std::string& text);
 
 		void onKey(const std::shared_ptr<class Event>& event);
 		void onSelectEntity(const std::shared_ptr<class Event>& event);

@@ -11,6 +11,7 @@ namespace Bamboo
 	{
 		m_format = VulkanRHI::get().getDepthFormat();
 		m_size = 1024;
+		m_light_num = 0;
 	}
 
 	void SpotLightShadowPass::init()
@@ -18,11 +19,12 @@ namespace Bamboo
 		RenderPass::init();
 
 		createResizableObjects(m_size, m_size);
+		createDynamicBuffers(MAX_SPOT_LIGHT_NUM);
 	}
 
 	void SpotLightShadowPass::render()
 	{
-		for (size_t p = 0; p < m_framebuffers.size(); ++p)
+		for (size_t p = 0; p < m_light_num; ++p)
 		{
 			VkRenderPassBeginInfo render_pass_bi{};
 			render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -311,9 +313,8 @@ namespace Bamboo
 
 	void SpotLightShadowPass::updateFrustums(const std::vector<ShadowFrustumCreateInfo>& shadow_frustum_cis)
 	{
-		createDynamicBuffers(shadow_frustum_cis.size());
-
-		for (size_t p = 0; p < shadow_frustum_cis.size(); ++p)
+		m_light_num = shadow_frustum_cis.size();
+		for (size_t p = 0; p < m_light_num; ++p)
 		{
 			const ShadowFrustumCreateInfo& shadow_frustum_ci = shadow_frustum_cis[p];
 			glm::mat4 view = glm::lookAtRH(shadow_frustum_ci.light_pos, shadow_frustum_ci.light_pos + shadow_frustum_ci.light_dir, k_up_vector);

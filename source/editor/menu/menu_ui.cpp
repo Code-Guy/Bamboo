@@ -442,7 +442,8 @@ namespace Bamboo
 		m_showing_open_world_popup = true;
 		m_current_world_urls.clear();
 
-		std::vector<std::string> all_files = FileWatcher::get().getAllFiles();
+		std::vector<std::string> all_files;
+		FileWatcher::get().getAllFiles(all_files);
 		for (const auto& file : all_files)
 		{
 			if (g_engine.assetManager()->getAssetType(file) == EAssetType::World)

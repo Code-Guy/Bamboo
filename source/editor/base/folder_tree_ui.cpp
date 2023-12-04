@@ -85,14 +85,15 @@ namespace Bamboo
 
 	std::string IFolderTreeUI::createFolder()
 	{
-		LOG_INFO("create folder");
-		std::string new_folder_name = m_selected_folder + "/NewFolder";
+		std::string new_folder_prefix = m_selected_folder + "/new_folder";
+		std::string new_folder_name = new_folder_prefix;
 
 		int index = 1;
 		while (!g_engine.fileSystem()->createDir(new_folder_name))
 		{
-			new_folder_name = m_selected_folder + "/NewFolder_" + std::to_string(index++);
+			new_folder_name = new_folder_prefix + "_" + std::to_string(index++);
 		}
+		LOG_INFO("create folder: {}", new_folder_name);
 		return new_folder_name;
 	}
 

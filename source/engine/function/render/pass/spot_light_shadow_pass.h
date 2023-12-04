@@ -32,5 +32,6 @@ namespace Bamboo
 
 		std::vector<VmaImageViewSampler> m_shadow_image_view_samplers;
 		std::vector<VkFramebuffer> m_framebuffers;
+		uint32_t m_light_num;
 	};
 }
