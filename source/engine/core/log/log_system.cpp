@@ -44,7 +44,7 @@ namespace Bamboo
         
         m_logger = std::make_shared<spdlog::async_logger>("multi_sink_logger",
             sink_list.begin(), sink_list.end(), spdlog::thread_pool(),
-            spdlog::async_overflow_policy::block);
+            spdlog::async_overflow_policy::overrun_oldest);
         m_logger->set_level(spdlog::level::trace);
 
         spdlog::register_logger(m_logger);

@@ -7,6 +7,7 @@
 #include "editor/simulation/simulation_ui.h"
 #include "editor/asset/asset_ui.h"
 #include "editor/log/log_ui.h"
+#include "editor/base/file_watcher.h"
 
 #include "engine/engine.h"
 #include "engine/core/base/macro.h"
@@ -31,6 +32,9 @@ namespace Bamboo
         m_simulation_ui = std::make_shared<SimulationUI>();
         m_editor_uis = { menu_ui, tool_ui, world_ui, property_ui, asset_ui, m_simulation_ui, log_ui };
 
+        // init file watcher
+        FileWatcher::get().init();
+
         // init all editor uis
 		for (auto& editor_ui : m_editor_uis)
 		{
@@ -51,6 +55,7 @@ namespace Bamboo
 		{
 			editor_ui->destroy();
 		}
+        FileWatcher::get().destroy();
 
         // destroy engine
         m_engine->destroy();
@@ -65,7 +70,7 @@ namespace Bamboo
             float delta_time = m_engine->calcDeltaTime();
 
             // tick editor
-            // TODO
+            FileWatcher::get().tick();
 
             // tick engine
             if (!m_engine->tick(delta_time))

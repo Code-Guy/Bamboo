@@ -11,6 +11,7 @@ namespace Bamboo
 	{
 		m_formats = { VK_FORMAT_R32_SFLOAT, VulkanRHI::get().getDepthFormat() };
 		m_size = 1024;
+		m_light_num = 0;
 	}
 
 	void PointLightShadowPass::init()
@@ -18,11 +19,12 @@ namespace Bamboo
 		RenderPass::init();
 
 		createResizableObjects(m_size, m_size);
+		createDynamicBuffers(MAX_POINT_LIGHT_NUM);
 	}
 
 	void PointLightShadowPass::render()
 	{
-		for (size_t p = 0; p < m_framebuffers.size(); ++p)
+		for (size_t p = 0; p < m_light_num; ++p)
 		{
 			VkRenderPassBeginInfo render_pass_bi{};
 			render_pass_bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -362,9 +364,8 @@ namespace Bamboo
 
 	void PointLightShadowPass::updateCubes(const std::vector<ShadowCubeCreateInfo>& shadow_cube_cis)
 	{
-		createDynamicBuffers(shadow_cube_cis.size());
-
-		for (size_t p = 0; p < shadow_cube_cis.size(); ++p)
+		m_light_num = shadow_cube_cis.size();
+		for (size_t p = 0; p < m_light_num; ++p)
 		{
 			const ShadowCubeCreateInfo& shadow_cube_ci = shadow_cube_cis[p];
 			m_light_poss[p] = shadow_cube_ci.light_pos;

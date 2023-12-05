@@ -42,9 +42,9 @@ namespace Bamboo
 
 		std::string m_layout_path;
 
-		bool showing_new_world_popup = false;
-		bool showing_open_world_popup = false;
-		bool showing_save_as_world_popup = false;
+		bool m_showing_new_world_popup = false;
+		bool m_showing_open_world_popup = false;
+		bool m_showing_save_as_world_popup = false;
 
 		// new world
 		struct TemplateWorld

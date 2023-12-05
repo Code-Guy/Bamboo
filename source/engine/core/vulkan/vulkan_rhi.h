@@ -47,6 +47,9 @@ namespace Bamboo
 		}
 
 	private:
+		VulkanRHI() = default;
+		~VulkanRHI() = default;
+
 		struct QueueFamilyIndices
 		{
 			uint32_t graphics;

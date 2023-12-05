@@ -35,6 +35,7 @@ namespace Bamboo
 		std::vector<VkFramebuffer> m_framebuffers;
 		std::vector<std::vector<VmaBuffer>> m_shadow_cube_ubss;
 
+		uint32_t m_light_num;
 		std::vector<glm::vec3> m_light_poss;
 	};
 }

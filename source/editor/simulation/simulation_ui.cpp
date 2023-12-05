@@ -375,6 +375,28 @@ namespace Bamboo
 		}
 	}
 
+	void SimulationUI::constructCreateLightPopupModal(std::string& text)
+	{
+		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
+		if (ImGui::BeginPopupModal("create light", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::Text(text.c_str());
+			ImGui::Separator();
+
+			float current_width = ImGui::GetContentRegionAvail().x;
+			ImVec2 button_size{ current_width, 0.0f };
+			if (ImGui::Button("ok", button_size))
+			{
+				ImGui::CloseCurrentPopup();
+				text.clear();
+			}
+
+			ImGui::EndPopup();
+		}
+		ImGui::PopStyleVar();
+	}
+
 	void SimulationUI::onKey(const std::shared_ptr<class Event>& event)
 	{
 		const WindowKeyEvent* key_event = static_cast<const WindowKeyEvent*>(event.get());
@@ -479,8 +501,33 @@ namespace Bamboo
 		m_camera_component.lock()->setInput(m_mouse_right_button_pressed, isFocused());
 	}
 
+	ELightType getLightType(const std::string& entity_type)
+	{
+		if (entity_type.find("Directional") != std::string::npos)
+		{
+			return ELightType::DirectionalLight;
+		}
+		if (entity_type.find("Sky") != std::string::npos)
+		{
+			return ELightType::SkyLight;
+		}
+		if (entity_type.find("Point") != std::string::npos)
+		{
+			return ELightType::PointLight;
+		}
+		if (entity_type.find("Spot") != std::string::npos)
+		{
+			return ELightType::SpotLight;
+		}
+
+		LOG_FATAL("entity_type {} is not a valid light type", entity_type);
+		return ELightType::DirectionalLight;
+	}
+
+
 	void SimulationUI::handleDragDropTarget(const glm::vec2& mouse_pos, const glm::vec2& viewport_size)
 	{
+		static std::string warning_text;
 		if (ImGui::BeginDragDropTarget())
 		{
 			const ImGuiPayload* payload = nullptr;
@@ -512,29 +559,108 @@ namespace Bamboo
 					}
 					else if (entity_category == "Lights")
 					{
-						m_created_entity = world->createEntity(entity_type);
-						auto transform_component = m_created_entity->getComponent(TransformComponent);
+						ELightType light_type = getLightType(entity_type);
 
-						// add light component
-						if (entity_type.find("Directional") != std::string::npos)
+						// check if we should create the addition light
+						int directional_light_num = 0;
+						int sky_light_num = 0;
+						int point_light_num = 0;
+						int spot_light_num = 0;
+						for (const auto& iter : world->getEntities())
 						{
-							transform_component->setRotation(glm::vec3(0.0f, 135.0f, -35.2f));
-							m_created_entity->addComponent(std::make_shared<DirectionalLightComponent>());
+							const auto& entity = iter.second;
+							if (entity->getComponent(DirectionalLightComponent))
+							{
+								directional_light_num++;
+							}
+							else if (entity->getComponent(SkyLightComponent))
+							{
+								sky_light_num++;
+							}
+							else if (entity->getComponent(PointLightComponent))
+							{
+								point_light_num++;
+							}
+							else if (entity->getComponent(SpotLightComponent))
+							{
+								spot_light_num++;
+							}
 						}
-						else if (entity_type.find("Sky") != std::string::npos)
+
+						switch (light_type)
 						{
-							auto sky_light_component = std::make_shared<SkyLightComponent>();
-							auto sky_texture_cube = g_engine.assetManager()->loadAsset<TextureCube>("asset/engine/texture/ibl/texc_cloudy.texc");
-							sky_light_component->setTextureCube(sky_texture_cube);
-							m_created_entity->addComponent(sky_light_component);
+						case ELightType::DirectionalLight:
+						{
+							if (directional_light_num > 0)
+							{
+								warning_text = "There should be only one directional light at most";
+							}
 						}
-						else if (entity_type.find("Point") != std::string::npos)
+							break;
+						case ELightType::SkyLight:
 						{
-							m_created_entity->addComponent(std::make_shared<PointLightComponent>());
+							if (sky_light_num > 0)
+							{
+								warning_text = "There should be only one sky light at most";
+							}
 						}
-						else if (entity_type.find("Spot") != std::string::npos)
+							break;
+						case ELightType::PointLight:
 						{
-							m_created_entity->addComponent(std::make_shared<SpotLightComponent>());
+							if (point_light_num >= MAX_POINT_LIGHT_NUM)
+							{
+								warning_text = "There should be only " + std::to_string(MAX_POINT_LIGHT_NUM) + " point lights at most";
+							}
+						}
+							break;
+						case ELightType::SpotLight:
+						{
+							if (spot_light_num >= MAX_SPOT_LIGHT_NUM)
+							{
+								warning_text = "There should be only " + std::to_string(MAX_POINT_LIGHT_NUM) + " spot lights at most";
+							}
+						}
+							break;
+						default:
+							break;
+						}
+
+						// create light entity
+						if (warning_text.empty())
+						{
+							m_created_entity = world->createEntity(entity_type);
+							auto transform_component = m_created_entity->getComponent(TransformComponent);
+
+							// add light component
+							switch (light_type)
+							{
+							case ELightType::DirectionalLight:
+							{
+								transform_component->setRotation(glm::vec3(0.0f, 135.0f, -35.2f));
+								m_created_entity->addComponent(std::make_shared<DirectionalLightComponent>());
+							}
+							break;
+							case ELightType::SkyLight:
+							{
+								auto sky_light_component = std::make_shared<SkyLightComponent>();
+								auto sky_texture_cube = g_engine.assetManager()->loadAsset<TextureCube>("asset/engine/texture/ibl/texc_cloudy.texc");
+								sky_light_component->setTextureCube(sky_texture_cube);
+								m_created_entity->addComponent(sky_light_component);
+							}
+							break;
+							case ELightType::PointLight:
+							{
+								m_created_entity->addComponent(std::make_shared<PointLightComponent>());
+							}
+							break;
+							case ELightType::SpotLight:
+							{
+								m_created_entity->addComponent(std::make_shared<SpotLightComponent>());
+							}
+							break;
+							default:
+								break;
+							}
 						}
 					}
 					else if (entity_category == "VFX")
@@ -562,6 +688,12 @@ namespace Bamboo
 			}
 
 			ImGui::EndDragDropTarget();
+		}
+
+		constructCreateLightPopupModal(warning_text);
+		if (!warning_text.empty())
+		{
+			ImGui::OpenPopup("create light");
 		}
 	}
 

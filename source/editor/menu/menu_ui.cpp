@@ -69,7 +69,7 @@ namespace Bamboo
 		// construct popups
 		static char world_name[128];
 		const float k_spacing = 4;
-		if (showing_new_world_popup)
+		if (m_showing_new_world_popup)
 		{
 			ImGui::SetNextWindowSize(ImVec2(420, 500));
 			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -123,13 +123,13 @@ namespace Bamboo
 						clearEntitySelection();
 						g_engine.worldManager()->createWorld(template_url, save_as_url);
 
-						showing_new_world_popup = false;
+						m_showing_new_world_popup = false;
 					}
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("cancel", ImVec2(button_width, 0)))
 				{
-					showing_new_world_popup = false;
+					m_showing_new_world_popup = false;
 				}
 				ImGui::EndChild();
 
@@ -137,7 +137,7 @@ namespace Bamboo
 			}
 		}
 
-		if (showing_open_world_popup)
+		if (m_showing_open_world_popup)
 		{
 			ImGui::SetNextWindowSize(ImVec2(300, 500));
 			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -173,20 +173,20 @@ namespace Bamboo
 				{
 					clearEntitySelection();
 					g_engine.worldManager()->openWorld(m_selected_world_url);
-					showing_open_world_popup = false;
+					m_showing_open_world_popup = false;
 				}
 
 				ImGui::SameLine();
 				if (ImGui::Button("cancel", ImVec2(button_width, 0)))
 				{
-					showing_open_world_popup = false;
+					m_showing_open_world_popup = false;
 				}
 
 				ImGui::EndPopup();
 			}
 		}
 
-		if (showing_save_as_world_popup)
+		if (m_showing_save_as_world_popup)
 		{
 			ImGui::SetNextWindowSize(ImVec2(300, 500));
 			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -227,14 +227,14 @@ namespace Bamboo
 						std::string url = m_selected_folder + "/" + world_name_str + ".world";
 						g_engine.worldManager()->saveAsWorld(url);
 
-						showing_save_as_world_popup = false;
+						m_showing_save_as_world_popup = false;
 					}
 				}
 
 				ImGui::SameLine();
 				if (ImGui::Button("cancel", ImVec2(button_width, 0)))
 				{
-					showing_save_as_world_popup = false;
+					m_showing_save_as_world_popup = false;
 				}
 				ImGui::EndChild();
 
@@ -429,8 +429,7 @@ namespace Bamboo
 			return;
 		}
 
-		showing_new_world_popup = true;
-		pollFolders();
+		m_showing_new_world_popup = true;
 	}
 
 	void MenuUI::openWorld()
@@ -440,22 +439,20 @@ namespace Bamboo
 			return;
 		}
 
-		showing_open_world_popup = true;
-		pollFolders();
-
+		m_showing_open_world_popup = true;
 		m_current_world_urls.clear();
-		for (const auto& folder_node : m_folder_nodes)
+
+		std::vector<std::string> all_files;
+		FileWatcher::get().getAllFiles(all_files);
+		for (const auto& file : all_files)
 		{
-			for (const auto& child_file : folder_node.child_files)
+			if (g_engine.assetManager()->getAssetType(file) == EAssetType::World)
 			{
-				if (g_engine.assetManager()->getAssetType(child_file) == EAssetType::World)
+				std::string world_name = g_engine.fileSystem()->basename(file);
+				std::string current_world_name = g_engine.worldManager()->getCurrentWorldName();
+				if (world_name != current_world_name)
 				{
-					std::string world_name = g_engine.fileSystem()->basename(child_file);
-					std::string current_world_name = g_engine.worldManager()->getCurrentWorldName();
-					if (world_name != current_world_name)
-					{
-						m_current_world_urls.push_back(g_engine.fileSystem()->relative(child_file));
-					}
+					m_current_world_urls.push_back(g_engine.fileSystem()->relative(file));
 				}
 			}
 		}
@@ -478,8 +475,7 @@ namespace Bamboo
 			return;
 		}
 
-		showing_save_as_world_popup = true;
-		pollFolders();
+		m_showing_save_as_world_popup = true;
 	}
 
 	void MenuUI::quit()

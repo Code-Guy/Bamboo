@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/function/render/pass/render_pass.h"
+#include "engine/function/framework/component/light_component.h"
 
 #include <map>
 #include <memory>
@@ -8,11 +9,6 @@
 
 namespace Bamboo
 {
-	enum class ELightType
-	{
-		DirectionalLight, SkyLight, PointLight, SpotLight
-	};
-
 	class RenderSystem
 	{
 	public:
