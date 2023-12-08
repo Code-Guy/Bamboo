@@ -65,7 +65,7 @@ namespace Bamboo
 				{ { VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(int) } });
 
 			// texture image samplers
-			addImageDescriptorSet(desc_writes, desc_image_infos[0], *postprocess_render_data->p_color_texture, 0);
+			addImageDescriptorSet(desc_writes, desc_image_infos[0], *postprocess_render_data->bloom_fx_data.bloom_color_texture, 0);
 			VmaImageViewSampler outline_texture = is_selecting ? *postprocess_render_data->outline_texture : *postprocess_render_data->p_color_texture;
 			addImageDescriptorSet(desc_writes, desc_image_infos[1], outline_texture, 1);
 			addImageDescriptorSet(desc_writes, desc_image_infos[2], m_color_grading_texture_sampler, 2);
@@ -291,7 +291,7 @@ namespace Bamboo
 
 		shader_stage_cis = {
 			shader_manager->getShaderStageCI("screen.vert", VK_SHADER_STAGE_VERTEX_BIT),
-			shader_manager->getShaderStageCI("bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+			shader_manager->getShaderStageCI("postprocess_combine.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
 		};
 		m_pipeline_ci.layout = m_pipeline_layouts[1];
 		m_pipeline_ci.stageCount = static_cast<uint32_t>(shader_stage_cis.size());

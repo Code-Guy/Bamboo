@@ -45,6 +45,7 @@ namespace Bamboo
 		std::shared_ptr<class PickPass> m_pick_pass;
 		std::shared_ptr<class OutlinePass> m_outline_pass;
 		std::shared_ptr<class MainPass> m_main_pass;
+		std::shared_ptr<class BloomPass> m_bloom_pass;
 		std::shared_ptr<class PostprocessPass> m_postprocess_pass;
 		std::shared_ptr<class UIPass> m_ui_pass;
 		std::vector<std::shared_ptr<RenderPass>> m_render_passes;

@@ -100,6 +100,7 @@ namespace Bamboo
 		{
 			float intensity;
 			float threshold;
+			const VmaImageViewSampler* bloom_color_texture;
 		} bloom_fx_data;
 	};
 

@@ -14,6 +14,7 @@
 #include "engine/function/render/pass/pick_pass.h"
 #include "engine/function/render/pass/outline_pass.h"
 #include "engine/function/render/pass/main_pass.h"
+#include "engine/function/render/pass/bloom_pass.h"
 #include "engine/function/render/pass/postprocess_pass.h"
 #include "engine/function/render/pass/ui_pass.h"
 
@@ -41,6 +42,7 @@ namespace Bamboo
 		m_pick_pass = std::make_shared<PickPass>();
 		m_outline_pass = std::make_shared<OutlinePass>();
 		m_main_pass = std::make_shared<MainPass>();
+		m_bloom_pass = std::make_shared<BloomPass>();
 		m_postprocess_pass = std::make_shared<class PostprocessPass>();
 		m_ui_pass = std::make_shared<UIPass>();
 
@@ -51,6 +53,7 @@ namespace Bamboo
 			m_pick_pass,
 			m_outline_pass,
 			m_main_pass,
+			m_bloom_pass,
 			m_postprocess_pass,
 			m_ui_pass
 		};
@@ -131,6 +134,7 @@ namespace Bamboo
 		m_pick_pass->onResize(width, height);
 		m_outline_pass->onResize(width, height);
 		m_main_pass->onResize(width, height);
+		m_bloom_pass->onResize(width, height);
 		m_postprocess_pass->onResize(width, height);
 	}
 
@@ -551,6 +555,8 @@ namespace Bamboo
 		postprocess_render_data->lens_data.exposure = camera_component->m_exposure;
 		postprocess_render_data->p_color_texture = m_main_pass->getColorTexture();
 		postprocess_render_data->outline_texture = m_outline_pass->getColorTexture();
+		postprocess_render_data->bloom_fx_data.bloom_color_texture = m_bloom_pass->getBloomFxTexture();
+		m_bloom_pass->setRenderDatas({ postprocess_render_data });
 		m_postprocess_pass->setRenderDatas({postprocess_render_data});
 	}
 
