@@ -6,7 +6,7 @@ namespace Bamboo
 {
 	BloomPass::BloomPass()
 	{
-		m_format = VK_FORMAT_R8G8B8A8_UNORM;
+		m_format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	}
 
 	void BloomPass::init()
