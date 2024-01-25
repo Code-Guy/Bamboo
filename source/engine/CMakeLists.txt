@@ -23,6 +23,7 @@ target_include_directories(${TARGET_NAME} PUBLIC ${BAMBOO_ROOT_DIR}/external)
 target_include_directories(${TARGET_NAME} PUBLIC ${BAMBOO_ROOT_DIR}/shader/include)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE VULKAN_SHADER_COMPILER=\"${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}\")
+target_compile_definitions(${TARGET_NAME} PRIVATE VMA_VULKAN_VERSION=1003000)
 
 set(INSTALL_BIN "bin/$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>")
 

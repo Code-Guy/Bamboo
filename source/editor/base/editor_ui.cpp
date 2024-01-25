@@ -134,6 +134,18 @@ namespace Bamboo
 		return m_imgui_images.find(url) != m_imgui_images.end();
 	}
 
+	float EditorUI::sScalar(float v)
+	{
+		float dpi_scale = g_engine.windowSystem()->getMonitorDPIScale();
+		return v * dpi_scale;
+	}
+
+	ImVec2 EditorUI::sImVec2(float x, float y)
+	{
+		float dpi_scale = g_engine.windowSystem()->getMonitorDPIScale();
+		return ImVec2(x * dpi_scale, y * dpi_scale);
+	}
+
 	bool EditorUI::isMouseFocused()
 	{
 		int xpos, ypos;

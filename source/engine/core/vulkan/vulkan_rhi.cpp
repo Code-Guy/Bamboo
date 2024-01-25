@@ -67,7 +67,7 @@ namespace Bamboo
 		app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		app_info.pApplicationName = APP_NAME;
 		app_info.pEngineName = APP_NAME;
-		app_info.apiVersion = VK_API_VERSION_1_3;
+		app_info.apiVersion = getVKAPIVersion();
 		app_info.applicationVersion = VK_MAKE_API_VERSION(0, APP_MAJOR_VERSION, APP_MINOR_VERSION, APP_PATCH_VERSION);
 		app_info.engineVersion = app_info.applicationVersion;
 
@@ -195,7 +195,7 @@ namespace Bamboo
 	void VulkanRHI::createVmaAllocator()
 	{
 		VmaAllocatorCreateInfo vma_alloc_ci{};
-		vma_alloc_ci.vulkanApiVersion = VK_API_VERSION_1_3;
+		vma_alloc_ci.vulkanApiVersion = getVKAPIVersion();
 		vma_alloc_ci.instance = m_instance;
 		vma_alloc_ci.physicalDevice = m_physical_device;
 		vma_alloc_ci.device = m_device;
@@ -352,6 +352,23 @@ namespace Bamboo
 			vkCreateSemaphore(m_device, &semaphore_ci, nullptr, &m_render_finished_semaphores[i]);
 			vkCreateFence(m_device, &fence_ci, nullptr, &m_flight_fences[i]);
 		}
+	}
+
+	uint32_t VulkanRHI::getVKAPIVersion()
+	{
+		if (VMA_VULKAN_VERSION == 1003000)
+		{
+			return VK_API_VERSION_1_3;
+		}
+		if (VMA_VULKAN_VERSION == 1002000)
+		{
+			return VK_API_VERSION_1_2;
+		}
+		if (VMA_VULKAN_VERSION == 1001000)
+		{
+			return VK_API_VERSION_1_1;
+		}
+		return VK_API_VERSION_1_0;
 	}
 
 	void VulkanRHI::waitFrame()

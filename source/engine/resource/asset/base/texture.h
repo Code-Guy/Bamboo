@@ -2,7 +2,7 @@
 
 #include "engine/core/vulkan/vulkan_util.h"
 #include <cereal/access.hpp>
-
+#include <cereal/cereal.hpp>
 enum class ETextureType
 {
 	BaseColor, MetallicRoughnessOcclusion, Normal, Emissive, Cube, UI, Data

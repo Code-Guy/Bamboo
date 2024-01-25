@@ -22,7 +22,7 @@ namespace Bamboo
 		bool isRoot() { return m_parent.expired(); }
 		bool isLeaf() { return m_children.empty(); }
 
-		void attach(std::weak_ptr<Entity>& parent);
+		void attach(const std::weak_ptr<Entity>& parent);
 		void detach();
 
 		uint32_t getID() { return m_id; }

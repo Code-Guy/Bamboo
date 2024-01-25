@@ -65,7 +65,7 @@ namespace Bamboo
 		}
 	}
 
-	void Entity::attach(std::weak_ptr<Entity>& parent)
+	void Entity::attach(const std::weak_ptr<Entity>& parent)
 	{
 		m_parent = parent;
 		m_parent.lock()->m_children.push_back(weak_from_this());
@@ -132,7 +132,7 @@ namespace Bamboo
 			bool is_chain_dirty = std::get<1>(tuple);
 			const glm::mat4& parent_global_matrix = std::get<2>(tuple);
 
-			auto& transform_component = entity->getComponent(TransformComponent);
+			auto transform_component = entity->getComponent(TransformComponent);
 			is_chain_dirty = transform_component->update(is_chain_dirty, parent_global_matrix);
 
 			for (auto& child : entity->m_children)

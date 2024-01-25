@@ -21,10 +21,17 @@ namespace Bamboo
 		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 		const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
+		// get monitor dpi scale
+		float x_scale, y_scale;
+		glfwGetMonitorContentScale(monitor, &x_scale, &y_scale);
+		m_monitor_content_scale = std::max(x_scale, y_scale);
+
 		// create glfw window
 		bool is_packaged_fullscreen = m_fullscreen && g_engine.isApplication();
-		int width = is_packaged_fullscreen ? mode->width : g_engine.configManager()->getWindowWidth();
-		int height = is_packaged_fullscreen ? mode->height: g_engine.configManager()->getWindowHeight();
+		int dpi_scaled_width = g_engine.configManager()->getWindowWidth() * m_monitor_content_scale;
+		int dpi_scaled_height = g_engine.configManager()->getWindowHeight() * m_monitor_content_scale;
+		int width = is_packaged_fullscreen ? mode->width : dpi_scaled_width;
+		int height = is_packaged_fullscreen ? mode->height: dpi_scaled_height;
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		m_window = glfwCreateWindow(width, height, APP_NAME, nullptr, nullptr);
 		if (!m_window)
@@ -37,8 +44,8 @@ namespace Bamboo
 		// set fullscreen if needed
 		if (is_packaged_fullscreen)
 		{
-			m_windowed_width = g_engine.configManager()->getWindowWidth();
-			m_windowed_height = g_engine.configManager()->getWindowHeight();
+			m_windowed_width = dpi_scaled_width;
+			m_windowed_height = dpi_scaled_height;
 			m_windowed_pos_x = (mode->width - m_windowed_width) * 0.5f;
 			m_windowed_pos_y = (mode->height - m_windowed_height) * 0.5f;
 			glfwSetWindowMonitor(m_window, monitor, 0, 0, mode->width, mode->height, GLFW_DONT_CARE);
@@ -91,6 +98,11 @@ namespace Bamboo
 	void WindowSystem::getWindowSize(int& width, int& height)
 	{
 		glfwGetWindowSize(m_window, &width, &height);
+	}
+
+	float WindowSystem::getMonitorDPIScale()
+	{
+		return m_monitor_content_scale;
 	}
 
 	void WindowSystem::getScreenSize(int& width, int& height)

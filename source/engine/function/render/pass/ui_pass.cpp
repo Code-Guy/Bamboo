@@ -36,6 +36,10 @@ namespace Bamboo
 		//ImGui::StyleColorsLight();
 		ImGui::GetStyle().WindowMenuButtonPosition = ImGuiDir_None;
 
+		// get dpi content scale
+		float dpi_scale = g_engine.windowSystem()->getMonitorDPIScale();
+		ImGui::GetStyle().ScaleAllSizes(dpi_scale);
+
 		// create descriptor pool
 		createDescriptorPool();
 
@@ -62,7 +66,7 @@ namespace Bamboo
 		ASSERT(is_success, "failed to init imgui");
 
 		// add consola font
-		const float k_base_font_size = 14.0f;
+		const float k_base_font_size = 14.0f * dpi_scale;
 		const float k_icon_font_size = k_base_font_size * 0.8f;
 		const auto& fs = g_engine.fileSystem();
 		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/consola.ttf").c_str(), k_base_font_size);
@@ -76,11 +80,11 @@ namespace Bamboo
 		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/fa-solid-900.ttf").c_str(), k_icon_font_size, &icons_config, icons_ranges);
 
 		// add small consola font
-		const float k_small_font_size = 12.0f;
+		const float k_small_font_size = k_base_font_size * 0.857f;
 		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/consola.ttf").c_str(), k_small_font_size);
 
 		// add big icon font
-		const float k_big_icon_font_size = 18.0f;
+		const float k_big_icon_font_size = k_base_font_size * 1.286f;
 		icons_config.MergeMode = false;
 		icons_config.GlyphMinAdvanceX = k_big_icon_font_size;
 		io.Fonts->AddFontFromFileTTF(fs->absolute("asset/engine/font/fa-solid-900.ttf").c_str(), k_big_icon_font_size, &icons_config, icons_ranges);

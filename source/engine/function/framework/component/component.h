@@ -46,7 +46,7 @@ namespace Bamboo
 		Component() = default;
 		virtual ~Component() = default;
 
-		void attach(std::weak_ptr<Entity>& parent);
+		void attach(const std::weak_ptr<Entity>& parent);
 		void detach();
 		std::weak_ptr<Entity>& getParent() { return m_parent; }
 		const std::string& getTypeName() { return m_type_name; }
@@ -75,7 +75,7 @@ namespace Bamboo
 
 #define REGISTER_REFLECTION(parent_class) \
 	RTTR_REGISTRATION_FRIEND \
-	RTTR_ENABLE(Bamboo::##parent_class) \
+	RTTR_ENABLE(Bamboo::parent_class) \
 	friend class cereal::access;
 
 #define POLYMORPHIC_DECLARATION virtual void inflate() override;

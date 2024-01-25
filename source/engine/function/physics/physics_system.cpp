@@ -30,6 +30,7 @@
 #include "physics_settings.h"
 #include <glm/gtx/matrix_decompose.hpp>
 #include <cstdarg>
+#include <cmath>
 
 namespace Bamboo
 {
@@ -318,7 +319,7 @@ namespace Bamboo
 			collectRigidbodies();
 
 			// update bodies
-			int collision_step = (int)std::ceilf(delta_time / m_physics_settings->m_update_delta_time);
+			int collision_step = (int)std::ceil(delta_time / m_physics_settings->m_update_delta_time);
 			m_physics_system->Update(delta_time, collision_step, m_temp_allocator.get(), m_job_system.get());
 
 			// update transforms of rigidbody components

@@ -19,7 +19,7 @@ namespace Bamboo
 	{
 		EventHandle* event_handle = (EventHandle*)handle;
 		m_event_queue.removeListener(event_handle->type, event_handle->handle);
-		delete handle;
+		delete event_handle;
 	}
 
 	void EventSystem::asyncDispatch(const EventPointer& event_pointer)

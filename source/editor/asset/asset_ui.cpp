@@ -43,11 +43,11 @@ namespace Bamboo
 			return;
 		}
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f, 4.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, sImVec2(2.0f, 2.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, sImVec2(4.0f, 4.0f));
 
 		const float k_folder_tree_width_scale = 0.2f;
-		const uint32_t k_spacing = 4;
+		const uint32_t k_spacing = sScalar(4);
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
 		content_size.x -= k_spacing;
 
@@ -82,7 +82,7 @@ namespace Bamboo
 		ImGui::Spacing();
 		ImGui::Indent(k_spacing);
 
-		ImGui::BeginChild("asset_navigator", ImVec2(content_size.x * (1 - k_folder_tree_width_scale) - k_spacing * 3, 24), true);
+		ImGui::BeginChild("asset_navigator", ImVec2(content_size.x * (1 - k_folder_tree_width_scale) - k_spacing * 3, sScalar(24)), true);
 		constructAssetNavigator();
 		ImGui::EndChild();
 
@@ -130,7 +130,7 @@ namespace Bamboo
 
 	void AssetUI::constructAssetNavigator()
 	{
-		ImVec2 button_size(20, 20);
+		ImVec2 button_size = sImVec2(20, 20);
 		ImGui::Button(ICON_FA_ARROW_LEFT, button_size);
 
 		ImGui::SameLine();
@@ -146,7 +146,7 @@ namespace Bamboo
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
 		ImGui::Text(m_formatted_selected_folder.c_str());
 
-		ImGui::SameLine(ImGui::GetWindowWidth() - 22);
+		ImGui::SameLine(ImGui::GetWindowWidth() - sScalar(22));
 		if (ImGui::Button(ICON_FA_COG, button_size))
 		{
 			ImGui::OpenPopup("asset settings");
@@ -176,7 +176,7 @@ namespace Bamboo
 
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5.0f);
 
-		ImVec2 icon_size(80, 80);
+		ImVec2 icon_size = sImVec2(80, 80);
 		ImGuiStyle& style = ImGui::GetStyle();
 		float max_pos_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
 
@@ -185,7 +185,7 @@ namespace Bamboo
 
 		constructAssetFilePopups();
 
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(15.0f, 24.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, sImVec2(15.0f, 24.0f));
 		for (size_t i = 0; i < m_selected_files.size(); ++i)
 		{
 			bool is_clipping = false;
@@ -273,17 +273,17 @@ namespace Bamboo
 			}
 
 			ImDrawFlags draw_flags = ImDrawFlags_RoundCornersBottom;
-			const float k_margin = 4;
+			const float k_margin = sScalar(4);
 			ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(hover_state.rect_min.x - k_margin, hover_state.rect_min.y - k_margin),
-				ImVec2(hover_state.rect_max.x + k_margin, hover_state.rect_max.y + k_margin), 
-				IM_COL32(color.x, color.y, color.z, color.w), 3.0f, draw_flags);
+				ImVec2(hover_state.rect_max.x + k_margin, hover_state.rect_max.y + k_margin),
+				IM_COL32(color.x, color.y, color.z, color.w), sScalar(3.0f), draw_flags);
 		}
 		
 		// draw image
 		ImGui::Image(tex_id, size);
 
 		// draw asset name text
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 20.0f);
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - sScalar(20.0f));
 		float text_width = ImGui::CalcTextSize(basename.c_str()).x;
 
 		if (m_is_renaming && m_selected_file == filename)
@@ -359,7 +359,7 @@ namespace Bamboo
 					static bool contains_occlusion_channel = true;
 					ImGui::Checkbox("contain occlusion channel", &contains_occlusion_channel);
 
-					if (ImGui::Button("OK", ImVec2(120, 0)))
+					if (ImGui::Button("OK", sImVec2(120, 0)))
 					{
 						ImGui::CloseCurrentPopup();
 
@@ -373,7 +373,7 @@ namespace Bamboo
 
 					ImGui::SameLine();
 
-					if (ImGui::Button("Cancel", ImVec2(120, 0)))
+					if (ImGui::Button("Cancel", sImVec2(120, 0)))
 					{
 						ImGui::CloseCurrentPopup();
 						iter = m_imported_files.erase(iter);
@@ -597,7 +597,7 @@ namespace Bamboo
 	void AssetUI::createCustomSeperatorText(const std::string& text)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
-		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextPadding, ImVec2(0.0f, 0.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextPadding, sImVec2(0.0f, 0.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 0.0f);
 		ImGui::PushFont(smallFont());
 		ImGui::SeparatorText(text.c_str());

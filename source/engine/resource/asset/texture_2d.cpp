@@ -6,6 +6,8 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <tinygltf/stb_image_resize2.h>
 
+#include <thread>
+
 CEREAL_REGISTER_TYPE(Bamboo::Texture2D)
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Asset, Bamboo::Texture2D)
 

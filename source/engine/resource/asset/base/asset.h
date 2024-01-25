@@ -23,19 +23,19 @@
 	m_ref_urls[id] = asset->getURL();
 
 #define REF_ASSET_OUTER(object, prop, asset) \
-	object->##prop = asset; \
+	object->prop = asset; \
 	object->m_ref_urls[#prop] = asset->getURL();
 
 #define BIND_ASSET(prop, asset_class) \
 	if (m_ref_urls.find(#prop) != m_ref_urls.end()) \
 	{ \
-		prop = g_engine.assetManager()->loadAsset<##asset_class>(m_ref_urls[#prop]); \
+		prop = g_engine.assetManager()->loadAsset<asset_class>(m_ref_urls[#prop]); \
 	} \
 
 #define BIND_ASSET_ELEM(prop, id, asset_class) \
 	if (m_ref_urls.find(id) != m_ref_urls.end()) \
 	{ \
-		prop = g_engine.assetManager()->loadAsset<##asset_class>(m_ref_urls[id]); \
+		prop = g_engine.assetManager()->loadAsset<asset_class>(m_ref_urls[id]); \
 	} \
 
 namespace Bamboo

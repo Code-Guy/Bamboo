@@ -15471,7 +15471,7 @@ static void ImGui::DockContextBuildNodesFromSettings(ImGuiContext* ctx, ImGuiDoc
         node->ParentNode = settings->ParentNodeId ? DockContextFindNodeByID(ctx, settings->ParentNodeId) : NULL;
         node->Pos = ImVec2(settings->Pos.x, settings->Pos.y);
         node->Size = ImVec2(settings->Size.x, settings->Size.y);
-        node->SizeRef = ImVec2(settings->SizeRef.x, settings->SizeRef.y);
+        node->SizeRef = ImVec2(settings->SizeRef.x, settings->SizeRef.y) * ctx->PlatformIO.Monitors.front().DpiScale;
         node->AuthorityForPos = node->AuthorityForSize = node->AuthorityForViewport = ImGuiDataAuthority_DockNode;
         if (node->ParentNode && node->ParentNode->ChildNodes[0] == NULL)
             node->ParentNode->ChildNodes[0] = node;

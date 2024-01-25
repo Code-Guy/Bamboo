@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cereal/access.hpp>
+#include <cereal/cereal.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 

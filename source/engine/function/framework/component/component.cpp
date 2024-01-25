@@ -38,7 +38,7 @@ namespace Bamboo
 		}
 	}
 
-	void Component::attach(std::weak_ptr<Entity>& parent)
+	void Component::attach(const std::weak_ptr<Entity>& parent)
 	{
 		m_parent = parent;
 	}

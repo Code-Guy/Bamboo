@@ -54,7 +54,7 @@ namespace Bamboo
 
 		// save
 		const float kButtonHeight = 30.0f;
-		const ImVec2 kButtonSize = ImVec2(kButtonHeight, kButtonHeight);
+		const ImVec2 kButtonSize = sImVec2(kButtonHeight, kButtonHeight);
 		ImGui::PushFont(bigIconFont());
 		if (ImGui::Button(ICON_FA_SAVE, kButtonSize))
 		{
@@ -65,7 +65,7 @@ namespace Bamboo
 		// create entities
 		ImGui::SameLine();
 		sprintf(m_title_buf, "Create %s", ICON_FA_CHEVRON_DOWN);
-		if (ImGui::Button(m_title_buf, ImVec2(80, kButtonHeight)))
+		if (ImGui::Button(m_title_buf, sImVec2(80, kButtonHeight)))
 		{
 			ImGui::OpenPopup("create_entity");
 		}

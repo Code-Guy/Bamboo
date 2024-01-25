@@ -42,6 +42,10 @@ namespace Bamboo
 		bool isPoppingUp();
 		bool isImGuiImageLoaded(const URL& url);
 
+		// dpi scaling
+		float sScalar(float v);
+		ImVec2 sImVec2(float x, float y);
+
 		std::string m_title;
 		char m_title_buf[128];
 		glm::uvec4 m_content_region;

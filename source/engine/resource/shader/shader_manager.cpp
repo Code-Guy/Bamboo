@@ -6,6 +6,12 @@ namespace Bamboo
 {
 	void ShaderManager::init()
 	{
+		if (VULKAN_SHADER_COMPILER == "")
+		{
+			LOG_WARNING("failed to find glslangValidator to compile shader");
+			return;
+		}
+
 		// create spv dir if doesn't exist
 		const auto& fs = g_engine.fileSystem();
 		std::string spv_dir = fs->getSpvDir();

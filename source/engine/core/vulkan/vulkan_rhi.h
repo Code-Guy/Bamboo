@@ -82,6 +82,7 @@ namespace Bamboo
 		void createCommandBuffers();
 		void createSynchronizationPrimitives();
 
+		uint32_t getVKAPIVersion();
 		std::vector<const char*> getRequiredInstanceExtensions();
 		std::vector<const char*> getRequiredInstanceLayers();
 		std::vector<const char*> getRequiredDeviceExtensions();

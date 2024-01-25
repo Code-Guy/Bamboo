@@ -68,17 +68,17 @@ namespace Bamboo
 
 		// construct popups
 		static char world_name[128];
-		const float k_spacing = 4;
+		const float k_spacing = sScalar(4);
 		if (m_showing_new_world_popup)
 		{
-			ImGui::SetNextWindowSize(ImVec2(420, 500));
+			ImGui::SetNextWindowSize(sImVec2(420, 500));
 			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
 			ImGui::OpenPopup("New World");
 			if (ImGui::BeginPopupModal("New World", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 			{
-				const float k_middle_height = 55.0f;
-				const float k_bottom_height = 30.0f;
+				const float k_middle_height = sScalar(55.0f);
+				const float k_bottom_height = sScalar(25.0f);
 				
 				ImVec2 content_size = ImGui::GetContentRegionAvail();
 
@@ -108,7 +108,7 @@ namespace Bamboo
 				ImGui::EndChild();
 				
 				ImGui::BeginChild("new_world_bottom", ImVec2(content_size.x, k_bottom_height), false);
-				float button_width = 60.0f;
+				float button_width = sScalar(60.0f);
 				float button_offset_x = (ImGui::GetContentRegionAvail().x - button_width * 2 - k_spacing) / 2.0f;
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + button_offset_x);
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6);
@@ -139,7 +139,7 @@ namespace Bamboo
 
 		if (m_showing_open_world_popup)
 		{
-			ImGui::SetNextWindowSize(ImVec2(300, 500));
+			ImGui::SetNextWindowSize(sImVec2(300, 500));
 			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
 			ImGui::OpenPopup("Open World");
@@ -165,7 +165,7 @@ namespace Bamboo
 					}
 				}
 
-				float button_width = 60.0f;
+				float button_width = sScalar(60.0f);
 				float button_offset_x = (ImGui::GetContentRegionAvail().x - button_width * 2 - k_spacing) / 2.0f;
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + button_offset_x);
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - 30);
@@ -188,14 +188,14 @@ namespace Bamboo
 
 		if (m_showing_save_as_world_popup)
 		{
-			ImGui::SetNextWindowSize(ImVec2(300, 500));
+			ImGui::SetNextWindowSize(sImVec2(300, 500));
 			ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 
 			ImGui::OpenPopup("Save As World");
 			if (ImGui::BeginPopupModal("Save As World", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 			{
-				const float k_middle_height = 55.0f;
-				const float k_bottom_height = 30.0f;
+				const float k_middle_height = sScalar(55.0f);
+				const float k_bottom_height = sScalar(25.0f);
 
 				ImVec2 content_size = ImGui::GetContentRegionAvail();
 
@@ -215,7 +215,7 @@ namespace Bamboo
 				ImGui::EndChild();
 
 				ImGui::BeginChild("new_world_bottom", ImVec2(content_size.x, k_bottom_height), false);
-				float button_width = 60.0f;
+				float button_width = sScalar(60.0f);
 				float button_offset_x = (ImGui::GetContentRegionAvail().x - button_width * 2 - k_spacing) / 2.0f;
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + button_offset_x);
 				ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6);
@@ -520,14 +520,14 @@ namespace Bamboo
 
 	void MenuUI::constructTemplateWorldPanel()
 	{
-		ImVec2 icon_size(80, 80);
+		ImVec2 icon_size = sImVec2(80, 80);
 		ImGuiStyle& style = ImGui::GetStyle();
 		float max_pos_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
 
 		float clip_rect_min_y = ImGui::GetCursorScreenPos().y + ImGui::GetScrollY();
 		float clip_rect_max_y = clip_rect_min_y + ImGui::GetContentRegionAvail().y;
 
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(15.0f, 24.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, sImVec2(15.0f, 24.0f));
 		for (size_t i = 0; i < m_template_worlds.size(); ++i)
 		{
 			const std::string& template_world_name = m_template_worlds[i].name;
@@ -551,17 +551,17 @@ namespace Bamboo
 				}
 
 				ImDrawFlags draw_flags = ImDrawFlags_RoundCornersBottom;
-				const float k_margin = 4;
+				const float k_margin = sScalar(4);
 				ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(hover_state.rect_min.x - k_margin, hover_state.rect_min.y - k_margin),
 					ImVec2(hover_state.rect_max.x + k_margin, hover_state.rect_max.y + k_margin),
-					IM_COL32(color.x, color.y, color.z, color.w), 3.0f, draw_flags);
+					IM_COL32(color.x, color.y, color.z, color.w), sScalar(3.0f), draw_flags);
 			}
 
 			// draw image
 			ImGui::Image(m_template_worlds[i].icon->tex_id, icon_size);
 
 			// draw asset name text
-			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 20.0f);
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() - sScalar(20.0f));
 			float text_width = ImGui::CalcTextSize(template_world_name.c_str()).x;
 			if (text_width > icon_size.x)
 			{

@@ -103,7 +103,7 @@ namespace Bamboo
 				{
 				case EFileChangeType::Added:
 				{
-					std::shared_ptr<FolderNode>& folder_node = std::make_shared<FolderNode>();
+					std::shared_ptr<FolderNode> folder_node = std::make_shared<FolderNode>();
 					folder_node->setDir(path);
 					folder_node->is_leaf = true;
 

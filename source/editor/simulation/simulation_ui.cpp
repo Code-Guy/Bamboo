@@ -46,7 +46,7 @@ namespace Bamboo
 		sprintf(m_title_buf, "%s %s###%s", ICON_FA_GAMEPAD, world_name.c_str(), m_title.c_str());
 
 		bool is_simulating_fullscreen = g_engine.isSimulating() && g_editor.isSimulationPanelFullscreen();
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, sImVec2(0.0f, 0.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, is_simulating_fullscreen ? 0.0f : 1.0f);
 
 		if (!ImGui::Begin(m_title_buf))
@@ -98,9 +98,9 @@ namespace Bamboo
 		handleDragDropTarget(glm::vec2(mouse_x, mouse_y), glm::vec2(content_size.x, content_size.y));
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.8f));
-		ImGui::SetCursorPos(ImVec2(10, 30));
+		ImGui::SetCursorPos(sImVec2(10, 30));
 		sprintf(m_title_buf, "%s view", ICON_FA_DICE_D6);
-		if (ImGui::Button(m_title_buf, ImVec2(64, 24)))
+		if (ImGui::Button(m_title_buf, sImVec2(64, 24)))
 		{
 			ImGui::OpenPopup("view");
 		}
@@ -109,9 +109,9 @@ namespace Bamboo
 		static const std::vector<std::string> views = {
 			"perspective", "top", "bottom", "left", "right", "front", "back"
 		};
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(-2.0f, -2.0f));
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 8.0f));
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, sImVec2(-2.0f, -2.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, sImVec2(8.0f, 8.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, sImVec2(12.0f, 12.0f));
 		if (constructRadioButtonPopup("view", views, view_index))
 		{
 			static glm::vec3 last_camera_rotation;
@@ -140,7 +140,7 @@ namespace Bamboo
 
 		ImGui::SameLine();
 		sprintf(m_title_buf, "%s shader", ICON_FA_BOWLING_BALL);
-		if (ImGui::Button(m_title_buf, ImVec2(75, 24)))
+		if (ImGui::Button(m_title_buf, sImVec2(75, 24)))
 		{
 			ImGui::OpenPopup("shader");
 		}
@@ -157,7 +157,7 @@ namespace Bamboo
 
 		ImGui::SameLine();
 		sprintf(m_title_buf, "%s show", ICON_FA_EYE);
-		if (ImGui::Button(m_title_buf, ImVec2(64, 24)))
+		if (ImGui::Button(m_title_buf, sImVec2(64, 24)))
 		{
 			ImGui::OpenPopup("show");
 		}
@@ -308,9 +308,9 @@ namespace Bamboo
 		std::vector<std::string> names = { ICON_FA_MOUSE_POINTER, ICON_FA_MOVE, ICON_FA_SYNC_ALT, ICON_FA_EXPAND };
 		for (size_t i = 0; i < names.size(); ++i)
 		{
-			ImGui::SameLine(i == 0 ? ImGui::GetContentRegionAvail().x - 130 : 0.0f);
+			ImGui::SameLine(i == 0 ? ImGui::GetContentRegionAvail().x - sScalar(130) : 0.0f);
 			ImGui::PushStyleColor(ImGuiCol_Button, i == (size_t)m_operation_mode ? ImVec4(0.26f, 0.59f, 0.98f, 0.8f) : ImVec4(0.4f, 0.4f, 0.4f, 0.8f));
-			if (ImGui::Button(names[i].c_str(), ImVec2(24, 24)))
+			if (ImGui::Button(names[i].c_str(), sImVec2(24, 24)))
 			{
 				m_operation_mode = (EOperationMode)i;
 			}
@@ -377,7 +377,7 @@ namespace Bamboo
 	void SimulationUI::constructCreateLightPopupModal(std::string& text)
 	{
 		ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, sImVec2(8.0f, 8.0f));
 		if (ImGui::BeginPopupModal("create light", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
 			ImGui::Text(text.c_str());

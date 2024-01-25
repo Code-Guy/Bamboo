@@ -2,6 +2,7 @@
 
 #include <eventpp/eventqueue.h>
 #include <vulkan/vulkan.h>
+#include <vector>
 
 namespace Bamboo
 {

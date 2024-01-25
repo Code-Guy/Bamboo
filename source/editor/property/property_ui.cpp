@@ -142,7 +142,7 @@ namespace Bamboo
 				EPropertyType property_type = getPropertyType(prop.get_type());
 				ASSERT(property_type.second != EPropertyContainerType::Map, "don't support map container property type now");
 
-				rttr::variant& variant = prop.get_value(instance);
+				rttr::variant variant = prop.get_value(instance);
 				if (property_type.second == EPropertyContainerType::Mono)
 				{
 					m_property_constructors[property_type.first](prop_name, variant);
@@ -272,7 +272,7 @@ namespace Bamboo
 		ImGui::TableNextColumn();
 
 		// asset preview image
-		const ImVec2 icon_size(60, 60);
+		ImVec2 icon_size = sImVec2(60, 60);
 		ImGui::Image(m_dummy_image->tex_id, icon_size);
 
 		// asset find combo box

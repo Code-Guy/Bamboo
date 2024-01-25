@@ -20,6 +20,7 @@ namespace Bamboo
 		void setTitle(const std::string& title);
 		GLFWwindow* getWindow() { return m_window; }
 		void getWindowSize(int& width, int& height);
+		float getMonitorDPIScale();
 		void getScreenSize(int& width, int& height);
 		void getMousePos(int& x, int& y);
 
@@ -49,5 +50,6 @@ namespace Bamboo
 
 		int m_windowed_width, m_windowed_height;
 		int m_windowed_pos_x, m_windowed_pos_y;
+		float m_monitor_content_scale;
 	};
 }
