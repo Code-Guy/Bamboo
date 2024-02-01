@@ -172,7 +172,7 @@ namespace Bamboo
 
 	std::string FileSystem::getShaderDir()
 	{
-		return absolute("shader");
+		return combine(std::string(BAMBOO_DIR), std::string("shader"));
 	}
 
 	std::string FileSystem::getSpvDir()

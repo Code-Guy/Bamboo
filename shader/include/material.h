@@ -3,7 +3,7 @@
 
 #include "host_device.h"
 
-layout(push_constant) uniform _MaterialPCO { layout(offset = 192) MaterialPCO material_pco; };
+layout(push_constant) uniform _MaterialPCO { MaterialPCO material_pco; };
 
 layout(set = 0, binding = 1) uniform sampler2D base_color_texture_sampler;
 layout(set = 0, binding = 2) uniform sampler2D metallic_roughness_occlusion_texture_sampler;

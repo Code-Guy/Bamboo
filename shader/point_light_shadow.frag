@@ -4,7 +4,6 @@
 #include "constants.h"
 
 layout(push_constant) uniform PCO { 
-    layout(offset = 192) 
     vec4 light_pos;
 } pco;
 

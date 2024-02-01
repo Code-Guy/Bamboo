@@ -19,7 +19,7 @@ struct BoneUBO
 	mat4 bone_matrices[MAX_BONE_NUM];
 };
 
-struct TransformPCO
+struct TransformUBO
 {
     mat4 m;
     mat4 nm;

@@ -4,7 +4,7 @@
 #include "host_device.h"
 
 layout(set = 0, binding = 0) uniform _BoneUBO { BoneUBO bone_ubo; };
-layout(push_constant) uniform _TransformPCO { TransformPCO transform_pco; };
+layout(set = 0, binding = 12) uniform _TransformUBO { TransformUBO transform_ubo; };
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 tex_coord;
@@ -27,9 +27,9 @@ void main()
 	vec4 local_position = blend_bone_matrix * vec4(position, 1.0);
 	vec3 local_normal = mat3(blend_bone_matrix) * normal;
 	
-	f_position = (transform_pco.m * local_position).xyz;
+	f_position = (transform_ubo.m * local_position).xyz;
 	f_tex_coord = tex_coord;
-	f_normal = normalize(mat3(transform_pco.nm) * local_normal);
+	f_normal = normalize(mat3(transform_ubo.nm) * local_normal);
 
-	gl_Position = transform_pco.mvp * local_position;
+	gl_Position = transform_ubo.mvp * local_position;
 }

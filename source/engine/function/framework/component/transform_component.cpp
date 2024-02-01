@@ -1,5 +1,6 @@
 #include "transform_component.h"
 #include "engine/function/framework/entity/entity.h"
+#include "host_device.h"
 
 RTTR_REGISTRATION
 {
@@ -15,6 +16,14 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Bamboo::Component, Bamboo::TransformCompone
 namespace Bamboo
 {
 	
+	TransformComponent::~TransformComponent()
+	{
+		for (VmaBuffer& transform_ub : m_transform_ubs)
+		{
+			transform_ub.destroy();
+		}
+	}
+
 	void TransformComponent::setPosition(const glm::vec3& position)
 	{
 		m_position = position;
@@ -54,6 +63,25 @@ namespace Bamboo
 		is_chain_dirty |= m_is_dirty;
 		m_is_dirty = false;
 		return is_chain_dirty;
+	}
+
+	Bamboo::VmaBuffer TransformComponent::updateUniformBuffer(const glm::mat4& vp)
+	{
+		if (m_transform_ubs.empty())
+		{
+			m_transform_ubs.resize(MAX_FRAMES_IN_FLIGHT);
+			for (VmaBuffer& transform_ub : m_transform_ubs)
+			{
+				VulkanUtil::createBuffer(sizeof(TransformUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, transform_ub, true);
+			}
+		}
+
+		TransformUBO transform_ubo;
+		transform_ubo.m = getGlobalMatrix();
+		transform_ubo.nm = glm::transpose(glm::inverse(glm::mat3(transform_ubo.m)));
+		transform_ubo.mvp = vp * transform_ubo.m;
+
+		return VulkanUtil::updateBuffer(m_transform_ubs, (void*)&transform_ubo, sizeof(TransformUBO));
 	}
 
 	const glm::mat4& TransformComponent::getGlobalMatrix()

@@ -44,9 +44,10 @@ namespace Bamboo
 	{
 		VmaBuffer vertex_buffer;
 		VmaBuffer index_buffer;
+		VmaBuffer transform_ub;
+
 		std::vector<uint32_t> index_counts;
 		std::vector<uint32_t> index_offsets;
-		TransformPCO transform_pco;
 	};
 
 	struct StaticMeshRenderData : public MeshRenderData
@@ -71,7 +72,8 @@ namespace Bamboo
 		VmaBuffer vertex_buffer;
 		VmaBuffer index_buffer;
 		uint32_t index_count;
-		TransformPCO transform_pco;
+
+		mat4 mvp;
 		VmaImageViewSampler env_texture;
 	};
 

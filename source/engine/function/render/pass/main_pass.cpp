@@ -136,7 +136,7 @@ namespace Bamboo
 			vkCmdBindIndexBuffer(command_buffer, m_skybox_render_data->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 			// push constants
-			vkCmdPushConstants(command_buffer, m_pipeline_layouts[5], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO), &m_skybox_render_data->transform_pco);
+			vkCmdPushConstants(command_buffer, m_pipeline_layouts[5], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &m_skybox_render_data->mvp);
 
 			// update(push) sub mesh descriptors
 			std::vector<VkWriteDescriptorSet> desc_writes;
@@ -314,6 +314,7 @@ namespace Bamboo
 			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{12, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}
 		};
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
@@ -366,6 +367,7 @@ namespace Bamboo
 			{9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_POINT_LIGHT_NUM, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_SPOT_LIGHT_NUM, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 			{11, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{12, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}
 		};
 
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
@@ -410,8 +412,7 @@ namespace Bamboo
 
 		m_push_constant_ranges =
 		{
-			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO) },
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TransformPCO), sizeof(MaterialPCO) }
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(MaterialPCO) }
 		};
 
 		pipeline_layout_ci.pushConstantRangeCount = static_cast<uint32_t>(m_push_constant_ranges.size());
@@ -445,15 +446,14 @@ namespace Bamboo
 
 		// skybox pipeline layouts
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[5];
+		VkPushConstantRange push_constant_range = { VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) };
+		pipeline_layout_ci.pPushConstantRanges = &push_constant_range;
 		pipeline_layout_ci.pushConstantRangeCount = 1;
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[5]);
 		CHECK_VULKAN_RESULT(result, "create skybox pipeline layout");
 
 		// debug draw pipeline layouts
 		pipeline_layout_ci.pSetLayouts = &m_desc_set_layouts[6];
-		VkPushConstantRange push_constant_range = { VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4) };
-		pipeline_layout_ci.pPushConstantRanges = &push_constant_range;
-		pipeline_layout_ci.pushConstantRangeCount = 1;
 		result = vkCreatePipelineLayout(VulkanRHI::get().getDevice(), &pipeline_layout_ci, nullptr, &m_pipeline_layouts[6]);
 		CHECK_VULKAN_RESULT(result, "create debug draw pipeline layout");
 
@@ -742,11 +742,11 @@ namespace Bamboo
 		for (size_t i = 0; i < sub_mesh_count; ++i)
 		{
 			// push constants
-			updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco, &static_mesh_render_data->material_pcos[i] });
+			updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->material_pcos[i] });
 
 			// update(push) sub mesh descriptors
 			std::vector<VkWriteDescriptorSet> desc_writes;
-			std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
+			std::array<VkDescriptorBufferInfo, 3> desc_buffer_infos{};
 			std::array<VkDescriptorImageInfo, 24> desc_image_infos{};
 
 			// bone matrix ubo
@@ -754,12 +754,13 @@ namespace Bamboo
 			{
 				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ub, 0);
 			}
+			addBufferDescriptorSet(desc_writes, desc_buffer_infos[2], static_mesh_render_data->transform_ub, 12);
 
 			// forward rendering
 			if (renderer_type == ERendererType::Forward)
 			{
 				// lighting ubo
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_lighting_render_data->lighting_ub, 11);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[3], m_lighting_render_data->lighting_ub, 11);
 
 				// ibl textures
 				std::vector<VmaImageViewSampler> ibl_textures = {

@@ -301,10 +301,8 @@ namespace Bamboo
 						skeletal_mesh_render_data->bone_ub = animator_component->updateUniformBuffer();
 					}
 
-					// update push constants
-					static_mesh_render_data->transform_pco.m = transform_component->getGlobalMatrix();
-					static_mesh_render_data->transform_pco.nm = glm::transpose(glm::inverse(glm::mat3(static_mesh_render_data->transform_pco.m)));
-					static_mesh_render_data->transform_pco.mvp = camera_component->getViewProjectionMatrix() * static_mesh_render_data->transform_pco.m;
+					// update transform uniform buffer
+					static_mesh_render_data->transform_ub = transform_component->updateUniformBuffer(camera_component->getViewProjectionMatrix());
 
 					// traverse all sub meshes
 					for (size_t i = 0; i < mesh->m_sub_meshes.size(); ++i)
@@ -380,7 +378,7 @@ namespace Bamboo
 				skybox_render_data->vertex_buffer = skybox_cube_mesh->m_vertex_buffer;
 				skybox_render_data->index_buffer = skybox_cube_mesh->m_index_buffer;
 				skybox_render_data->index_count = skybox_cube_mesh->m_sub_meshes.front().m_index_count;
-				skybox_render_data->transform_pco.mvp = camera_component->getProjectionMatrix(EProjectionType::Perspective) * camera_component->getViewMatrixNoTranslation();
+				skybox_render_data->mvp = camera_component->getProjectionMatrix(EProjectionType::Perspective) * camera_component->getViewMatrixNoTranslation();
 				skybox_render_data->env_texture = sky_light_component->m_prefilter_texture_sampler;
 
 				// set lighting uniform buffer object

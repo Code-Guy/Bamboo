@@ -7,7 +7,7 @@ layout(location = 2) in vec3 f_normal;
 layout(location = 0) out vec4 o_color;
 
 layout(push_constant) uniform PCO {
-    layout(offset = 192) vec4 color;
+    vec4 color;
 } pco;
 
 void main()

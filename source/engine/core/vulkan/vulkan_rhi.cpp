@@ -153,7 +153,7 @@ namespace Bamboo
 
 	void VulkanRHI::validatePhysicalDevice()
 	{
-		const uint32_t k_max_push_constant_size = 256;
+		const uint32_t k_max_push_constant_size = 128;
 		ASSERT(m_physical_device_properties.limits.maxPushConstantsSize >= k_max_push_constant_size, 
 			"push constants size must be greater than {}", k_max_push_constant_size);
 

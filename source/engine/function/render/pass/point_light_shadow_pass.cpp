@@ -87,11 +87,11 @@ namespace Bamboo
 				{
 					// push constants
 					glm::vec4 light_pos = glm::vec4(m_light_poss[p], 1.0f);
-					updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco, glm::value_ptr(light_pos) });
+					updatePushConstants(command_buffer, pipeline_layout, { glm::value_ptr(light_pos) });
 
 					// update(push) sub mesh descriptors
 					std::vector<VkWriteDescriptorSet> desc_writes;
-					std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
+					std::array<VkDescriptorBufferInfo, 3> desc_buffer_infos{};
 					std::array<VkDescriptorImageInfo, 1> desc_image_infos{};
 
 					// bone matrix ubo
@@ -99,9 +99,10 @@ namespace Bamboo
 					{
 						addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ub, 0);
 					}
+					addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], static_mesh_render_data->transform_ub, 12);
 
 					// shadow face ubo
-					addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_shadow_cube_ubss[p][VulkanRHI::get().getFlightIndex()], 1);
+					addBufferDescriptorSet(desc_writes, desc_buffer_infos[2], m_shadow_cube_ubss[p][VulkanRHI::get().getFlightIndex()], 1);
 
 					// base color texture image sampler
 					addImageDescriptorSet(desc_writes, desc_image_infos[0], static_mesh_render_data->pbr_textures[i].base_color_texure, 2);
@@ -216,7 +217,8 @@ namespace Bamboo
 	{
 		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
 			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_GEOMETRY_BIT, nullptr},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{12, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}
 		};
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
@@ -240,8 +242,7 @@ namespace Bamboo
 	{
 		m_push_constant_ranges =
 		{
-			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO) },
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TransformPCO), sizeof(vec4) }
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vec4) }
 		};
 
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};

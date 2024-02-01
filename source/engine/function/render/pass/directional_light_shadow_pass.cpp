@@ -88,12 +88,9 @@ namespace Bamboo
 			size_t sub_mesh_count = index_counts.size();
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
-				// push constants
-				updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco });
-
 				// update(push) sub mesh descriptors
 				std::vector<VkWriteDescriptorSet> desc_writes;
-				std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
+				std::array<VkDescriptorBufferInfo, 3> desc_buffer_infos{};
 				std::array<VkDescriptorImageInfo, 1> desc_image_infos{};
 
 				// bone matrix ubo
@@ -101,9 +98,10 @@ namespace Bamboo
 				{
 					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ub, 0);
 				}
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], static_mesh_render_data->transform_ub, 12);
 
 				// shadow cascade ubo
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], m_shadow_cascade_ubs[VulkanRHI::get().getFlightIndex()], 1);
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[2], m_shadow_cascade_ubs[VulkanRHI::get().getFlightIndex()], 1);
 	
 				// base color texture image sampler
 				addImageDescriptorSet(desc_writes, desc_image_infos[0], static_mesh_render_data->pbr_textures[i].base_color_texure, 2);
@@ -191,7 +189,8 @@ namespace Bamboo
 	{
 		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
 			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_GEOMETRY_BIT, nullptr},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+			{12, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}
 		};
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
@@ -213,11 +212,6 @@ namespace Bamboo
 
 	void DirectionalLightShadowPass::createPipelineLayouts()
 	{
-		m_push_constant_ranges =
-		{
-			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO) },
-		};
-
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
 		pipeline_layout_ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipeline_layout_ci.setLayoutCount = 1;

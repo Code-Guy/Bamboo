@@ -30,6 +30,7 @@ if(NOT TARGET imgui)
     "${IMGUI_SOURCE_DIR}/backends/imgui_impl_vulkan.h")
     
     add_library(imgui ${imgui_sources} ${imgui_impl})
+    target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
     target_include_directories(imgui PUBLIC ${IMGUI_SOURCE_DIR})
     target_link_libraries(imgui PUBLIC glfw ${Vulkan_LIBRARY})
     set_target_properties(imgui PROPERTIES FOLDER ${external_folder}/imgui)

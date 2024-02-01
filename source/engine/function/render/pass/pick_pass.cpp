@@ -88,21 +88,22 @@ namespace Bamboo
 			glm::vec4 color = encodeEntityID(m_entity_ids[entity_index++]);
 			for (size_t i = 0; i < sub_mesh_count; ++i)
 			{
+				// update(push) sub mesh descriptors
+				std::vector<VkWriteDescriptorSet> desc_writes;
+				std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
+
 				// push constants
-				updatePushConstants(command_buffer, pipeline_layout, { &static_mesh_render_data->transform_pco, &color });
+				updatePushConstants(command_buffer, pipeline_layout, { &color });
 
 				// bone matrix ubo
 				if (is_skeletal_mesh)
 				{
-					// update(push) sub mesh descriptors
-					std::vector<VkWriteDescriptorSet> desc_writes;
-					std::array<VkDescriptorBufferInfo, 1> desc_buffer_infos{};
-
 					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ub, 0);
-
-					VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-						pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 				}
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], static_mesh_render_data->transform_ub, 12);
+
+				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+					pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 
 				// render sub mesh
 				vkCmdDrawIndexed(command_buffer, index_counts[i], 1, index_offsets[i], 0, 0);
@@ -182,17 +183,21 @@ namespace Bamboo
 
 	void PickPass::createDescriptorSetLayouts()
 	{
+		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
+			{12, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}
+		};
+
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
 		desc_set_layout_ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		desc_set_layout_ci.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
+		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
+		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 
 		m_desc_set_layouts.resize(2);
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create static mesh/billboard descriptor set layout");
 
-		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
-			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr }
-		};
+		desc_set_layout_bindings.insert(desc_set_layout_bindings.begin(), { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr });
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);
@@ -203,8 +208,7 @@ namespace Bamboo
 	{
 		m_push_constant_ranges =
 		{
-			{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(TransformPCO) },
-			{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TransformPCO), sizeof(glm::vec4) }
+			{ VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(glm::vec4) }
 		};
 
 		VkPipelineLayoutCreateInfo pipeline_layout_ci{};
