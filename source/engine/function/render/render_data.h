@@ -45,6 +45,7 @@ namespace Bamboo
 		VmaBuffer vertex_buffer;
 		VmaBuffer index_buffer;
 		VmaBuffer transform_ub;
+		TransformUBO transform_ubo;
 
 		std::vector<uint32_t> index_counts;
 		std::vector<uint32_t> index_offsets;

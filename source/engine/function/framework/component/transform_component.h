@@ -3,6 +3,7 @@
 #include "component.h"
 #include "engine/core/math/transform.h"
 #include "engine/core/vulkan/vulkan_util.h"
+#include "host_device.h"
 
 namespace Bamboo
 {
@@ -16,7 +17,7 @@ namespace Bamboo
 		void setScale(const glm::vec3& scale);
 
 		bool update(bool is_chain_dirty = false, const glm::mat4& parent_global_matrix = glm::mat4(1.0));
-		VmaBuffer updateUniformBuffer(const glm::mat4& vp);
+		void updateUniformBuffer(const glm::mat4& vp, VmaBuffer& transform_ub, TransformUBO& transform_ubo);
 
 		const glm::mat4& getGlobalMatrix();
 		glm::vec3 getForwardVector();

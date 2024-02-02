@@ -302,7 +302,8 @@ namespace Bamboo
 					}
 
 					// update transform uniform buffer
-					static_mesh_render_data->transform_ub = transform_component->updateUniformBuffer(camera_component->getViewProjectionMatrix());
+					transform_component->updateUniformBuffer(camera_component->getViewProjectionMatrix(), 
+						static_mesh_render_data->transform_ub, static_mesh_render_data->transform_ubo);
 
 					// traverse all sub meshes
 					for (size_t i = 0; i < mesh->m_sub_meshes.size(); ++i)
@@ -407,7 +408,7 @@ namespace Bamboo
 
 				ShadowCubeCreateInfo shadow_cube_ci;
 				shadow_cube_ci.light_pos = transform_component->m_position;
-				shadow_cube_ci.light_far =point_light_component->m_radius;
+				shadow_cube_ci.light_far = point_light_component->m_radius;
 				shadow_cube_ci.light_near = camera_component->m_near;
 				shadow_cube_cis.push_back(shadow_cube_ci);
 

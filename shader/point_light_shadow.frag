@@ -7,7 +7,7 @@ layout(push_constant) uniform PCO {
     vec4 light_pos;
 } pco;
 
-layout(set = 0, binding = 2) uniform sampler2D base_color_texture_sampler;
+layout(binding = 3) uniform sampler2D base_color_texture_sampler;
 
 layout(location = 0) in vec3 g_position;
 layout(location = 1) in vec2 g_tex_coord;

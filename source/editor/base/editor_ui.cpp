@@ -84,7 +84,7 @@ namespace Bamboo
 		return image;
 	}
 
-	std::shared_ptr<Bamboo::ImGuiImage> EditorUI::loadImGuiImageFromImageViewSampler(const VmaImageViewSampler& image_view_sampler)
+	std::shared_ptr<ImGuiImage> EditorUI::loadImGuiImageFromImageViewSampler(const VmaImageViewSampler& image_view_sampler)
 	{
 		std::shared_ptr<ImGuiImage> image = std::make_shared<ImGuiImage>();
 		image->image_view_sampler = image_view_sampler;
@@ -98,7 +98,7 @@ namespace Bamboo
 		return image;
 	}
 
-	std::shared_ptr<Bamboo::ImGuiImage> EditorUI::getImGuiImageFromCache(const URL& url)
+	std::shared_ptr<ImGuiImage> EditorUI::getImGuiImageFromCache(const URL& url)
 	{
 		return m_imgui_images[url];
 	}

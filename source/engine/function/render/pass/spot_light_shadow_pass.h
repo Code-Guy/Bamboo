@@ -11,6 +11,7 @@ namespace Bamboo
 
 		virtual void init() override;
 		virtual void render() override;
+		virtual void destroy() override;
 
 		virtual void createRenderPass() override;
 		virtual void createDescriptorSetLayouts() override;
@@ -32,6 +33,8 @@ namespace Bamboo
 
 		std::vector<VmaImageViewSampler> m_shadow_image_view_samplers;
 		std::vector<VkFramebuffer> m_framebuffers;
+		std::vector<std::vector<VmaBuffer>> m_light_transform_ubss;
+
 		uint32_t m_light_num;
 	};
 }

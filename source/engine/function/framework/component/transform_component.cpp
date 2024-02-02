@@ -1,6 +1,5 @@
 #include "transform_component.h"
 #include "engine/function/framework/entity/entity.h"
-#include "host_device.h"
 
 RTTR_REGISTRATION
 {
@@ -65,7 +64,7 @@ namespace Bamboo
 		return is_chain_dirty;
 	}
 
-	Bamboo::VmaBuffer TransformComponent::updateUniformBuffer(const glm::mat4& vp)
+	void TransformComponent::updateUniformBuffer(const glm::mat4& vp, VmaBuffer& transform_ub, TransformUBO& transform_ubo)
 	{
 		if (m_transform_ubs.empty())
 		{
@@ -76,12 +75,11 @@ namespace Bamboo
 			}
 		}
 
-		TransformUBO transform_ubo;
 		transform_ubo.m = getGlobalMatrix();
 		transform_ubo.nm = glm::transpose(glm::inverse(glm::mat3(transform_ubo.m)));
 		transform_ubo.mvp = vp * transform_ubo.m;
 
-		return VulkanUtil::updateBuffer(m_transform_ubs, (void*)&transform_ubo, sizeof(TransformUBO));
+		transform_ub = VulkanUtil::updateBuffer(m_transform_ubs, (void*)&transform_ubo, sizeof(TransformUBO));
 	}
 
 	const glm::mat4& TransformComponent::getGlobalMatrix()

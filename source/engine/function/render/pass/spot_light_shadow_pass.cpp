@@ -89,15 +89,20 @@ namespace Bamboo
 					std::array<VkDescriptorBufferInfo, 2> desc_buffer_infos{};
 					std::array<VkDescriptorImageInfo, 1> desc_image_infos{};
 
+					// transform ubo
+					TransformUBO transform_ubo = static_mesh_render_data->transform_ubo;
+					transform_ubo.mvp = m_light_view_projs[p] * transform_ubo.m;
+					VmaBuffer transform_ub = VulkanUtil::updateBuffer(m_light_transform_ubss[p], (void*)&transform_ubo, sizeof(TransformUBO));
+					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], transform_ub, 0);
+
 					// bone matrix ubo
 					if (is_skeletal_mesh)
 					{
-						addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ub, 0);
+						addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], skeletal_mesh_render_data->bone_ub, 1);
 					}
-					addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], static_mesh_render_data->transform_ub, 12);
 
 					// base color texture image sampler
-					addImageDescriptorSet(desc_writes, desc_image_infos[0], static_mesh_render_data->pbr_textures[i].base_color_texure, 1);
+					addImageDescriptorSet(desc_writes, desc_image_infos[0], static_mesh_render_data->pbr_textures[i].base_color_texure, 2);
 
 					VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 						pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
@@ -111,6 +116,20 @@ namespace Bamboo
 		}
 
 		m_render_datas.clear();
+	}
+
+	void SpotLightShadowPass::destroy()
+	{
+		RenderPass::destroy();
+
+		// destroy light transform uniform buffers
+		for (auto& light_transform_ubs : m_light_transform_ubss)
+		{
+			for (VmaBuffer& uniform_buffer : light_transform_ubs)
+			{
+				uniform_buffer.destroy();
+			}
+		}
 	}
 
 	void SpotLightShadowPass::createRenderPass()
@@ -172,8 +191,8 @@ namespace Bamboo
 	void SpotLightShadowPass::createDescriptorSetLayouts()
 	{
 		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
-			{12, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
 		};
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
@@ -186,7 +205,7 @@ namespace Bamboo
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create static mesh descriptor set layout");
 
-		desc_set_layout_bindings.insert(desc_set_layout_bindings.begin(), { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr });
+		desc_set_layout_bindings.insert(desc_set_layout_bindings.begin(), { 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr });
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);
@@ -328,6 +347,7 @@ namespace Bamboo
 		m_shadow_image_view_samplers.resize(size);
 		m_framebuffers.resize(size);
 		m_light_view_projs.resize(size);
+		m_light_transform_ubss.resize(size);
 
 		for (uint32_t i = last_size; i < size; ++i)
 		{
@@ -348,6 +368,13 @@ namespace Bamboo
 
 			VkResult result = vkCreateFramebuffer(VulkanRHI::get().getDevice(), &framebuffer_ci, nullptr, &m_framebuffers[i]);
 			CHECK_VULKAN_RESULT(result, "create spot light shadow framebuffer");
+
+			// create shadow face uniform buffers
+			m_light_transform_ubss[i].resize(MAX_FRAMES_IN_FLIGHT);
+			for (VmaBuffer& uniform_buffer : m_light_transform_ubss[i])
+			{
+				VulkanUtil::createBuffer(sizeof(TransformUBO), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, uniform_buffer, true);
+			}
 		}
 	}
 

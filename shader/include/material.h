@@ -5,10 +5,10 @@
 
 layout(push_constant) uniform _MaterialPCO { MaterialPCO material_pco; };
 
-layout(set = 0, binding = 1) uniform sampler2D base_color_texture_sampler;
-layout(set = 0, binding = 2) uniform sampler2D metallic_roughness_occlusion_texture_sampler;
-layout(set = 0, binding = 3) uniform sampler2D normal_texture_sampler;
-layout(set = 0, binding = 4) uniform sampler2D emissive_texture_sampler;
+layout(binding = 2) uniform sampler2D base_color_texture_sampler;
+layout(binding = 3) uniform sampler2D metallic_roughness_occlusion_texture_sampler;
+layout(binding = 4) uniform sampler2D normal_texture_sampler;
+layout(binding = 5) uniform sampler2D emissive_texture_sampler;
 
 layout(location = 0) in vec3 f_position;
 layout(location = 1) in vec2 f_tex_coord;

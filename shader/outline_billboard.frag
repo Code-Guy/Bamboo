@@ -5,7 +5,7 @@
 
 layout(location = 0) in vec2 g_tex_coord;
 layout(location = 0) out vec4 o_color;
-layout(set = 0, binding = 1) uniform sampler2D base_color_texture_sampler;
+layout(binding = 2) uniform sampler2D base_color_texture_sampler;
 
 void main()
 {

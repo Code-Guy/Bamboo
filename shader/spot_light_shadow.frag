@@ -3,7 +3,7 @@
 
 #include "constants.h"
 
-layout(set = 0, binding = 1) uniform sampler2D base_color_texture_sampler;
+layout(binding = 2) uniform sampler2D base_color_texture_sampler;
 
 layout(location = 0) in vec3 f_position;
 layout(location = 1) in vec2 f_tex_coord;

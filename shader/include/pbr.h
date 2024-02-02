@@ -5,17 +5,17 @@
 #include "host_device.h"
 
 // ibl textures
-layout(set = 0, binding = 5) uniform samplerCube irradiance_texture_sampler;
-layout(set = 0, binding = 6) uniform samplerCube prefilter_texture_sampler;
-layout(set = 0, binding = 7) uniform sampler2D brdf_lut_texture_sampler;
+layout(binding = 6) uniform samplerCube irradiance_texture_sampler;
+layout(binding = 7) uniform samplerCube prefilter_texture_sampler;
+layout(binding = 8) uniform sampler2D brdf_lut_texture_sampler;
 
 // shadow textures
-layout(set = 0, binding = 8) uniform sampler2DArray directional_light_shadow_texture_sampler;
-layout(set = 0, binding = 9) uniform samplerCube point_light_shadow_texture_samplers[MAX_POINT_LIGHT_NUM];
-layout(set = 0, binding = 10) uniform sampler2D spot_light_shadow_texture_samplers[MAX_SPOT_LIGHT_NUM];
+layout(binding = 9) uniform sampler2DArray directional_light_shadow_texture_sampler;
+layout(binding = 10) uniform samplerCube point_light_shadow_texture_samplers[MAX_POINT_LIGHT_NUM];
+layout(binding = 11) uniform sampler2D spot_light_shadow_texture_samplers[MAX_SPOT_LIGHT_NUM];
 
 // lighting ubo
-layout(set = 0, binding = 11) uniform _LightingUBO { LightingUBO lighting_ubo; };
+layout(binding = 12) uniform _LightingUBO { LightingUBO lighting_ubo; };
 
 struct PBRInfo
 {

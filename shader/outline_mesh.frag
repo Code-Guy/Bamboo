@@ -9,7 +9,7 @@ layout(location = 2) in vec3 f_normal;
 
 layout(location = 0) out vec4 o_color;
 
-layout(set = 0, binding = 1) uniform sampler2D base_color_texture_sampler;
+layout(binding = 2) uniform sampler2D base_color_texture_sampler;
 
 void main()
 {

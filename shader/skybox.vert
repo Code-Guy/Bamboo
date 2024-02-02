@@ -5,7 +5,7 @@
 
 layout(push_constant) uniform PCO 
 {
-	layout (offset = 0) mat4 mvp;
+	mat4 mvp;
 } pco;
 
 layout(location = 0) in vec3 position;

@@ -10,7 +10,7 @@ layout(location = 0) in vec3 f_position[];
 layout(location = 1) in vec2 f_tex_coord[];
 layout(location = 2) in vec3 f_normal[];
 
-layout(binding = 1) uniform _ShadowCubeUBO { ShadowCubeUBO shadow_cube_ubo; };
+layout(binding = 2) uniform _ShadowCubeUBO { ShadowCubeUBO shadow_cube_ubo; };
 
 layout(location = 0) out vec3 g_position;
 layout(location = 1) out vec2 g_tex_coord;

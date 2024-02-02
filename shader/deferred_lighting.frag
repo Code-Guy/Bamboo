@@ -3,11 +3,11 @@
 
 #include "pbr.h"
 
-layout(input_attachment_index = 0, set = 0, binding = 0) uniform subpassInput normal_texture_sampler;
-layout(input_attachment_index = 1, set = 0, binding = 1) uniform subpassInput base_color_texture_sampler;
-layout(input_attachment_index = 2, set = 0, binding = 2) uniform subpassInput emissive_color_texture_sampler;
-layout(input_attachment_index = 3, set = 0, binding = 3) uniform subpassInput metallic_roughness_occlusion_texture_sampler;
-layout(input_attachment_index = 4, set = 0, binding = 4) uniform subpassInput depth_stencil_texture_sampler;
+layout(input_attachment_index = 0, binding = 0) uniform subpassInput normal_texture_sampler;
+layout(input_attachment_index = 1, binding = 1) uniform subpassInput base_color_texture_sampler;
+layout(input_attachment_index = 2, binding = 2) uniform subpassInput emissive_color_texture_sampler;
+layout(input_attachment_index = 3, binding = 3) uniform subpassInput metallic_roughness_occlusion_texture_sampler;
+layout(input_attachment_index = 4, binding = 4) uniform subpassInput depth_stencil_texture_sampler;
 
 layout(location = 0) in vec2 f_tex_coord;
 layout(location = 0) out vec4 o_color;

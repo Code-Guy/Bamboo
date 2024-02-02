@@ -95,12 +95,14 @@ namespace Bamboo
 				// push constants
 				updatePushConstants(command_buffer, pipeline_layout, { &color });
 
+				// transform ubo
+				addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], static_mesh_render_data->transform_ub, 0);
+
 				// bone matrix ubo
 				if (is_skeletal_mesh)
 				{
-					addBufferDescriptorSet(desc_writes, desc_buffer_infos[0], skeletal_mesh_render_data->bone_ub, 0);
+					addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], skeletal_mesh_render_data->bone_ub, 1);
 				}
-				addBufferDescriptorSet(desc_writes, desc_buffer_infos[1], static_mesh_render_data->transform_ub, 12);
 
 				VulkanRHI::get().getVkCmdPushDescriptorSetKHR()(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 					pipeline_layout, 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
@@ -184,7 +186,7 @@ namespace Bamboo
 	void PickPass::createDescriptorSetLayouts()
 	{
 		std::vector<VkDescriptorSetLayoutBinding> desc_set_layout_bindings = {
-			{12, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}
 		};
 
 		VkDescriptorSetLayoutCreateInfo desc_set_layout_ci{};
@@ -197,7 +199,7 @@ namespace Bamboo
 		VkResult result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[0]);
 		CHECK_VULKAN_RESULT(result, "create static mesh/billboard descriptor set layout");
 
-		desc_set_layout_bindings.insert(desc_set_layout_bindings.begin(), { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr });
+		desc_set_layout_bindings.insert(desc_set_layout_bindings.begin(), { 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr });
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
 		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);

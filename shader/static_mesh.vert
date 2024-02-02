@@ -3,7 +3,7 @@
 
 #include "host_device.h"
 
-layout(set = 0, binding = 12) uniform _TransformUBO { TransformUBO transform_ubo; };
+layout(binding = 0) uniform _TransformUBO { TransformUBO transform_ubo; };
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 tex_coord;
