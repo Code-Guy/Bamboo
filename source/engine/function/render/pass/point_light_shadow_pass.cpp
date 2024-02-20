@@ -118,8 +118,11 @@ namespace Bamboo
 			}
 
 			vkCmdEndRenderPass(command_buffer);
+
+// 			VulkanUtil::saveImage(m_shadow_image_view_samplers[p].image(), static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height),
+// 				m_formats[0], "D:/Data/Test/point_light_shadow/data.bin", VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1, 6);
 		}
-		
+
 		m_render_datas.clear();
 	}
 
@@ -235,7 +238,7 @@ namespace Bamboo
 
 		desc_set_layout_bindings.insert(desc_set_layout_bindings.begin(), { 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr });
 		desc_set_layout_ci.bindingCount = static_cast<uint32_t>(desc_set_layout_bindings.size());
-		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data(); 
+		desc_set_layout_ci.pBindings = desc_set_layout_bindings.data();
 		result = vkCreateDescriptorSetLayout(VulkanRHI::get().getDevice(), &desc_set_layout_ci, nullptr, &m_desc_set_layouts[1]);
 		CHECK_VULKAN_RESULT(result, "create skeletal mesh descriptor set layout");
 	}
@@ -265,6 +268,9 @@ namespace Bamboo
 
 	void PointLightShadowPass::createPipelines()
 	{
+		// must cull front face, not back face, maybe the view matrix is some kind of weird
+		m_rasterize_state_ci.cullMode = VK_CULL_MODE_FRONT_BIT;
+		
 		// vertex input state
 		// vertex bindings
 		std::vector<VkVertexInputBindingDescription> vertex_input_binding_descriptions;

@@ -56,6 +56,7 @@ namespace Bamboo
 		const float kButtonHeight = 30.0f;
 		const ImVec2 kButtonSize = sImVec2(kButtonHeight, kButtonHeight);
 		ImGui::PushFont(bigIconFont());
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.6f));
 		if (ImGui::Button(ICON_FA_SAVE, kButtonSize))
 		{
 			wm->saveWorld();
@@ -125,6 +126,7 @@ namespace Bamboo
 			ImGui::EndDisabled();
 		}
 
+		ImGui::PopStyleColor();
 		ImGui::End();
 	}
 

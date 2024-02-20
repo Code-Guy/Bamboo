@@ -74,7 +74,7 @@ namespace Bamboo
 		uint32_t mouse_y = static_cast<uint32_t>(ImGui::GetMousePos().y - cursor_screen_pos.y);
 
 		ImVec2 content_size = ImGui::GetContentRegionAvail();
-		ImGui::Image(m_color_texture_desc_set, content_size);
+		ImGui::Image(m_color_texture_desc_set, content_size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 1));
 
 		if (g_engine.isSimulating())
 		{

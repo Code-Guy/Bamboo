@@ -285,7 +285,7 @@ vec4 calc_pbr(MaterialInfo mat_info)
 			{
 				vec3 sample_vector = mat_info.position - point_light.position;
 				float depth = texture(point_light_shadow_texture_samplers[i], sample_vector).x;
-				if (length(sample_vector) > depth)
+				if ((length(sample_vector) - depth) / point_light.radius > POINT_LIGHT_SHADOW_BIAS)
 				{
 					shadow = 0.0;
 				}
@@ -347,6 +347,9 @@ vec4 calc_pbr(MaterialInfo mat_info)
 
 	// tonemapping
 	color = tonemap(color, lighting_ubo.exposure);
+
+	// gamma corretion
+	color = linear_to_srgb(color);
 
 	// get alpha from base_color's alpha
 	return vec4(color, mat_info.base_color.a);

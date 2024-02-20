@@ -69,6 +69,9 @@ namespace Bamboo
 			m_pipeline_layouts[0], 0, static_cast<uint32_t>(desc_writes.size()), desc_writes.data());
 		vkCmdDraw(command_buffer, 3, 1, 0, 0);
 		vkCmdEndRenderPass(command_buffer);
+
+// 		VulkanUtil::saveImage(m_color_texture_sampler.image(), static_cast<uint32_t>(viewport.width), static_cast<uint32_t>(viewport.height),
+// 			m_format, "D:/Data/Test/main_pass/data.bin", VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	void PostprocessPass::destroy()

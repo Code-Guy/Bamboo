@@ -10,7 +10,13 @@ layout(location = 0) in struct {
 
 void main()
 {
-    vec4 SRGBColor = In.Color;
-    SRGBColor.xyz = pow(SRGBColor.xyz, vec3(2.2));
-    fColor = SRGBColor * texture(sTexture, In.UV.st);
+    vec4 tColor = texture(sTexture, In.UV.st);
+    if (length(In.Color.xyz) > 0)
+    {
+        fColor = In.Color * vec4(pow(tColor.xyz, vec3(1.0 / 2.2)), tColor.w);
+    }
+    else
+    {
+        fColor = tColor;
+    }
 }

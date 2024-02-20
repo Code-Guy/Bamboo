@@ -371,6 +371,23 @@ namespace Bamboo
 		return VK_API_VERSION_1_0;
 	}
 
+	const char* VulkanRHI::getVKAPIVersionStr()
+	{
+		if (VMA_VULKAN_VERSION == 1003000)
+		{
+			return "vulkan1.3";
+		}
+		if (VMA_VULKAN_VERSION == 1002000)
+		{
+			return "vulkan1.2";
+		}
+		if (VMA_VULKAN_VERSION == 1001000)
+		{
+			return "vulkan1.1";
+		}
+		return "vulkan1.0";
+	}
+
 	void VulkanRHI::waitFrame()
 	{
 		// wait sumbitted command buffer finished
@@ -720,15 +737,16 @@ namespace Bamboo
 
 	VkSurfaceFormatKHR VulkanRHI::getProperSwapchainSurfaceFormat(const SwapchainSupportDetails& details)
 	{
+		VkFormat target_format = VK_FORMAT_B8G8R8A8_UNORM;
 		for (VkSurfaceFormatKHR format : details.formats)
 		{
-			if (format.format == VK_FORMAT_B8G8R8A8_SRGB &&
+			if (format.format == target_format &&
 				format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 			{
 				return format;
 			}
 		}
-		LOG_FATAL("do not supported swapchain surface format: VK_FORMAT_B8G8R8A8_SRGB");
+		LOG_FATAL("do not support swapchain surface format: {}", target_format);
 		return details.formats.front();
 	}
 

@@ -21,6 +21,7 @@ namespace Bamboo
 
 		void waitDeviceIdle() { vkDeviceWaitIdle(m_device); }
 
+		const char* getVKAPIVersionStr();
 		VkInstance getInstance() { return m_instance; }
 		VkPhysicalDevice getPhysicalDevice() { return m_physical_device; }
 		VkPhysicalDeviceProperties getPhysicalDeviceProperties() { return m_physical_device_properties; }

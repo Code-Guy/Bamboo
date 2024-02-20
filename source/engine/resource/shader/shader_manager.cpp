@@ -87,8 +87,8 @@ namespace Bamboo
 				std::string global_glsl_filename = fs->global(glsl_filename);
 				std::string spv_filename = StringUtil::format("%s/%s-%s.spv", spv_dir.c_str(), glsl_basename.c_str(), modified_time.c_str());
 				std::string global_spv_filename = fs->global(spv_filename);
-				std::string shader_compile_cmd = StringUtil::format("%s --target-env vulkan1.3 -I%s -g -o \"%s\" \"%s\"", 
-					VULKAN_SHADER_COMPILER, global_shader_include_dir.c_str(), global_spv_filename.c_str(), global_glsl_filename.c_str());
+				std::string shader_compile_cmd = StringUtil::format("%s --target-env %s -I%s -g -o \"%s\" \"%s\"", 
+					VULKAN_SHADER_COMPILER, VulkanRHI::get().getVKAPIVersionStr(), global_shader_include_dir.c_str(), global_spv_filename.c_str(), global_glsl_filename.c_str());
 				std::string result = execute(shader_compile_cmd.c_str());
 				StringUtil::trim(result);
 				if (!result.empty())

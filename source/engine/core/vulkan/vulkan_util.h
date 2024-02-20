@@ -98,7 +98,7 @@ namespace Bamboo
 		static void createIndexBuffer(const std::vector<uint32_t>& indices, VmaBuffer& index_buffer);
 
 		static void transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, 
-			VkFormat format = VK_FORMAT_B8G8R8A8_SRGB, uint32_t mip_levels = 1, uint32_t layers = 1);
+			VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, uint32_t mip_levels = 1, uint32_t layers = 1);
 		static void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 		static void createImageMipmaps(VkImage image, uint32_t width, uint32_t height, uint32_t mip_levels);
 
