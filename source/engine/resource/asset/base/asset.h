@@ -62,6 +62,12 @@ namespace Bamboo
 		{
 			ar(cereal::make_nvp("ref_urls", m_ref_urls));
 
+			// convert backslash to slash
+			// for (auto& iter : m_ref_urls)
+			// {
+			// 	iter.second.toGeneric();
+			// }
+			
 			if (!m_has_bound)
 			{
 				bindRefs();

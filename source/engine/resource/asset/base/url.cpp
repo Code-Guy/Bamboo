@@ -35,7 +35,12 @@ namespace Bamboo
 		return URL(g_engine.fileSystem()->combine(lhs, rhs));
 	}
 
-	void URL::toRelative()
+    void URL::toGeneric()
+    {
+		std::replace(m_url.begin(), m_url.end(), '\\', '/' );
+    }
+
+    void URL::toRelative()
 	{
 		if (!m_url.empty() && m_url[0] == '.')
 		{

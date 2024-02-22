@@ -46,6 +46,8 @@ namespace Bamboo
             sink_list.begin(), sink_list.end(), spdlog::thread_pool(),
             spdlog::async_overflow_policy::overrun_oldest);
         m_logger->set_level(spdlog::level::trace);
+        m_logger->flush_on(spdlog::level::err);
+        spdlog::flush_every(std::chrono::seconds(1));
 
         spdlog::register_logger(m_logger);
     }

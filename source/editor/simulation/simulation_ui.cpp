@@ -664,7 +664,7 @@ namespace Bamboo
 					}
 					else if (entity_category == "Primitives")
 					{
-						std::string url = StringUtil::format("asset/engine/mesh/primitive/sm_%s.sm", entity_type.c_str());
+						std::string url = StringUtil::format("asset/engine/mesh/primitive/sm_%s.sm", StringUtil::tolower(entity_type).c_str());
 						loadAsset(url);
 					}
 				}

@@ -18,6 +18,9 @@ namespace Bamboo
 		static void ltrim(std::string& s);
 		static void rtrim(std::string& s);
 		static void trim(std::string& s);
+		
+		static std::string tolower(const std::string& s);
+		static std::string toupper(const std::string& s);
 
 		template<typename ... Args>
 		static std::string format(const std::string& format, Args ... args)

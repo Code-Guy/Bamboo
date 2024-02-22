@@ -1,5 +1,6 @@
 #include "string_util.h"
 #include <algorithm>
+#include <cctype>
 
 namespace Bamboo
 {
@@ -78,4 +79,19 @@ namespace Bamboo
 		ltrim(s);
 	}
 
+    std::string StringUtil::tolower(const std::string &s)
+    {
+		std::string ls = s;
+        std::transform(ls.begin(), ls.end(), ls.begin(),
+    		[](unsigned char c){ return std::tolower(c); });
+		return ls;
+    }
+
+    std::string StringUtil::toupper(const std::string &s)
+    {
+        std::string us = s;
+        std::transform(us.begin(), us.end(), us.begin(),
+    		[](unsigned char c){ return std::tolower(c); });
+		return us;
+    }
 }

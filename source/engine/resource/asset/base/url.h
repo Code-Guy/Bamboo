@@ -52,7 +52,8 @@ namespace Bamboo
 		}
 
 		static URL combine(const std::string& lhs, const std::string& rhs);
-
+		void toGeneric();
+		
 	private:
 		friend class cereal::access;
 		template<class Archive>

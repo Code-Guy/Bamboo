@@ -46,6 +46,12 @@ namespace Bamboo
 
 	void AssetManager::destroy()
 	{
+		// flush all assets
+		// for (auto& iter : m_assets)
+		// {
+		// 	serializeAsset(iter.second);
+		// }
+
 		for (auto& iter : m_assets)
 		{
 			iter.second.reset();
