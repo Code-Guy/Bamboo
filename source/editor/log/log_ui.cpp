@@ -90,13 +90,13 @@ namespace Bamboo
 			if (std::string(log.begin() + 1, log.begin() + log_str_len + 1) == k_log_strs[log_level])
 			{
 				ImGui::PushStyleColor(ImGuiCol_Text, k_log_colors[log_level]);
-				ImGui::Text((std::string("[") + k_log_strs[log_level] + "]").c_str());
+				ImGui::Text("[%s]", k_log_strs[log_level]);
 				ImGui::PopStyleColor();
 
 				ImGui::SameLine();
 
 				size_t second_right_bracket_pos = find_nth(log, "]", 2);
-				ImGui::Text(std::string(log.begin() + second_right_bracket_pos + 2, log.end()).c_str());
+				ImGui::TextUnformatted(std::string(log.begin() + second_right_bracket_pos + 2, log.end()).c_str());
 			}
 		}
 	}

@@ -6,7 +6,7 @@ namespace Bamboo
 {
 	void ShaderManager::init()
 	{
-		if (VULKAN_SHADER_COMPILER == "")
+		if (strcmp(VULKAN_SHADER_COMPILER, "") == 0)
 		{
 			LOG_WARNING("failed to find glslangValidator to compile shader");
 			return;

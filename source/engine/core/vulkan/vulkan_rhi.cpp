@@ -132,23 +132,26 @@ namespace Bamboo
 			VkPhysicalDeviceProperties physical_device_properties;
 			vkGetPhysicalDeviceProperties(physical_devices[i], &physical_device_properties);
 			physical_device_propertiess[i] = physical_device_properties;
-			LOG_INFO("device {}: {} {} {}.{}.{}", 
+
+			// only use discrete gpu, for best performance
+			bool is_selected = false;
+			if (physical_device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && selected_device_index == 0)
+			{
+				is_selected = true;
+				selected_device_index = i;
+			}
+
+			LOG_INFO("device {}: {} {} {}.{}.{}{}", 
 				i, physical_device_properties.deviceName, 
 				vkPhysicalDeviceTypeString(physical_device_properties.deviceType),
 				physical_device_properties.apiVersion >> 22,
 				(physical_device_properties.apiVersion >> 12) & 0x3ff,
-				physical_device_properties.apiVersion & 0xfff);
-
-			// only use discrete gpu, for best performance
-			if (physical_device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && selected_device_index == 0)
-			{
-				selected_device_index = i;
-			}
+				physical_device_properties.apiVersion & 0xfff,
+				is_selected ? " [selected]" : "");
 		}
 
 		m_physical_device = physical_devices[selected_device_index];
 		m_physical_device_properties = physical_device_propertiess[selected_device_index];
-		LOG_INFO("select device {}", selected_device_index);
 	}
 
 	void VulkanRHI::validatePhysicalDevice()
@@ -752,14 +755,21 @@ namespace Bamboo
 
 	VkPresentModeKHR VulkanRHI::getProperSwapchainSurfacePresentMode(const SwapchainSupportDetails& details)
 	{
-		for (VkPresentModeKHR present_mode : details.present_modes)
+		std::vector<VkPresentModeKHR> candidate_present_modes = 
+		{ 
+			VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_KHR,
+			VK_PRESENT_MODE_FIFO_RELAXED_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR
+		};
+
+		for (VkPresentModeKHR candidate_present_mode : candidate_present_modes)
 		{
-			if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
+			if (std::find(details.present_modes.begin(), details.present_modes.end(), candidate_present_mode) != details.present_modes.end())
 			{
-				return present_mode;
+				return candidate_present_mode;
 			}
 		}
-		LOG_FATAL("no supported swapchain surface present mode: VK_PRESENT_MODE_MAILBOX_KHR");
+
+		LOG_FATAL("no supported swapchain surface present modes");
 		return details.present_modes.front();
 	}
 

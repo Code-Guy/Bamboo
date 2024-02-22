@@ -292,12 +292,12 @@ namespace Bamboo
 		vertex_input_attribute_descriptions[3].binding = 0;
 		vertex_input_attribute_descriptions[3].location = 3;
 		vertex_input_attribute_descriptions[3].format = VK_FORMAT_R32G32B32A32_SINT;
-		vertex_input_attribute_descriptions[3].offset = offsetof(SkeletalVertex, m_bones);
+		vertex_input_attribute_descriptions[3].offset = sizeof(StaticVertex);
 
 		vertex_input_attribute_descriptions[4].binding = 0;
 		vertex_input_attribute_descriptions[4].location = 4;
 		vertex_input_attribute_descriptions[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-		vertex_input_attribute_descriptions[4].offset = offsetof(SkeletalVertex, m_weights);
+		vertex_input_attribute_descriptions[4].offset = sizeof(StaticVertex) + sizeof(glm::ivec4);
 
 		vertex_input_ci.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attribute_descriptions.size());
 		vertex_input_ci.pVertexAttributeDescriptions = vertex_input_attribute_descriptions.data();

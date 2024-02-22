@@ -2,7 +2,17 @@
 
 #include "engine/core/base/macro.h"
 #include <vulkan/vulkan.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnullability-completeness"
+#endif
+
 #include <vma/vk_mem_alloc.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 #define MAX_FRAMES_IN_FLIGHT 2
 

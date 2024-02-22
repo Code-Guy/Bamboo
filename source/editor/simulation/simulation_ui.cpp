@@ -380,7 +380,7 @@ namespace Bamboo
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, sImVec2(8.0f, 8.0f));
 		if (ImGui::BeginPopupModal("create light", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
-			ImGui::Text(text.c_str());
+			ImGui::TextUnformatted(text.c_str());
 			ImGui::Separator();
 
 			float current_width = ImGui::GetContentRegionAvail().x;
@@ -531,7 +531,7 @@ namespace Bamboo
 		{
 			const ImGuiPayload* payload = nullptr;
 			ImGuiDragDropFlags flags = ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoPreviewTooltip;
-			if (payload = ImGui::AcceptDragDropPayload("load_asset", flags))
+			if ((payload = ImGui::AcceptDragDropPayload("load_asset", flags)))
 			{
 				if (!m_created_entity)
 				{
@@ -542,7 +542,7 @@ namespace Bamboo
 					LOG_INFO("load asset {}, elapsed time: {}ms", url, stop_watch.stopMs());
 				}
 			}
-			else if (payload = ImGui::AcceptDragDropPayload("create_entity", flags))
+			else if ((payload = ImGui::AcceptDragDropPayload("create_entity", flags)))
 			{
 				if (!m_created_entity)
 				{

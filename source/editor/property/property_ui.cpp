@@ -67,7 +67,7 @@ namespace Bamboo
 
 			ImGui::SetCursorPosX((window_width - text_width) * 0.5f);
 			ImGui::SetCursorPosY(window_height * 0.2f);
-			ImGui::Text(hint_text);
+			ImGui::TextUnformatted(hint_text);
 		}
 
 		ImGui::End();
@@ -200,7 +200,7 @@ namespace Bamboo
 		addPropertyNameText(name);
 
 		ImGui::TableNextColumn();
-		ImGui::Text("%s", (*&variant.get_value<std::string>()).c_str());
+		ImGui::TextUnformatted((*&variant.get_value<std::string>()).c_str());
 	}
 
 	void PropertyUI::constructPropertyVec2(const std::string& name, rttr::variant& variant)
@@ -267,7 +267,7 @@ namespace Bamboo
 	{
 		ImGui::TableNextColumn();
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("%s", name.c_str());
+		ImGui::TextUnformatted(name.c_str());
 
 		ImGui::TableNextColumn();
 
@@ -304,7 +304,7 @@ namespace Bamboo
 	{
 		ImGui::TableNextColumn();
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 3.0f);
-		ImGui::Text("%s", name.c_str());
+		ImGui::TextUnformatted(name.c_str());
 	}
 
 	EPropertyType PropertyUI::getPropertyType(const rttr::type& type)

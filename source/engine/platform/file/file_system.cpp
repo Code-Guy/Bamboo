@@ -1,6 +1,7 @@
 #include "engine/core/base/macro.h"
 #include <fstream>
 #include <algorithm>
+#include <limits>
 
 namespace Bamboo
 {
@@ -84,7 +85,7 @@ namespace Bamboo
 	{
 		if (isFile(path))
 		{
-			return std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::filesystem::last_write_time(path).time_since_epoch()).count());
+			return std::to_string(std::abs(std::chrono::duration_cast<std::chrono::seconds>(std::filesystem::last_write_time(path).time_since_epoch()).count()));
 		}
 
 		if (isDir(path))
@@ -95,7 +96,7 @@ namespace Bamboo
 			{
 				if (isFile(file))
 				{
-					last_write_time = std::max(last_write_time, (long long)std::chrono::duration_cast<std::chrono::seconds>(std::filesystem::last_write_time(file).time_since_epoch()).count());
+					last_write_time = std::max(last_write_time, std::abs((long long)std::chrono::duration_cast<std::chrono::seconds>(std::filesystem::last_write_time(file).time_since_epoch()).count()));
 				}
 			}
 			return std::to_string(last_write_time);
