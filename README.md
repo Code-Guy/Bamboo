@@ -3,7 +3,7 @@
 # Bamboo
 
 ## What is Bamboo
-**Bamboo** is a lightweight simulation engine that supports high-fidelity graphics rendering, and will mainly focus on AIGC and cloud rendering technologies in the future. Bamboo uses vulkan as the only graphics/computing api, and is written in C++17.
+**Bamboo** is a lightweight game engine with high-fidelity graphics rendering and simulation functions, provides a flexible gameplay framework, and will mainly focus on AIGC technologies in the future. Bamboo uses vulkan as the only graphics/computing api, and is written in C++17.
 ![1](snapshot/robot.png)
 
 ![2](snapshot/sponza.png)
